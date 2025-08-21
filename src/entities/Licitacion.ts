@@ -8,41 +8,41 @@ import {
 @Entity('licitaciones')
 export class Licitacion {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'varchar', length: 50, unique: true })
-  idLicitacion: string;
+  idLicitacion!: string;
 
   @Column({ type: 'varchar', length: 500 })
-  nombre: string;
+  nombre!: string;
 
   @Column({ type: 'datetime' })
-  fechaPublicacion: Date;
+  fechaPublicacion!: Date;
 
   @Column({ type: 'datetime' })
-  fechaCierre: Date;
+  fechaCierre!: Date;
 
   @Column({ type: 'varchar', length: 300 })
-  organismo: string;
+  organismo!: string;
 
   @Column({ type: 'varchar', length: 200 })
-  unidad: string;
+  unidad!: string;
 
   @Column({ type: 'decimal', precision: 15, scale: 2 })
-  montoDisponible: number;
+  montoDisponible!: number;
 
   @Column({ type: 'varchar', length: 10 })
-  moneda: string;
+  moneda!: string;
 
   @Column({ type: 'varchar', length: 50 })
-  estado: string;
+  estado!: string;
 
   @Column({ type: 'varchar', length: 255 })
-  fileName: string;
+  fileName!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @Column({ type: 'datetime' })
-  processedAt: Date;
+  processedAt!: Date;
 }

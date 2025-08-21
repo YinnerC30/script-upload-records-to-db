@@ -71,8 +71,11 @@ export class ExcelProcessor {
       }
 
       const latestFile = files[0];
-      logger.info(`Archivo más reciente encontrado: ${latestFile.name}`);
-      return latestFile.path;
+      if (latestFile) {
+        logger.info(`Archivo más reciente encontrado: ${latestFile.name}`);
+        return latestFile.path;
+      }
+      return null;
     } catch (error) {
       logger.error('Error buscando archivo Excel:', error);
       return null;
@@ -125,7 +128,13 @@ export class ExcelProcessor {
     try {
       const workbook = XLSX.readFile(filePath);
       const sheetName = workbook.SheetNames[0];
+      if (!sheetName) {
+        throw new Error('No se encontró ninguna hoja en el archivo Excel');
+      }
       const worksheet = workbook.Sheets[sheetName];
+      if (!worksheet) {
+        throw new Error('No se pudo acceder a la hoja del archivo Excel');
+      }
 
       // Convertir a JSON
       const data = XLSX.utils.sheet_to_json(worksheet) as ExcelRow[];

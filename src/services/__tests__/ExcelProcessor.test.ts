@@ -6,7 +6,7 @@ import * as path from 'path';
 // Mock de las dependencias
 vi.mock('fs');
 vi.mock('path');
-vi.mock('../config/database', () => ({
+vi.mock('../../config/database', () => ({
   AppDataSource: {
     getRepository: vi.fn(() => ({
       save: vi.fn().mockResolvedValue([]),
@@ -31,6 +31,7 @@ describe('ExcelProcessor', () => {
   describe('findLatestExcelFile', () => {
     it('should return null when no Excel files exist', () => {
       mockFs.readdirSync.mockReturnValue(['file.txt', 'document.pdf'] as any);
+      mockPath.extname.mockReturnValue('.txt');
 
       const result = processor.findLatestExcelFile();
 
@@ -38,14 +39,21 @@ describe('ExcelProcessor', () => {
     });
 
     it('should return the most recent Excel file', () => {
-      const mockStats = {
+      const mockStatsOld = {
+        mtime: new Date('2023-01-01'),
+      };
+      const mockStatsNew = {
         mtime: new Date('2023-01-02'),
       };
 
       mockFs.readdirSync.mockReturnValue(['old.xlsx', 'new.xlsx'] as any);
-      mockFs.statSync.mockReturnValue(mockStats as any);
+      mockFs.statSync
+        .mockReturnValueOnce(mockStatsOld as any)
+        .mockReturnValueOnce(mockStatsNew as any);
       mockPath.join.mockImplementation((...args) => args.join('/'));
-      mockPath.extname.mockReturnValue('.xlsx');
+      mockPath.extname
+        .mockReturnValueOnce('.xlsx')
+        .mockReturnValueOnce('.xlsx');
 
       const result = processor.findLatestExcelFile();
 
@@ -88,8 +96,11 @@ describe('ExcelProcessor', () => {
   describe('parseDate', () => {
     it('should parse string date correctly', () => {
       const result = processor['parseDate']('2023-01-01');
+
       expect(result).toBeInstanceOf(Date);
-      expect(result.getFullYear()).toBe(2023);
+      // Verificar que la fecha sea correcta sin depender de zona horaria
+      const expectedDate = new Date('2023-01-01');
+      expect(result.getTime()).toBe(expectedDate.getTime());
     });
 
     it('should return current date for invalid date', () => {

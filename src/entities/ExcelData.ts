@@ -8,17 +8,17 @@ import {
 @Entity('excel_data')
 export class ExcelData {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'varchar', length: 255 })
-  fileName: string;
+  fileName!: string;
 
   @Column({ type: 'text' })
-  data: string;
+  data!: string;
 
   @Column({ type: 'datetime' })
-  processedAt: Date;
+  processedAt!: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }
