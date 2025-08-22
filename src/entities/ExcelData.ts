@@ -13,7 +13,7 @@ export class ExcelData {
   @Column({ type: 'varchar', length: 255 })
   fileName!: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'longtext' })
   data!: string;
 
   @Column({ type: 'datetime' })

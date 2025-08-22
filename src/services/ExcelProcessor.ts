@@ -279,10 +279,20 @@ export class ExcelProcessor {
     const excelDataRepository = AppDataSource.getRepository(ExcelData);
 
     try {
-      // Guardar datos procesados en excel_data para respaldo
+      // Guardar resumen de datos procesados en excel_data para respaldo
       const excelData = new ExcelData();
       excelData.fileName = fileName;
-      excelData.data = JSON.stringify(data);
+      
+      // Crear un resumen en lugar de guardar todos los datos
+      const summary = {
+        totalRecords: data.length,
+        headers: Object.keys(data[0] || {}),
+        sampleRecord: data[0] || {},
+        processedAt: new Date().toISOString(),
+        mappingApplied: true
+      };
+      
+      excelData.data = JSON.stringify(summary);
       excelData.processedAt = new Date();
 
       await excelDataRepository.save(excelData);
