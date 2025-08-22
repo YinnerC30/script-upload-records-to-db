@@ -21,24 +21,24 @@ export interface ExcelRow {
 
 // Mapeo de encabezados del Excel a campos del código (normalizados)
 const HEADER_MAPPING: { [key: string]: string } = {
-  'id': 'idLicitacion',
-  'nombre': 'nombre',
+  id: 'idLicitacion',
+  nombre: 'nombre',
   'fecha de publicacion': 'fechaPublicacion',
   'fecha de cierre': 'fechaCierre',
-  'organismo': 'organismo',
-  'unidad': 'unidad',
+  organismo: 'organismo',
+  unidad: 'unidad',
   'monto disponible': 'montoDisponible',
-  'moneda': 'moneda',
-  'estado': 'estado',
+  moneda: 'moneda',
+  estado: 'estado',
   // Variaciones adicionales para mayor compatibilidad
-  'id_licitacion': 'idLicitacion',
-  'idlicitacion': 'idLicitacion',
-  'fecha_publicacion': 'fechaPublicacion',
-  'fechapublicacion': 'fechaPublicacion',
-  'fecha_cierre': 'fechaCierre',
-  'fechacierre': 'fechaCierre',
-  'monto_disponible': 'montoDisponible',
-  'montodisponible': 'montoDisponible'
+  id_licitacion: 'idLicitacion',
+  idlicitacion: 'idLicitacion',
+  fecha_publicacion: 'fechaPublicacion',
+  fechapublicacion: 'fechaPublicacion',
+  fecha_cierre: 'fechaCierre',
+  fechacierre: 'fechaCierre',
+  monto_disponible: 'montoDisponible',
+  montodisponible: 'montoDisponible',
 };
 
 export class ExcelProcessor {
@@ -183,14 +183,14 @@ export class ExcelProcessor {
     // Obtener el primer registro para identificar los encabezados
     const firstRow = rawData[0];
     const headers = Object.keys(firstRow);
-    
+
     logger.info('Encabezados encontrados en el archivo:', headers);
 
     // Crear mapeo de encabezados originales a campos normalizados
     const headerMapping: { [key: string]: string } = {};
     const unmappedHeaders: string[] = [];
 
-    headers.forEach(header => {
+    headers.forEach((header) => {
       const normalizedHeader = this.normalizeHeader(header);
       if (HEADER_MAPPING[normalizedHeader]) {
         headerMapping[header] = HEADER_MAPPING[normalizedHeader];
@@ -207,8 +207,8 @@ export class ExcelProcessor {
     // Transformar cada fila usando el mapeo
     return rawData.map((row, index) => {
       const transformedRow: ExcelRow = {};
-      
-      headers.forEach(originalHeader => {
+
+      headers.forEach((originalHeader) => {
         const mappedField = headerMapping[originalHeader];
         if (mappedField) {
           transformedRow[mappedField] = row[originalHeader];
@@ -229,7 +229,13 @@ export class ExcelProcessor {
       .replace(/\s+/g, ' ') // Normalizar espacios múltiples
       .replace(/[áéíóúüñ]/g, (match) => {
         const accents: { [key: string]: string } = {
-          'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n'
+          á: 'a',
+          é: 'e',
+          í: 'i',
+          ó: 'o',
+          ú: 'u',
+          ü: 'u',
+          ñ: 'n',
         };
         return accents[match] || match;
       });
