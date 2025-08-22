@@ -1,0 +1,42 @@
+# Archivos de configuración sensibles
+.env
+.env.*
+!.env.example
+
+# Logs y archivos temporales
+logs/
+*.log
+tmp/
+temp/
+
+# Archivos de datos
+excel-files/
+processed-files/
+error-files/
+test-files/
+
+# Base de datos
+mysql/data/
+docker-compose.override.yml
+
+# Archivos de desarrollo
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de prueba
+coverage/
+.nyc_output/
+
+# Archivos de build
+dist/
+build/
+bin/
+
+# Archivos de configuración local
+*.local
