@@ -16,12 +16,19 @@
       "node_modules/reflect-metadata/**/*",
       "node_modules/mysql2/**/*",
       "node_modules/winston/**/*",
-      "node_modules/dotenv/**/*"
+      "node_modules/dotenv/**/*",
+      "node_modules/class-transformer/**/*",
+      "node_modules/class-validator/**/*"
     ],
     "scripts": [
       "node_modules/xlsx/**/*.js",
       "node_modules/typeorm/**/*.js",
-      "node_modules/mysql2/**/*.js"
+      "node_modules/mysql2/**/*.js",
+      "node_modules/reflect-metadata/**/*.js"
+    ],
+    "ignore": [
+      "node_modules/typeorm/browser/**/*",
+      "node_modules/typeorm/cli/**/*"
     ]
   },
   "scripts": {
