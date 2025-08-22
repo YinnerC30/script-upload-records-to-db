@@ -2,7 +2,7 @@
 
 # Script de desinstalación para el ejecutable de procesamiento de Excel
 # Autor: Script de desinstalación automática
-# Versión: 1.0.0
+# Versión: 2.0.0 - Simplificado
 
 set -e
 
@@ -38,22 +38,20 @@ show_help() {
     echo "  -h, --help          Mostrar esta ayuda"
     echo "  -d, --directory     Directorio de instalación (default: /usr/local/bin)"
     echo "  -f, --force         Forzar desinstalación sin confirmación"
-    echo "  -c, --config-only   Solo eliminar archivos de configuración"
-    echo "  -s, --service-only  Solo eliminar servicio systemd"
     echo ""
     echo "Ejemplos:"
     echo "  $0                    # Desinstalación completa con confirmación"
     echo "  $0 -f                 # Desinstalación forzada sin confirmación"
     echo "  $0 -d ~/bin          # Desinstalar desde directorio personal"
-    echo "  $0 -c                # Solo eliminar configuración"
-    echo "  $0 -s                # Solo eliminar servicio"
+    echo ""
+    echo "El script eliminará:"
+    echo "  🗑️  Ejecutable excel-processor"
+    echo "  🗑️  Archivo de configuración .env"
 }
 
 # Variables por defecto
 INSTALL_DIR="/usr/local/bin"
 FORCE=false
-CONFIG_ONLY=false
-SERVICE_ONLY=false
 EXECUTABLE_NAME="excel-processor"
 
 # Procesar argumentos
@@ -69,14 +67,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         -f|--force)
             FORCE=true
-            shift
-            ;;
-        -c|--config-only)
-            CONFIG_ONLY=true
-            shift
-            ;;
-        -s|--service-only)
-            SERVICE_ONLY=true
             shift
             ;;
         *)
@@ -95,7 +85,6 @@ confirm_uninstall() {
         echo "Esto eliminará:"
         echo "  - Ejecutable: $INSTALL_DIR/$EXECUTABLE_NAME"
         echo "  - Configuración: $INSTALL_DIR/.env"
-        echo "  - Servicio systemd: /etc/systemd/system/excel-processor.service"
         echo ""
         read -p "¿Continuar? (y/N): " -n 1 -r
         echo ""
@@ -126,27 +115,6 @@ check_executable_usage() {
     fi
 }
 
-# Función para desinstalar servicio
-uninstall_service() {
-    if [ -f "/etc/systemd/system/excel-processor.service" ]; then
-        print_info "Desinstalando servicio systemd..."
-        
-        # Detener y deshabilitar servicio
-        sudo systemctl stop excel-processor 2>/dev/null || true
-        sudo systemctl disable excel-processor 2>/dev/null || true
-        
-        # Eliminar archivo del servicio
-        sudo rm -f /etc/systemd/system/excel-processor.service
-        
-        # Recargar systemd
-        sudo systemctl daemon-reload
-        
-        print_success "Servicio desinstalado correctamente"
-    else
-        print_info "No se encontró servicio systemd para desinstalar"
-    fi
-}
-
 # Función para desinstalar configuración
 uninstall_config() {
     if [ -f "$INSTALL_DIR/.env" ]; then
@@ -169,8 +137,6 @@ uninstall_executable() {
     fi
 }
 
-
-
 # Función para verificar desinstalación
 verify_uninstall() {
     echo ""
@@ -192,14 +158,6 @@ verify_uninstall() {
         errors=$((errors + 1))
     else
         print_success "✅ Archivo de configuración eliminado correctamente"
-    fi
-    
-    # Verificar servicio
-    if [ -f "/etc/systemd/system/excel-processor.service" ]; then
-        print_error "❌ El servicio systemd aún existe"
-        errors=$((errors + 1))
-    else
-        print_success "✅ Servicio systemd eliminado correctamente"
     fi
     
     # Verificar procesos
@@ -235,25 +193,17 @@ main() {
     # Verificar uso del ejecutable
     check_executable_usage
     
-    # Desinstalar según las opciones especificadas
-    if [ "$SERVICE_ONLY" = true ]; then
-        uninstall_service
-    elif [ "$CONFIG_ONLY" = true ]; then
-        uninstall_config
-    else
-        # Desinstalación completa
-        uninstall_service
-        uninstall_config
-        uninstall_executable
-    fi
+    # Desinstalación completa
+    uninstall_config
+    uninstall_executable
     
     # Verificar desinstalación
     verify_uninstall
     
     print_info "📋 Información adicional:"
-    echo "  - Los logs del servicio pueden permanecer en el journal de systemd"
-    echo "  - Para limpiar logs: sudo journalctl --vacuum-time=1d"
-    echo "  - Para ver logs antiguos: sudo journalctl -u excel-processor"
+    echo "  - Los directorios de trabajo (excel-files, processed-files, etc.) no se eliminan"
+    echo "  - Los logs en ./logs/ no se eliminan automáticamente"
+    echo "  - Para limpiar todo: rm -rf ./excel-files ./processed-files ./error-files ./logs"
 }
 
 # Ejecutar función principal

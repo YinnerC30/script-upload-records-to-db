@@ -2,7 +2,7 @@
 
 # Script de instalación para el ejecutable de procesamiento de Excel
 # Autor: Script de instalación automática
-# Versión: 1.0.0
+# Versión: 2.0.0 - Simplificado
 
 set -e
 
@@ -37,20 +37,19 @@ show_help() {
     echo "Opciones:"
     echo "  -h, --help          Mostrar esta ayuda"
     echo "  -d, --directory     Directorio de instalación (default: /usr/local/bin)"
-    echo "  -c, --config        Crear archivo de configuración"
-    echo "  -s, --service       Instalar como servicio systemd"
     echo ""
     echo "Ejemplos:"
-    echo "  $0                    # Instalación básica"
+    echo "  $0                    # Instalación estándar en /usr/local/bin"
     echo "  $0 -d ~/bin          # Instalar en directorio personal"
-    echo "  $0 -c                # Solo crear configuración"
-    echo "  $0 -s                # Instalar como servicio"
+    echo ""
+    echo "El script instalará:"
+    echo "  ✅ Ejecutable excel-processor"
+    echo "  ✅ Archivo de configuración .env"
+    echo "  ✅ Permisos de ejecución"
 }
 
 # Variables por defecto
 INSTALL_DIR="/usr/local/bin"
-CREATE_CONFIG=false
-INSTALL_SERVICE=false
 EXECUTABLE_NAME="excel-processor"
 
 # Procesar argumentos
@@ -63,14 +62,6 @@ while [[ $# -gt 0 ]]; do
         -d|--directory)
             INSTALL_DIR="$2"
             shift 2
-            ;;
-        -c|--config)
-            CREATE_CONFIG=true
-            shift
-            ;;
-        -s|--service)
-            INSTALL_SERVICE=true
-            shift
             ;;
         *)
             print_error "Opción desconocida: $1"
@@ -101,21 +92,27 @@ sudo chmod +x "$INSTALL_DIR/$EXECUTABLE_NAME"
 
 print_success "Ejecutable instalado en $INSTALL_DIR/$EXECUTABLE_NAME"
 
-# Crear archivo de configuración si se solicita
-if [ "$CREATE_CONFIG" = true ]; then
-    print_info "Creando archivo de configuración..."
-    
-    CONFIG_FILE="$INSTALL_DIR/.env"
-    
-    # Usar sudo si el directorio requiere permisos de administrador
-    if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
-        sudo tee "$CONFIG_FILE" > /dev/null << EOF
+# Crear archivo de configuración (siempre necesario)
+print_info "Creando archivo de configuración..."
+CONFIG_FILE="$INSTALL_DIR/.env"
+
+# Usar sudo si el directorio requiere permisos de administrador
+if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+    sudo tee "$CONFIG_FILE" > /dev/null << EOF
 # Configuración de Base de Datos
 DB_HOST=localhost
 DB_PORT=3306
 DB_USERNAME=root
 DB_PASSWORD=password
 DB_DATABASE=excel_data
+
+# Configuración de Retry y Pool de Conexiones
+DB_RETRY_MAX_ATTEMPTS=5
+DB_RETRY_INITIAL_DELAY=1000
+DB_RETRY_MAX_DELAY=30000
+DB_RETRY_BACKOFF_MULTIPLIER=2
+DB_CONNECTION_LIMIT=10
+DB_CONNECT_TIMEOUT_MS=30000
 
 # Configuración del Directorio de Archivos
 EXCEL_DIRECTORY=./excel-files
@@ -135,14 +132,22 @@ LOG_RETENTION_DAYS=30
 BATCH_SIZE=100
 PROCESSING_INTERVAL=30000
 EOF
-    else
-        cat > "$CONFIG_FILE" << EOF
+else
+    cat > "$CONFIG_FILE" << EOF
 # Configuración de Base de Datos
 DB_HOST=localhost
 DB_PORT=3306
 DB_USERNAME=root
 DB_PASSWORD=password
 DB_DATABASE=excel_data
+
+# Configuración de Retry y Pool de Conexiones
+DB_RETRY_MAX_ATTEMPTS=5
+DB_RETRY_INITIAL_DELAY=1000
+DB_RETRY_MAX_DELAY=30000
+DB_RETRY_BACKOFF_MULTIPLIER=2
+DB_CONNECTION_LIMIT=10
+DB_CONNECT_TIMEOUT_MS=30000
 
 # Configuración del Directorio de Archivos
 EXCEL_DIRECTORY=./excel-files
@@ -162,60 +167,36 @@ LOG_RETENTION_DAYS=30
 BATCH_SIZE=100
 PROCESSING_INTERVAL=30000
 EOF
-    fi
-
-    print_success "Archivo de configuración creado en $CONFIG_FILE"
-    print_warning "⚠️  Recuerda editar las variables de entorno según tu configuración"
 fi
 
-# Instalar como servicio systemd si se solicita
-if [ "$INSTALL_SERVICE" = true ]; then
-    print_info "Instalando como servicio systemd..."
-    
-    SERVICE_FILE="/etc/systemd/system/excel-processor.service"
-    
-    cat > "$SERVICE_FILE" << EOF
-[Unit]
-Description=Excel Processor Service
-After=network.target mysql.service
-Wants=mysql.service
+print_success "Archivo de configuración creado en $CONFIG_FILE"
 
-[Service]
-Type=simple
-User=$USER
-WorkingDirectory=$INSTALL_DIR
-EnvironmentFile=$INSTALL_DIR/.env
-ExecStart=$INSTALL_DIR/$EXECUTABLE_NAME
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-    # Recargar systemd y habilitar servicio
-    sudo systemctl daemon-reload
-    sudo systemctl enable excel-processor.service
-    
-    print_success "Servicio instalado y habilitado"
-    print_info "Comandos útiles:"
-    echo "  sudo systemctl start excel-processor    # Iniciar servicio"
-    echo "  sudo systemctl stop excel-processor     # Detener servicio"
-    echo "  sudo systemctl status excel-processor   # Ver estado"
-    echo "  sudo journalctl -u excel-processor -f   # Ver logs en tiempo real"
-fi
+# Mostrar información de configuración
+print_warning "⚠️  IMPORTANTE: Edita el archivo de configuración antes de usar:"
+echo "  sudo nano $CONFIG_FILE"
+echo ""
 
 print_success "🎉 Instalación completada exitosamente!"
-print_info "Para usar el ejecutable:"
+echo ""
+print_info "📋 Próximos pasos:"
+echo "  1. Editar configuración: sudo nano $CONFIG_FILE"
+echo "  2. Configurar base de datos MySQL"
+echo "  3. Crear directorios de trabajo"
+echo ""
+print_info "🚀 Comandos útiles:"
 echo "  $EXECUTABLE_NAME                    # Ejecutar directamente"
 echo "  $EXECUTABLE_NAME --help             # Ver ayuda"
 echo "  $EXECUTABLE_NAME --version          # Ver versión"
 echo "  $EXECUTABLE_NAME --config           # Ver configuración"
-echo "  $EXECUTABLE_NAME --watch            # Modo monitoreo continuo"
-
-if [ "$INSTALL_SERVICE" = true ]; then
-    print_info "Para iniciar el servicio:"
-    echo "  sudo systemctl start excel-processor"
-fi
+echo "  $EXECUTABLE_NAME --dry-run          # Ejecutar sin procesar (solo validar)"
+echo ""
+print_info "⏰ Para programar ejecución automática:"
+echo "  # Ejecutar cada 24 horas a las 2:00 AM"
+echo "  crontab -e"
+echo "  # Agregar: 0 2 * * * $EXECUTABLE_NAME"
+echo ""
+print_info "📁 Directorios que se crearán automáticamente:"
+echo "  ./excel-files/      # Archivos Excel a procesar"
+echo "  ./processed-files/  # Archivos procesados exitosamente"
+echo "  ./error-files/      # Archivos que generaron errores"
+echo "  ./logs/             # Archivos de logs"

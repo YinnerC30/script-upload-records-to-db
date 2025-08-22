@@ -75,7 +75,7 @@ npm run build:all
 # Ejecutar directamente
 ./bin/script-upload-records-to-db
 
-# Instalar globalmente
+# Instalar globalmente (incluye configuración automática)
 ./install.sh
 
 # Ver demostración
@@ -129,6 +129,35 @@ El script permite modificar la configuración del archivo `.env` directamente de
 - `--log-file`, `--log-console`, `--log-performance`
 
 📖 Ver [documentación completa de configuración](docs/CONFIGURACION_AMBIENTE.md)
+
+### ⏰ Programación Automática
+
+Para ejecutar el programa automáticamente en horarios específicos:
+
+```bash
+# Usar el script de programación (recomendado)
+./setup-scheduler.sh
+
+# Opciones disponibles:
+./setup-scheduler.sh -d          # Ejecutar diariamente a las 2:00 AM
+./setup-scheduler.sh -w          # Ejecutar semanalmente los domingos
+./setup-scheduler.sh -c          # Configurar programación personalizada
+./setup-scheduler.sh -r          # Remover programación existente
+./setup-scheduler.sh -s          # Ver programación actual
+```
+
+**Ejemplos de programación personalizada:**
+
+```bash
+# Ejecutar cada 6 horas
+0 */6 * * * excel-processor
+
+# Ejecutar solo días laborables a las 9:00 AM
+0 9 * * 1-5 excel-processor
+
+# Ejecutar los fines de semana a las 3:00 PM
+0 15 * * 6,0 excel-processor
+```
 
 ### Ejecución
 
