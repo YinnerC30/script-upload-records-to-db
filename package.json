@@ -48,7 +48,8 @@
     "test:excel": "node scripts/create-test-excel.js",
     "test:excel:large": "node scripts/create-large-test-excel.js",
     "demo": "node scripts/demo-progress.js",
-    "test:retry": "npm run build && node scripts/test-database-retry.js"
+    "test:retry": "npm run build && node scripts/test-database-retry.js",
+    "test:env-config": "npm run build && node scripts/test-env-config.js"
   },
   "keywords": [
     "excel",

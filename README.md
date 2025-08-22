@@ -89,6 +89,47 @@ npm run build:all
 - ✅ Más rápido y portable
 - ✅ Fácil de distribuir
 
+### 🔧 Configuración del Archivo .env
+
+El script permite modificar la configuración del archivo `.env` directamente desde la línea de comandos:
+
+```bash
+# Mostrar ayuda de configuración
+./bin/script-upload-records-to-db --help
+
+# Ver configuración actual
+./bin/script-upload-records-to-db --config
+
+# Cambiar configuración de base de datos
+./bin/script-upload-records-to-db --db-host 192.168.1.100 --db-port 3307
+
+# Cambiar directorios
+./bin/script-upload-records-to-db --excel-dir ./my-excel-files --processed-dir ./my-processed-files
+
+# Cambiar configuración de procesamiento
+./bin/script-upload-records-to-db --batch-size 200 --log-level debug
+
+# Configuración completa
+./bin/script-upload-records-to-db \
+  --db-host 192.168.1.100 \
+  --db-port 3307 \
+  --db-username admin \
+  --db-password secret123 \
+  --db-database production_data \
+  --excel-dir ./production/excel \
+  --batch-size 1000 \
+  --log-level info
+```
+
+**Opciones disponibles:**
+
+- `--db-host`, `--db-port`, `--db-username`, `--db-password`, `--db-database`
+- `--excel-dir`, `--processed-dir`, `--error-dir`
+- `--batch-size`, `--log-level`
+- `--log-file`, `--log-console`, `--log-performance`
+
+📖 Ver [documentación completa de configuración](docs/CONFIGURACION_AMBIENTE.md)
+
 ### Ejecución
 
 Para procesar archivos Excel:
@@ -111,6 +152,7 @@ npm run dev            # Ejecutar en modo desarrollo
 npm run start          # Ejecutar en modo producción
 npm run test           # Ejecutar pruebas
 npm run test:watch     # Ejecutar pruebas en modo watch
+npm run test:env-config # Probar configuración del archivo .env
 ```
 
 ## 📁 Estructura del Proyecto

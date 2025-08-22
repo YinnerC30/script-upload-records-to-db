@@ -1,11 +1,12 @@
 import 'reflect-metadata';
-import { initializeDatabase, closeDatabaseConnection } from './config/database';
-import { ExcelProcessor } from './services/ExcelProcessor';
 import {
   config,
-  validateConfig,
   createRequiredDirectories,
+  updateEnvFile,
+  validateConfig,
 } from './config/config';
+import { closeDatabaseConnection, initializeDatabase } from './config/database';
+import { ExcelProcessor } from './services/ExcelProcessor';
 import logger from './utils/logger';
 
 // Función para mostrar ayuda
@@ -15,21 +16,45 @@ function showHelp() {
 
 Uso: excel-processor [OPCIONES]
 
-Opciones:
-  -h, --help          Mostrar esta ayuda
-  -v, --version       Mostrar versión
-  -c, --config        Mostrar configuración actual
-  -d, --dry-run       Ejecutar sin procesar archivos (solo validar)
+Opciones generales:
+  -h, --help                    Mostrar esta ayuda
+  -v, --version                 Mostrar versión
+  -c, --config                  Mostrar configuración actual
+  -d, --dry-run                 Ejecutar sin procesar archivos (solo validar)
+
+Opciones de configuración de base de datos:
+  --db-host <host>              Configurar host de base de datos
+  --db-port <port>              Configurar puerto de base de datos
+  --db-username <username>      Configurar usuario de base de datos
+  --db-password <password>      Configurar contraseña de base de datos
+  --db-database <database>      Configurar nombre de base de datos
+
+Opciones de configuración de directorios:
+  --excel-dir <path>            Configurar directorio de archivos Excel
+  --processed-dir <path>        Configurar directorio de archivos procesados
+  --error-dir <path>            Configurar directorio de archivos con errores
+
+Opciones de configuración de procesamiento:
+  --batch-size <number>         Configurar tamaño de lote para procesamiento
+  --log-level <level>           Configurar nivel de logs (debug, info, warn, error)
+
+Opciones de configuración de logs:
+  --log-file <path>             Configurar archivo de logs
+  --log-console <true|false>    Habilitar/deshabilitar logs en consola
+  --log-performance <true|false> Habilitar/deshabilitar logs de rendimiento
 
 Ejemplos:
-  excel-processor                    # Procesamiento normal
-  excel-processor --help             # Mostrar ayuda
-  excel-processor --config           # Ver configuración
-  excel-processor --dry-run          # Solo validar archivos
+  excel-processor                                    # Procesamiento normal
+  excel-processor --help                             # Mostrar ayuda
+  excel-processor --config                           # Ver configuración
+  excel-processor --dry-run                          # Solo validar archivos
+  excel-processor --db-host 192.168.1.100            # Cambiar host de BD
+  excel-processor --db-port 3307                     # Cambiar puerto de BD
+  excel-processor --excel-dir ./my-excel-files       # Cambiar directorio Excel
+  excel-processor --batch-size 200                   # Cambiar tamaño de lote
+  excel-processor --log-level debug                  # Cambiar nivel de logs
 
-Configuración:
-  El programa usa variables de entorno o archivo .env
-  Ver README.md para más detalles sobre configuración
+Nota: Las opciones de configuración modifican el archivo .env permanentemente
 `);
 }
 
@@ -57,8 +82,11 @@ let isDryRun = false;
 // Función para procesar argumentos
 async function parseArguments() {
   const args = process.argv.slice(2);
+  const envUpdates: Record<string, string> = {};
 
-  for (const arg of args) {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
     switch (arg) {
       case '-h':
       case '--help':
@@ -84,10 +112,230 @@ async function parseArguments() {
         isDryRun = true;
         break;
 
+      // Opciones de base de datos
+      case '--db-host':
+        if (i + 1 < args.length) {
+          const value = args[++i];
+          if (value) {
+            envUpdates['DB_HOST'] = value;
+          } else {
+            console.error('❌ Error: --db-host requiere un valor');
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Error: --db-host requiere un valor');
+          process.exit(1);
+        }
+        break;
+
+      case '--db-port':
+        if (i + 1 < args.length) {
+          const port = args[++i];
+          if (port && /^\d+$/.test(port)) {
+            envUpdates['DB_PORT'] = port;
+          } else {
+            console.error('❌ Error: --db-port debe ser un número válido');
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Error: --db-port requiere un valor');
+          process.exit(1);
+        }
+        break;
+
+      case '--db-username':
+        if (i + 1 < args.length) {
+          const value = args[++i];
+          if (value) {
+            envUpdates['DB_USERNAME'] = value;
+          } else {
+            console.error('❌ Error: --db-username requiere un valor');
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Error: --db-username requiere un valor');
+          process.exit(1);
+        }
+        break;
+
+      case '--db-password':
+        if (i + 1 < args.length) {
+          const value = args[++i];
+          if (value) {
+            envUpdates['DB_PASSWORD'] = value;
+          } else {
+            console.error('❌ Error: --db-password requiere un valor');
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Error: --db-password requiere un valor');
+          process.exit(1);
+        }
+        break;
+
+      case '--db-database':
+        if (i + 1 < args.length) {
+          const value = args[++i];
+          if (value) {
+            envUpdates['DB_DATABASE'] = value;
+          } else {
+            console.error('❌ Error: --db-database requiere un valor');
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Error: --db-database requiere un valor');
+          process.exit(1);
+        }
+        break;
+
+      // Opciones de directorios
+      case '--excel-dir':
+        if (i + 1 < args.length) {
+          const value = args[++i];
+          if (value) {
+            envUpdates['EXCEL_DIRECTORY'] = value;
+          } else {
+            console.error('❌ Error: --excel-dir requiere un valor');
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Error: --excel-dir requiere un valor');
+          process.exit(1);
+        }
+        break;
+
+      case '--processed-dir':
+        if (i + 1 < args.length) {
+          const value = args[++i];
+          if (value) {
+            envUpdates['PROCESSED_DIRECTORY'] = value;
+          } else {
+            console.error('❌ Error: --processed-dir requiere un valor');
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Error: --processed-dir requiere un valor');
+          process.exit(1);
+        }
+        break;
+
+      case '--error-dir':
+        if (i + 1 < args.length) {
+          const value = args[++i];
+          if (value) {
+            envUpdates['ERROR_DIRECTORY'] = value;
+          } else {
+            console.error('❌ Error: --error-dir requiere un valor');
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Error: --error-dir requiere un valor');
+          process.exit(1);
+        }
+        break;
+
+      // Opciones de procesamiento
+      case '--batch-size':
+        if (i + 1 < args.length) {
+          const batchSize = args[++i];
+          if (batchSize && /^\d+$/.test(batchSize)) {
+            envUpdates['BATCH_SIZE'] = batchSize;
+          } else {
+            console.error('❌ Error: --batch-size debe ser un número válido');
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Error: --batch-size requiere un valor');
+          process.exit(1);
+        }
+        break;
+
+      // Opciones de logs
+      case '--log-level':
+        if (i + 1 < args.length) {
+          const level = args[++i];
+          if (level && ['debug', 'info', 'warn', 'error'].includes(level)) {
+            envUpdates['LOG_LEVEL'] = level;
+          } else {
+            console.error(
+              '❌ Error: --log-level debe ser debug, info, warn o error'
+            );
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Error: --log-level requiere un valor');
+          process.exit(1);
+        }
+        break;
+
+      case '--log-file':
+        if (i + 1 < args.length) {
+          const value = args[++i];
+          if (value) {
+            envUpdates['LOG_FILE'] = value;
+          } else {
+            console.error('❌ Error: --log-file requiere un valor');
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Error: --log-file requiere un valor');
+          process.exit(1);
+        }
+        break;
+
+      case '--log-console':
+        if (i + 1 < args.length) {
+          const value = args[++i];
+          if (value && ['true', 'false'].includes(value)) {
+            envUpdates['LOG_ENABLE_CONSOLE'] = value;
+          } else {
+            console.error('❌ Error: --log-console debe ser true o false');
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Error: --log-console requiere un valor');
+          process.exit(1);
+        }
+        break;
+
+      case '--log-performance':
+        if (i + 1 < args.length) {
+          const value = args[++i];
+          if (value && ['true', 'false'].includes(value)) {
+            envUpdates['LOG_ENABLE_PERFORMANCE'] = value;
+          } else {
+            console.error('❌ Error: --log-performance debe ser true o false');
+            process.exit(1);
+          }
+        } else {
+          console.error('❌ Error: --log-performance requiere un valor');
+          process.exit(1);
+        }
+        break;
+
       default:
         console.error(`❌ Opción desconocida: ${arg}`);
         console.log('Usa --help para ver las opciones disponibles');
         process.exit(1);
+    }
+  }
+
+  // Si hay actualizaciones de configuración, aplicarlas
+  if (Object.keys(envUpdates).length > 0) {
+    try {
+      await updateEnvFile(envUpdates);
+      console.log('✅ Configuración actualizada exitosamente');
+
+      // Si solo se actualizó la configuración, salir
+      if (!isDryRun) {
+        console.log(
+          '💡 Ejecuta el comando nuevamente sin opciones para procesar archivos'
+        );
+        process.exit(0);
+      }
+    } catch (error) {
+      console.error('❌ Error al actualizar configuración:', error);
+      process.exit(1);
     }
   }
 }
