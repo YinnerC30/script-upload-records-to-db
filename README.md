@@ -207,20 +207,60 @@ El script crea automáticamente los siguientes directorios:
 - `error-files/`: Archivos que generaron errores
 - `logs/`: Archivos de logs
 
-## 📝 Logs
+## 📝 Logs Mejorados
 
-El sistema genera logs detallados en:
+El sistema genera logs estructurados y detallados con las siguientes características:
 
-- `logs/app.log`: Logs generales
-- `logs/app.error.log`: Solo errores
-- Consola: En modo desarrollo
+### Archivos de Log
+
+- `logs/app.log`: Logs generales con toda la información
+- `logs/app.error.log`: Solo errores para monitoreo rápido
+- `logs/app.performance.log`: Métricas de rendimiento detalladas
+- `logs/report.md`: Reporte automático de análisis
+- `logs/report.json`: Datos estructurados para análisis
+
+### Características del Logging
+
+- **Categorías**: Cada componente tiene su propia categoría
+- **Sesiones Únicas**: Rastreo de procesos individuales
+- **Métricas de Rendimiento**: Tiempos de operación automáticos
+- **Formato Estructurado**: JSON para análisis automatizado
+- **Rotación Automática**: Gestión de archivos de log
 
 ### Niveles de Log
 
 - `error`: Errores críticos
 - `warn`: Advertencias
 - `info`: Información general
-- `debug`: Información detallada
+- `verbose`: Información detallada (métricas)
+- `debug`: Información de depuración
+
+### Comandos de Análisis
+
+```bash
+npm run logs:analyze    # Genera reporte completo
+npm run logs:report     # Genera reporte y muestra resumen
+npm run logs:clean      # Limpia logs antiguos (>30 días)
+npm run logs:test       # Prueba el sistema de logging
+```
+
+### Ejemplo de Log Mejorado
+
+```json
+{
+  "timestamp": "2025-08-22 08:38:31",
+  "level": "info",
+  "category": "ExcelProcessor",
+  "sessionId": "session_1755869911295_dma0shv4i",
+  "operation": "read_excel_file",
+  "duration": 151,
+  "message": "Performance: read_excel_file",
+  "fileName": "test-file.xlsx",
+  "recordsCount": 1000
+}
+```
+
+📖 **Documentación completa**: [docs/LOGGING_IMPROVEMENTS.md](docs/LOGGING_IMPROVEMENTS.md)
 
 ## 🧪 Pruebas
 

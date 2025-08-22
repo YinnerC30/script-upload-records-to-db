@@ -20,7 +20,11 @@
     "db:restart": "docker compose restart mysql",
     "db:logs": "docker compose logs mysql",
     "db:clean": "docker compose down -v && docker volume rm script-upload-records-to-db_mysql_data",
-    "db:status": "docker compose ps mysql"
+    "db:status": "docker compose ps mysql",
+    "logs:analyze": "ts-node scripts/log-analyzer.ts",
+    "logs:clean": "find ./logs -name '*.log' -mtime +30 -delete",
+    "logs:report": "npm run logs:analyze && echo 'Reporte generado en ./logs/report.md'",
+    "logs:test": "npm run build && node scripts/test-improved-logging.js"
   },
   "keywords": [
     "excel",

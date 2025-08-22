@@ -3,8 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { AppDataSource } from '../config/database';
 import { Licitacion } from '../entities/Licitacion';
-
-import logger from '../utils/logger';
+import logger, { StructuredLogger } from '../utils/logger';
 
 export interface ExcelRow {
   idLicitacion?: string;
@@ -46,6 +45,7 @@ export class ExcelProcessor {
   private readonly processedDirectory: string;
   private readonly errorDirectory: string;
   private readonly batchSize: number;
+  private logger: StructuredLogger;
 
   constructor() {
     this.excelDirectory = process.env.EXCEL_DIRECTORY || './excel-files';
@@ -53,17 +53,13 @@ export class ExcelProcessor {
       process.env.PROCESSED_DIRECTORY || './processed-files';
     this.errorDirectory = process.env.ERROR_DIRECTORY || './error-files';
     this.batchSize = parseInt(process.env.BATCH_SIZE || '100');
+    this.logger = new StructuredLogger('ExcelProcessor');
 
     // Crear directorios si no existen
-    this.ensureDirectories();
-  }
-
-  private ensureDirectories(): void {
     [this.excelDirectory, this.processedDirectory, this.errorDirectory].forEach(
       (dir) => {
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true });
-          logger.info(`Directorio creado: ${dir}`);
         }
       }
     );
@@ -105,15 +101,28 @@ export class ExcelProcessor {
   }
 
   /**
-   * Lee y procesa un archivo Excel
+   * Procesa un archivo Excel específico
    */
   public async processExcelFile(filePath: string): Promise<void> {
     const fileName = path.basename(filePath);
-    logger.info(`Iniciando procesamiento del archivo: ${fileName}`);
+    const startTime = Date.now();
+
+    this.logger.info('Iniciando procesamiento del archivo', {
+      fileName,
+      filePath,
+      fileSize: fs.statSync(filePath).size,
+    });
 
     try {
       // Leer archivo Excel
+      const readStartTime = Date.now();
       const data = await this.readExcelFile(filePath);
+      const readTime = Date.now() - readStartTime;
+
+      this.logger.performance('read_excel_file', readTime, {
+        fileName,
+        recordsCount: data.length,
+      });
 
       if (!data || data.length === 0) {
         throw new Error(
@@ -122,22 +131,63 @@ export class ExcelProcessor {
       }
 
       // Validar datos
+      const validationStartTime = Date.now();
       const isValid = await this.validateData(data);
+      const validationTime = Date.now() - validationStartTime;
+
+      this.logger.performance('validate_data', validationTime, {
+        fileName,
+        recordsCount: data.length,
+      });
+
       if (!isValid) {
         throw new Error('Los datos del archivo Excel no son válidos');
       }
 
       // Guardar en base de datos
+      const saveStartTime = Date.now();
       await this.saveToDatabase(data, fileName);
+      const saveTime = Date.now() - saveStartTime;
+
+      this.logger.performance('save_to_database', saveTime, {
+        fileName,
+        recordsCount: data.length,
+        batchSize: this.batchSize,
+      });
 
       // Mover archivo a directorio procesado
+      const moveStartTime = Date.now();
       await this.moveToProcessed(filePath, fileName);
+      const moveTime = Date.now() - moveStartTime;
 
-      logger.info(
-        `Archivo ${fileName} procesado exitosamente. ${data.length} registros insertados.`
-      );
+      this.logger.performance('move_file', moveTime, {
+        fileName,
+        destination: this.processedDirectory,
+      });
+
+      const totalTime = Date.now() - startTime;
+      this.logger.info('Archivo procesado exitosamente', {
+        fileName,
+        recordsCount: data.length,
+        totalTime,
+        totalTimeMs: totalTime,
+        sessionId: this.logger.getSessionId(),
+      });
+
+      // Logging de métricas
+      this.logger.metrics('records_processed', data.length, 'records', {
+        fileName,
+        processingTime: totalTime,
+      });
     } catch (error) {
-      logger.error(`Error procesando archivo ${fileName}:`, error);
+      const totalTime = Date.now() - startTime;
+      this.logger.error('Error procesando archivo', error, {
+        fileName,
+        totalTime,
+        totalTimeMs: totalTime,
+        sessionId: this.logger.getSessionId(),
+      });
+
       await this.moveToError(filePath, fileName);
       throw error;
     }
@@ -269,35 +319,87 @@ export class ExcelProcessor {
   }
 
   /**
-   * Guarda los datos en la base de datos
+   * Guarda los datos en la base de datos por lotes
    */
   private async saveToDatabase(
     data: ExcelRow[],
     fileName: string
   ): Promise<void> {
-    const licitacionRepository = AppDataSource.getRepository(Licitacion);
+    const startTime = Date.now();
+    let totalInserted = 0;
+    let batchCount = 0;
+
+    this.logger.info('Iniciando inserción en base de datos', {
+      fileName,
+      totalRecords: data.length,
+      batchSize: this.batchSize,
+    });
 
     try {
-      // Procesar registros en lotes
       for (let i = 0; i < data.length; i += this.batchSize) {
+        const batchStartTime = Date.now();
         const batch = data.slice(i, i + this.batchSize);
-        const licitaciones = batch.map((row) =>
-          this.mapToLicitacion(row, fileName)
-        );
+        const startIndex = i + 1;
+        const endIndex = Math.min(i + this.batchSize, data.length);
 
-        await licitacionRepository.save(licitaciones);
+        batchCount++;
 
-        logger.info(
-          `Lote procesado: ${i + 1} a ${Math.min(
-            i + this.batchSize,
-            data.length
-          )} de ${data.length}`
-        );
+        // Procesar lote
+        await this.processBatch(batch, fileName);
+
+        const batchTime = Date.now() - batchStartTime;
+        totalInserted += batch.length;
+
+        // Log cada 10 lotes o en el último lote
+        if (batchCount % 10 === 0 || endIndex === data.length) {
+          this.logger.verbose('Progreso de inserción', {
+            fileName,
+            batchNumber: batchCount,
+            recordsProcessed: totalInserted,
+            totalRecords: data.length,
+            progress: `${((totalInserted / data.length) * 100).toFixed(1)}%`,
+            batchTime,
+            averageTimePerRecord: batchTime / batch.length,
+          });
+        }
       }
+
+      const totalTime = Date.now() - startTime;
+      this.logger.info('Inserción en base de datos completada', {
+        fileName,
+        totalRecords: data.length,
+        totalInserted,
+        totalTime,
+        totalTimeMs: totalTime,
+        averageTimePerRecord: totalTime / data.length,
+        batchesProcessed: batchCount,
+      });
     } catch (error) {
-      logger.error('Error guardando en base de datos:', error);
+      const totalTime = Date.now() - startTime;
+      this.logger.error('Error en inserción de base de datos', error, {
+        fileName,
+        totalRecords: data.length,
+        totalInserted,
+        totalTime,
+        totalTimeMs: totalTime,
+        batchesProcessed: batchCount,
+      });
       throw error;
     }
+  }
+
+  /**
+   * Procesa un lote de registros
+   */
+  private async processBatch(
+    batch: ExcelRow[],
+    fileName: string
+  ): Promise<void> {
+    const licitacionRepository = AppDataSource.getRepository(Licitacion);
+    const licitaciones = batch.map((row) =>
+      this.mapToLicitacion(row, fileName)
+    );
+    await licitacionRepository.save(licitaciones);
   }
 
   /**
@@ -374,16 +476,44 @@ export class ExcelProcessor {
    * Ejecuta el procesamiento completo
    */
   public async run(): Promise<void> {
-    logger.info('🚀 Iniciando procesamiento de archivos Excel...');
+    const startTime = Date.now();
+    this.logger.info('🚀 Iniciando procesamiento de archivos Excel...', {
+      excelDirectory: this.excelDirectory,
+      batchSize: this.batchSize,
+    });
 
-    const latestFile = this.findLatestExcelFile();
+    try {
+      const latestFile = this.findLatestExcelFile();
 
-    if (!latestFile) {
-      logger.info('No hay archivos Excel para procesar');
-      return;
+      if (!latestFile) {
+        this.logger.warn('No se encontraron archivos Excel para procesar', {
+          directory: this.excelDirectory,
+        });
+        return;
+      }
+
+      this.logger.info('Archivo más reciente encontrado', {
+        fileName: path.basename(latestFile),
+        filePath: latestFile,
+        fileSize: fs.statSync(latestFile).size,
+      });
+
+      await this.processExcelFile(latestFile);
+
+      const totalTime = Date.now() - startTime;
+      this.logger.info('✅ Procesamiento completado exitosamente', {
+        totalTime,
+        totalTimeMs: totalTime,
+        sessionId: this.logger.getSessionId(),
+      });
+    } catch (error) {
+      const totalTime = Date.now() - startTime;
+      this.logger.error('❌ Error en el procesamiento', error, {
+        totalTime,
+        totalTimeMs: totalTime,
+        sessionId: this.logger.getSessionId(),
+      });
+      throw error;
     }
-
-    await this.processExcelFile(latestFile);
-    logger.info('✅ Procesamiento completado exitosamente');
   }
 }
