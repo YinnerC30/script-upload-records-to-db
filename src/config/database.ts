@@ -13,7 +13,8 @@ export const AppDataSource = new DataSource({
   password: process.env.DB_PASSWORD || 'password',
   database: process.env.DB_DATABASE || 'excel_data',
   entities: [Licitacion, ExcelData],
-  synchronize: process.env.NODE_ENV !== 'production',
+  // synchronize: process.env.NODE_ENV !== 'production',
+  synchronize: true,
   logging: process.env.NODE_ENV === 'development',
   ssl: false,
 });
