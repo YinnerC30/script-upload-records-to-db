@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { AppDataSource } from '../config/database';
 import { Licitacion } from '../entities/Licitacion';
-import { ExcelData } from '../entities/ExcelData';
+
 import logger from '../utils/logger';
 
 export interface ExcelRow {
@@ -276,27 +276,8 @@ export class ExcelProcessor {
     fileName: string
   ): Promise<void> {
     const licitacionRepository = AppDataSource.getRepository(Licitacion);
-    const excelDataRepository = AppDataSource.getRepository(ExcelData);
 
     try {
-      // Guardar resumen de datos procesados en excel_data para respaldo
-      const excelData = new ExcelData();
-      excelData.fileName = fileName;
-      
-      // Crear un resumen en lugar de guardar todos los datos
-      const summary = {
-        totalRecords: data.length,
-        headers: Object.keys(data[0] || {}),
-        sampleRecord: data[0] || {},
-        processedAt: new Date().toISOString(),
-        mappingApplied: true
-      };
-      
-      excelData.data = JSON.stringify(summary);
-      excelData.processedAt = new Date();
-
-      await excelDataRepository.save(excelData);
-
       // Procesar registros en lotes
       for (let i = 0; i < data.length; i += this.batchSize) {
         const batch = data.slice(i, i + this.batchSize);

@@ -4,7 +4,21 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Mock de las dependencias
-vi.mock('fs');
+vi.mock('fs', () => ({
+  default: {
+    existsSync: vi.fn(() => true),
+    mkdirSync: vi.fn(),
+    readdirSync: vi.fn(() => []),
+    statSync: vi.fn(() => ({ mtime: new Date() })),
+    renameSync: vi.fn(),
+  },
+  existsSync: vi.fn(() => true),
+  mkdirSync: vi.fn(),
+  readdirSync: vi.fn(() => []),
+  statSync: vi.fn(() => ({ mtime: new Date() })),
+  renameSync: vi.fn(),
+}));
+
 vi.mock('path');
 vi.mock('../../config/database', () => ({
   AppDataSource: {
@@ -14,19 +28,11 @@ vi.mock('../../config/database', () => ({
   },
 }));
 
-vi.mock('fs', () => ({
-  existsSync: vi.fn(() => true),
-  mkdirSync: vi.fn(),
-  readdirSync: vi.fn(() => []),
-  statSync: vi.fn(() => ({ mtime: new Date() })),
-  renameSync: vi.fn()
-}));
-
 vi.mock('xlsx', () => ({
   readFile: vi.fn(),
   utils: {
-    sheet_to_json: vi.fn()
-  }
+    sheet_to_json: vi.fn(),
+  },
 }));
 
 describe('ExcelProcessor', () => {
@@ -172,7 +178,7 @@ describe('ExcelProcessor - Mapeo de Encabezados', () => {
         { input: 'Moneda', expected: 'moneda' },
         { input: 'Estado', expected: 'estado' },
         { input: '  ID  ', expected: 'id' },
-        { input: 'Fecha   de   Publicación', expected: 'fecha de publicacion' }
+        { input: 'Fecha   de   Publicación', expected: 'fecha de publicacion' },
       ];
 
       testCases.forEach(({ input, expected }) => {
@@ -185,7 +191,7 @@ describe('ExcelProcessor - Mapeo de Encabezados', () => {
       const testCases = [
         { input: 'Publicación', expected: 'publicacion' },
         { input: 'Organismo', expected: 'organismo' },
-        { input: 'Unidad', expected: 'unidad' }
+        { input: 'Unidad', expected: 'unidad' },
       ];
 
       testCases.forEach(({ input, expected }) => {
@@ -199,16 +205,16 @@ describe('ExcelProcessor - Mapeo de Encabezados', () => {
     it('should map headers correctly', () => {
       const rawData = [
         {
-          'ID': 'LIC001',
-          'Nombre': 'Licitación Test',
+          ID: 'LIC001',
+          Nombre: 'Licitación Test',
           'Fecha de Publicación': '2024-01-01',
           'Fecha de cierre': '2024-02-01',
-          'Organismo': 'Ministerio Test',
-          'Unidad': 'Unidad Test',
+          Organismo: 'Ministerio Test',
+          Unidad: 'Unidad Test',
           'Monto Disponible': '1000000',
-          'Moneda': 'CLP',
-          'Estado': 'Activa'
-        }
+          Moneda: 'CLP',
+          Estado: 'Activa',
+        },
       ];
 
       const result = (processor as any).mapHeadersAndTransformData(rawData);
@@ -223,7 +229,7 @@ describe('ExcelProcessor - Mapeo de Encabezados', () => {
         unidad: 'Unidad Test',
         montoDisponible: '1000000',
         moneda: 'CLP',
-        estado: 'Activa'
+        estado: 'Activa',
       });
     });
 
@@ -235,11 +241,11 @@ describe('ExcelProcessor - Mapeo de Encabezados', () => {
     it('should handle unmapped headers', () => {
       const rawData = [
         {
-          'ID': 'LIC001',
-          'Nombre': 'Licitación Test',
+          ID: 'LIC001',
+          Nombre: 'Licitación Test',
           'Campo Desconocido': 'valor',
-          'Estado': 'Activa'
-        }
+          Estado: 'Activa',
+        },
       ];
 
       const result = (processor as any).mapHeadersAndTransformData(rawData);
@@ -248,7 +254,7 @@ describe('ExcelProcessor - Mapeo de Encabezados', () => {
       expect(result[0]).toEqual({
         idLicitacion: 'LIC001',
         nombre: 'Licitación Test',
-        estado: 'Activa'
+        estado: 'Activa',
       });
       // El campo 'Campo Desconocido' no debería estar en el resultado
       expect(result[0]['Campo Desconocido']).toBeUndefined();

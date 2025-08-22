@@ -109,8 +109,7 @@ script-upload-records-to-db/
 │   ├── config/
 │   │   └── database.ts          # Configuración de TypeORM
 │   ├── entities/
-│   │   ├── Licitacion.ts        # Entidad para licitaciones
-│   │   └── ExcelData.ts         # Entidad para respaldo de datos
+│   │   └── Licitacion.ts        # Entidad para licitaciones
 │   ├── services/
 │   │   ├── ExcelProcessor.ts    # Lógica principal de procesamiento
 │   │   └── WatcherService.ts    # Servicio de monitoreo continuo
@@ -146,19 +145,20 @@ El script espera archivos Excel con las siguientes columnas. **Importante**: El 
 
 El sistema mapea automáticamente los siguientes encabezados del Excel a los campos del sistema:
 
-| Encabezado del Excel | Campo del Sistema |
-| -------------------- | ----------------- |
-| `ID`                 | `idLicitacion`    |
-| `Nombre`             | `nombre`          |
+| Encabezado del Excel   | Campo del Sistema  |
+| ---------------------- | ------------------ |
+| `ID`                   | `idLicitacion`     |
+| `Nombre`               | `nombre`           |
 | `Fecha de Publicación` | `fechaPublicacion` |
-| `Fecha de cierre`    | `fechaCierre`     |
-| `Organismo`          | `organismo`       |
-| `Unidad`             | `unidad`          |
-| `Monto Disponible`   | `montoDisponible` |
-| `Moneda`             | `moneda`          |
-| `Estado`             | `estado`          |
+| `Fecha de cierre`      | `fechaCierre`      |
+| `Organismo`            | `organismo`        |
+| `Unidad`               | `unidad`           |
+| `Monto Disponible`     | `montoDisponible`  |
+| `Moneda`               | `moneda`           |
+| `Estado`               | `estado`           |
 
 **Características del mapeo:**
+
 - ✅ **Insensible a mayúsculas/minúsculas**
 - ✅ **Maneja acentos y caracteres especiales**
 - ✅ **Normaliza espacios múltiples**
@@ -168,11 +168,13 @@ El sistema mapea automáticamente los siguientes encabezados del Excel a los cam
 ### Ejemplo de Compatibilidad
 
 Tu archivo Excel puede tener encabezados como:
+
 ```
 ID | Nombre | Fecha de Publicación | Fecha de cierre | Organismo | Unidad | Monto Disponible | Moneda | Estado
 ```
 
 Y el sistema los mapeará automáticamente a:
+
 ```
 idLicitacion | nombre | fechaPublicacion | fechaCierre | organismo | unidad | montoDisponible | moneda | estado
 ```
@@ -243,6 +245,7 @@ node scripts/test-header-mapping.js
 ```
 
 Este script muestra:
+
 - 📋 Encabezados detectados en el archivo
 - ✅ Mapeo exitoso de cada encabezado
 - ⚠️ Encabezados no mapeados (si los hay)
@@ -286,11 +289,13 @@ Los logs incluyen información sobre:
 #### Encabezados No Mapeados
 
 Si ves en los logs mensajes como:
+
 ```
 ⚠️ Encabezado no mapeado: "Campo Desconocido"
 ```
 
 **Solución:**
+
 1. Verifica que los encabezados de tu Excel coincidan con los esperados
 2. Revisa el mapeo en `src/services/ExcelProcessor.ts`
 3. Agrega nuevos mapeos si es necesario
@@ -300,6 +305,7 @@ Si ves en los logs mensajes como:
 Si los datos no se insertan en la base de datos:
 
 **Verificar:**
+
 1. Que al menos el campo `idLicitacion` esté presente
 2. Que los encabezados se mapeen correctamente
 3. Revisar los logs para ver el mapeo realizado
@@ -316,9 +322,8 @@ Si los datos no se insertan en la base de datos:
 2. **Lectura**: Lee y parsea el archivo Excel
 3. **Validación**: Valida la estructura de datos
 4. **Inserción**: Inserta registros en la base de datos por lotes
-5. **Respaldo**: Guarda datos originales en tabla `excel_data`
-6. **Movimiento**: Mueve archivo a directorio procesado
-7. **Logging**: Registra todo el proceso
+5. **Movimiento**: Mueve archivo a directorio procesado
+6. **Logging**: Registra todo el proceso
 
 ## 📈 Rendimiento
 

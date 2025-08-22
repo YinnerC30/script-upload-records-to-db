@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Licitacion } from '../entities/Licitacion';
-import { ExcelData } from '../entities/ExcelData';
+
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -12,7 +12,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'root',
   password: process.env.DB_PASSWORD || 'password',
   database: process.env.DB_DATABASE || 'excel_data',
-  entities: [Licitacion, ExcelData],
+  entities: [Licitacion],
   // synchronize: process.env.NODE_ENV !== 'production',
   synchronize: true,
   logging: process.env.NODE_ENV === 'development',

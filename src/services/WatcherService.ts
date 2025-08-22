@@ -1,7 +1,6 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import { ExcelProcessor } from './ExcelProcessor';
 import logger from '../utils/logger';
+import { ExcelProcessor } from './ExcelProcessor';
 
 export class WatcherService {
   private readonly processor: ExcelProcessor;
