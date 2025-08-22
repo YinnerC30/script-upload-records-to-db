@@ -14,6 +14,21 @@ vi.mock('../../config/database', () => ({
   },
 }));
 
+vi.mock('fs', () => ({
+  existsSync: vi.fn(() => true),
+  mkdirSync: vi.fn(),
+  readdirSync: vi.fn(() => []),
+  statSync: vi.fn(() => ({ mtime: new Date() })),
+  renameSync: vi.fn()
+}));
+
+vi.mock('xlsx', () => ({
+  readFile: vi.fn(),
+  utils: {
+    sheet_to_json: vi.fn()
+  }
+}));
+
 describe('ExcelProcessor', () => {
   let processor: ExcelProcessor;
   const mockFs = vi.mocked(fs);
@@ -133,6 +148,110 @@ describe('ExcelProcessor', () => {
     it('should return 0 for invalid number', () => {
       const result = processor['parseNumber']('invalid');
       expect(result).toBe(0);
+    });
+  });
+});
+
+describe('ExcelProcessor - Mapeo de Encabezados', () => {
+  let processor: ExcelProcessor;
+
+  beforeEach(() => {
+    processor = new ExcelProcessor();
+  });
+
+  describe('normalizeHeader', () => {
+    it('should normalize headers correctly', () => {
+      const testCases = [
+        { input: 'ID', expected: 'id' },
+        { input: 'Nombre', expected: 'nombre' },
+        { input: 'Fecha de Publicación', expected: 'fecha de publicacion' },
+        { input: 'Fecha de cierre', expected: 'fecha de cierre' },
+        { input: 'Organismo', expected: 'organismo' },
+        { input: 'Unidad', expected: 'unidad' },
+        { input: 'Monto Disponible', expected: 'monto disponible' },
+        { input: 'Moneda', expected: 'moneda' },
+        { input: 'Estado', expected: 'estado' },
+        { input: '  ID  ', expected: 'id' },
+        { input: 'Fecha   de   Publicación', expected: 'fecha de publicacion' }
+      ];
+
+      testCases.forEach(({ input, expected }) => {
+        const result = (processor as any).normalizeHeader(input);
+        expect(result).toBe(expected);
+      });
+    });
+
+    it('should handle accented characters', () => {
+      const testCases = [
+        { input: 'Publicación', expected: 'publicacion' },
+        { input: 'Organismo', expected: 'organismo' },
+        { input: 'Unidad', expected: 'unidad' }
+      ];
+
+      testCases.forEach(({ input, expected }) => {
+        const result = (processor as any).normalizeHeader(input);
+        expect(result).toBe(expected);
+      });
+    });
+  });
+
+  describe('mapHeadersAndTransformData', () => {
+    it('should map headers correctly', () => {
+      const rawData = [
+        {
+          'ID': 'LIC001',
+          'Nombre': 'Licitación Test',
+          'Fecha de Publicación': '2024-01-01',
+          'Fecha de cierre': '2024-02-01',
+          'Organismo': 'Ministerio Test',
+          'Unidad': 'Unidad Test',
+          'Monto Disponible': '1000000',
+          'Moneda': 'CLP',
+          'Estado': 'Activa'
+        }
+      ];
+
+      const result = (processor as any).mapHeadersAndTransformData(rawData);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        idLicitacion: 'LIC001',
+        nombre: 'Licitación Test',
+        fechaPublicacion: '2024-01-01',
+        fechaCierre: '2024-02-01',
+        organismo: 'Ministerio Test',
+        unidad: 'Unidad Test',
+        montoDisponible: '1000000',
+        moneda: 'CLP',
+        estado: 'Activa'
+      });
+    });
+
+    it('should handle empty data', () => {
+      const result = (processor as any).mapHeadersAndTransformData([]);
+      expect(result).toEqual([]);
+    });
+
+    it('should handle unmapped headers', () => {
+      const rawData = [
+        {
+          'ID': 'LIC001',
+          'Nombre': 'Licitación Test',
+          'Campo Desconocido': 'valor',
+          'Estado': 'Activa'
+        }
+      ];
+
+      const result = (processor as any).mapHeadersAndTransformData(rawData);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        idLicitacion: 'LIC001',
+        nombre: 'Licitación Test',
+        estado: 'Activa'
+      });
+      // El campo 'Campo Desconocido' no debería estar en el resultado
+      expect(result[0]['Campo Desconocido']).toBeUndefined();
     });
   });
 });

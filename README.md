@@ -126,19 +126,56 @@ script-upload-records-to-db/
 
 ## 📊 Estructura de Datos Esperada
 
-El script espera archivos Excel con las siguientes columnas:
+El script espera archivos Excel con las siguientes columnas. **Importante**: El sistema incluye un mapeo automático de encabezados que permite compatibilidad con diferentes formatos de nombres de columnas.
 
-| Columna          | Tipo   | Descripción               | Requerido |
-| ---------------- | ------ | ------------------------- | --------- |
-| idLicitacion     | string | ID único de la licitación | ✅        |
-| nombre           | string | Nombre de la licitación   | ❌        |
-| fechaPublicacion | date   | Fecha de publicación      | ❌        |
-| fechaCierre      | date   | Fecha de cierre           | ❌        |
-| organismo        | string | Organismo que publica     | ❌        |
-| unidad           | string | Unidad del organismo      | ❌        |
-| montoDisponible  | number | Monto disponible          | ❌        |
-| moneda           | string | Moneda (CLP, USD, etc.)   | ❌        |
-| estado           | string | Estado de la licitación   | ❌        |
+### Campos Esperados por el Sistema
+
+| Campo del Sistema | Tipo   | Descripción               | Requerido |
+| ----------------- | ------ | ------------------------- | --------- |
+| idLicitacion      | string | ID único de la licitación | ✅        |
+| nombre            | string | Nombre de la licitación   | ❌        |
+| fechaPublicacion  | date   | Fecha de publicación      | ❌        |
+| fechaCierre       | date   | Fecha de cierre           | ❌        |
+| organismo         | string | Organismo que publica     | ❌        |
+| unidad            | string | Unidad del organismo      | ❌        |
+| montoDisponible   | number | Monto disponible          | ❌        |
+| moneda            | string | Moneda (CLP, USD, etc.)   | ❌        |
+| estado            | string | Estado de la licitación   | ❌        |
+
+### Mapeo Automático de Encabezados
+
+El sistema mapea automáticamente los siguientes encabezados del Excel a los campos del sistema:
+
+| Encabezado del Excel | Campo del Sistema |
+| -------------------- | ----------------- |
+| `ID`                 | `idLicitacion`    |
+| `Nombre`             | `nombre`          |
+| `Fecha de Publicación` | `fechaPublicacion` |
+| `Fecha de cierre`    | `fechaCierre`     |
+| `Organismo`          | `organismo`       |
+| `Unidad`             | `unidad`          |
+| `Monto Disponible`   | `montoDisponible` |
+| `Moneda`             | `moneda`          |
+| `Estado`             | `estado`          |
+
+**Características del mapeo:**
+- ✅ **Insensible a mayúsculas/minúsculas**
+- ✅ **Maneja acentos y caracteres especiales**
+- ✅ **Normaliza espacios múltiples**
+- ✅ **Soporta variaciones de nombres**
+- ✅ **Logs detallados de mapeo**
+
+### Ejemplo de Compatibilidad
+
+Tu archivo Excel puede tener encabezados como:
+```
+ID | Nombre | Fecha de Publicación | Fecha de cierre | Organismo | Unidad | Monto Disponible | Moneda | Estado
+```
+
+Y el sistema los mapeará automáticamente a:
+```
+idLicitacion | nombre | fechaPublicacion | fechaCierre | organismo | unidad | montoDisponible | moneda | estado
+```
 
 ## 🔧 Configuración
 
@@ -186,12 +223,30 @@ El sistema genera logs detallados en:
 ## 🧪 Pruebas
 
 ```bash
-# Ejecutar pruebas
+# Ejecutar todas las pruebas
 npm test
 
 # Ejecutar pruebas en modo watch
 npm run test:watch
+
+# Ejecutar pruebas específicas del mapeo de encabezados
+npm test -- --run src/services/__tests__/HeaderMapping.test.ts
 ```
+
+### Probar el Mapeo de Encabezados
+
+Para verificar que el mapeo de encabezados funciona correctamente:
+
+```bash
+# Ejecutar script de demostración
+node scripts/test-header-mapping.js
+```
+
+Este script muestra:
+- 📋 Encabezados detectados en el archivo
+- ✅ Mapeo exitoso de cada encabezado
+- ⚠️ Encabezados no mapeados (si los hay)
+- 📊 Datos transformados
 
 ## 🔍 Monitoreo
 
@@ -224,6 +279,30 @@ Los logs incluyen información sobre:
 3. **Datos inválidos**: Los datos no cumplen con la estructura esperada
 4. **Error de base de datos**: Problemas de conexión o inserción
 5. **Error de permisos**: Problemas de acceso a archivos
+6. **Encabezados no mapeados**: Columnas del Excel que no coinciden con el mapeo
+
+### Problemas Comunes con Encabezados
+
+#### Encabezados No Mapeados
+
+Si ves en los logs mensajes como:
+```
+⚠️ Encabezado no mapeado: "Campo Desconocido"
+```
+
+**Solución:**
+1. Verifica que los encabezados de tu Excel coincidan con los esperados
+2. Revisa el mapeo en `src/services/ExcelProcessor.ts`
+3. Agrega nuevos mapeos si es necesario
+
+#### Datos No Se Procesan
+
+Si los datos no se insertan en la base de datos:
+
+**Verificar:**
+1. Que al menos el campo `idLicitacion` esté presente
+2. Que los encabezados se mapeen correctamente
+3. Revisar los logs para ver el mapeo realizado
 
 ### Recuperación
 

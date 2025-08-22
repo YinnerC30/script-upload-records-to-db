@@ -19,6 +19,28 @@ export interface ExcelRow {
   [key: string]: any;
 }
 
+// Mapeo de encabezados del Excel a campos del código (normalizados)
+const HEADER_MAPPING: { [key: string]: string } = {
+  'id': 'idLicitacion',
+  'nombre': 'nombre',
+  'fecha de publicacion': 'fechaPublicacion',
+  'fecha de cierre': 'fechaCierre',
+  'organismo': 'organismo',
+  'unidad': 'unidad',
+  'monto disponible': 'montoDisponible',
+  'moneda': 'moneda',
+  'estado': 'estado',
+  // Variaciones adicionales para mayor compatibilidad
+  'id_licitacion': 'idLicitacion',
+  'idlicitacion': 'idLicitacion',
+  'fecha_publicacion': 'fechaPublicacion',
+  'fechapublicacion': 'fechaPublicacion',
+  'fecha_cierre': 'fechaCierre',
+  'fechacierre': 'fechaCierre',
+  'monto_disponible': 'montoDisponible',
+  'montodisponible': 'montoDisponible'
+};
+
 export class ExcelProcessor {
   private readonly excelDirectory: string;
   private readonly processedDirectory: string;
@@ -137,7 +159,10 @@ export class ExcelProcessor {
       }
 
       // Convertir a JSON
-      const data = XLSX.utils.sheet_to_json(worksheet) as ExcelRow[];
+      const rawData = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+      // Mapear encabezados y transformar datos
+      const data = this.mapHeadersAndTransformData(rawData);
 
       logger.info(`Leídos ${data.length} registros del archivo Excel`);
       return data;
@@ -145,6 +170,69 @@ export class ExcelProcessor {
       logger.error('Error leyendo archivo Excel:', error);
       throw error;
     }
+  }
+
+  /**
+   * Mapea los encabezados del Excel y transforma los datos
+   */
+  private mapHeadersAndTransformData(rawData: any[]): ExcelRow[] {
+    if (!rawData || rawData.length === 0) {
+      return [];
+    }
+
+    // Obtener el primer registro para identificar los encabezados
+    const firstRow = rawData[0];
+    const headers = Object.keys(firstRow);
+    
+    logger.info('Encabezados encontrados en el archivo:', headers);
+
+    // Crear mapeo de encabezados originales a campos normalizados
+    const headerMapping: { [key: string]: string } = {};
+    const unmappedHeaders: string[] = [];
+
+    headers.forEach(header => {
+      const normalizedHeader = this.normalizeHeader(header);
+      if (HEADER_MAPPING[normalizedHeader]) {
+        headerMapping[header] = HEADER_MAPPING[normalizedHeader];
+      } else {
+        unmappedHeaders.push(header);
+        logger.warn(`Encabezado no mapeado: "${header}"`);
+      }
+    });
+
+    if (unmappedHeaders.length > 0) {
+      logger.warn(`Encabezados no mapeados: ${unmappedHeaders.join(', ')}`);
+    }
+
+    // Transformar cada fila usando el mapeo
+    return rawData.map((row, index) => {
+      const transformedRow: ExcelRow = {};
+      
+      headers.forEach(originalHeader => {
+        const mappedField = headerMapping[originalHeader];
+        if (mappedField) {
+          transformedRow[mappedField] = row[originalHeader];
+        }
+      });
+
+      return transformedRow;
+    });
+  }
+
+  /**
+   * Normaliza un encabezado para facilitar el mapeo
+   */
+  private normalizeHeader(header: string): string {
+    return header
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ') // Normalizar espacios múltiples
+      .replace(/[áéíóúüñ]/g, (match) => {
+        const accents: { [key: string]: string } = {
+          'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n'
+        };
+        return accents[match] || match;
+      });
   }
 
   /**
