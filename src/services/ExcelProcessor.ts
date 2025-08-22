@@ -395,6 +395,11 @@ export class ExcelProcessor {
     console.log(`   📦 Tamaño de lote: ${this.batchSize}`);
     console.log(`   ⏱️  Inicio: ${new Date().toLocaleTimeString()}\n`);
 
+    // Iniciar transacción global
+    const queryRunner = AppDataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
       for (let i = 0; i < data.length; i += this.batchSize) {
         const batchStartTime = Date.now();
@@ -404,8 +409,8 @@ export class ExcelProcessor {
 
         batchCount++;
 
-        // Procesar lote
-        await this.processBatch(batch, fileName);
+        // Procesar lote dentro de la transacción
+        await this.processBatchWithTransaction(batch, fileName, queryRunner);
 
         const batchTime = Date.now() - batchStartTime;
         totalInserted += batch.length;
@@ -437,6 +442,9 @@ export class ExcelProcessor {
         }
       }
 
+      // Commit de la transacción
+      await queryRunner.commitTransaction();
+
       const totalTime = Date.now() - startTime;
       const totalTimeSeconds = Math.round(totalTime / 1000);
 
@@ -463,29 +471,63 @@ export class ExcelProcessor {
         batchesProcessed: batchCount,
       });
     } catch (error) {
+      // Rollback automático en caso de error
+      await queryRunner.rollbackTransaction();
+
       const totalTime = Date.now() - startTime;
-      console.log(`\n❌ Error durante la inserción:`);
+      console.log(`\n❌ Error durante la inserción - ROLLBACK realizado:`);
       console.log(
         `   📊 Registros procesados hasta el error: ${totalInserted.toLocaleString()}`
       );
       console.log(
-        `   ⏱️  Tiempo transcurrido: ${Math.round(totalTime / 1000)}s\n`
+        `   ⏱️  Tiempo transcurrido: ${Math.round(totalTime / 1000)}s`
+      );
+      console.log(
+        `   🔄 Todos los cambios han sido revertidos automáticamente\n`
       );
 
-      this.logger.error('Error en inserción de base de datos', error, {
+      this.logger.error('Error en inserción - Rollback realizado', error, {
         fileName,
         totalRecords: data.length,
         totalInserted,
         totalTime,
         totalTimeMs: totalTime,
         batchesProcessed: batchCount,
+        rollbackPerformed: true,
       });
       throw error;
+    } finally {
+      // Liberar recursos
+      await queryRunner.release();
     }
   }
 
   /**
-   * Procesa un lote de registros
+   * Procesa un lote de registros dentro de una transacción
+   */
+  private async processBatchWithTransaction(
+    batch: ExcelRow[],
+    fileName: string,
+    queryRunner: any
+  ): Promise<void> {
+    const licitacionRepository = queryRunner.manager.getRepository(Licitacion);
+    const licitaciones = batch.map((row) =>
+      this.mapToLicitacion(row, fileName)
+    );
+
+    // Mostrar progreso del lote actual
+    process.stdout.write(
+      `   🔄 Procesando lote de ${batch.length} registros... `
+    );
+
+    await licitacionRepository.save(licitaciones);
+
+    // Confirmar que el lote se completó
+    process.stdout.write('✅\n');
+  }
+
+  /**
+   * Procesa un lote de registros (método original para compatibilidad)
    */
   private async processBatch(
     batch: ExcelRow[],
