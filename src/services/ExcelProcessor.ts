@@ -63,8 +63,12 @@ export class ExcelProcessor {
    * Asegura que los directorios necesarios existan
    */
   private async ensureDirectories(): Promise<void> {
-    const directories = [this.excelDirectory, this.processedDirectory, this.errorDirectory];
-    
+    const directories = [
+      this.excelDirectory,
+      this.processedDirectory,
+      this.errorDirectory,
+    ];
+
     for (const dir of directories) {
       try {
         await fs.access(dir);
@@ -104,7 +108,9 @@ export class ExcelProcessor {
       );
 
       // Ordenar por fecha de modificación (más reciente primero)
-      fileStats.sort((a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime());
+      fileStats.sort(
+        (a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime()
+      );
 
       const latestFile = fileStats[0];
       if (latestFile) {
@@ -129,6 +135,12 @@ export class ExcelProcessor {
     await this.ensureDirectories();
 
     const fileStats = await fs.stat(filePath);
+    console.log(`\n📁 Procesando archivo: ${fileName}`);
+    console.log(
+      `   📏 Tamaño: ${(fileStats.size / 1024 / 1024).toFixed(2)} MB`
+    );
+    console.log(`   ⏰ Inicio: ${new Date().toLocaleTimeString()}\n`);
+
     this.logger.info('Iniciando procesamiento del archivo', {
       fileName,
       filePath,
@@ -137,9 +149,14 @@ export class ExcelProcessor {
 
     try {
       // Leer archivo Excel
+      console.log('📖 Leyendo archivo Excel...');
       const readStartTime = Date.now();
       const data = await this.readExcelFile(filePath);
       const readTime = Date.now() - readStartTime;
+
+      console.log(
+        `   ✅ Leídos ${data.length.toLocaleString()} registros en ${readTime}ms\n`
+      );
 
       this.logger.performance('read_excel_file', readTime, {
         fileName,
@@ -153,9 +170,12 @@ export class ExcelProcessor {
       }
 
       // Validar datos
+      console.log('🔍 Validando datos...');
       const validationStartTime = Date.now();
       const isValid = await this.validateData(data);
       const validationTime = Date.now() - validationStartTime;
+
+      console.log(`   ✅ Validación completada en ${validationTime}ms\n`);
 
       this.logger.performance('validate_data', validationTime, {
         fileName,
@@ -178,9 +198,12 @@ export class ExcelProcessor {
       });
 
       // Mover archivo a directorio procesado
+      console.log('📦 Moviendo archivo a directorio procesado...');
       const moveStartTime = Date.now();
       await this.moveToProcessed(filePath, fileName);
       const moveTime = Date.now() - moveStartTime;
+
+      console.log(`   ✅ Archivo movido en ${moveTime}ms`);
 
       this.logger.performance('move_file', moveTime, {
         fileName,
@@ -188,6 +211,15 @@ export class ExcelProcessor {
       });
 
       const totalTime = Date.now() - startTime;
+      const totalTimeSeconds = Math.round(totalTime / 1000);
+
+      console.log(`\n🎉 ¡Procesamiento completado exitosamente!`);
+      console.log(
+        `   📊 Total de registros procesados: ${data.length.toLocaleString()}`
+      );
+      console.log(`   ⏱️  Tiempo total: ${totalTimeSeconds}s`);
+      console.log(`   ⏰ Finalizado: ${new Date().toLocaleTimeString()}\n`);
+
       this.logger.info('Archivo procesado exitosamente', {
         fileName,
         recordsCount: data.length,
@@ -203,6 +235,12 @@ export class ExcelProcessor {
       });
     } catch (error) {
       const totalTime = Date.now() - startTime;
+      console.log(`\n❌ Error durante el procesamiento:`);
+      console.log(
+        `   ⏱️  Tiempo transcurrido: ${Math.round(totalTime / 1000)}s`
+      );
+      console.log(`   📁 Moviendo archivo a directorio de errores...\n`);
+
       this.logger.error('Error procesando archivo', error, {
         fileName,
         totalTime,
@@ -351,11 +389,11 @@ export class ExcelProcessor {
     let totalInserted = 0;
     let batchCount = 0;
 
-    this.logger.info('Iniciando inserción en base de datos', {
-      fileName,
-      totalRecords: data.length,
-      batchSize: this.batchSize,
-    });
+    console.log(`\n📊 Iniciando inserción en base de datos:`);
+    console.log(`   📁 Archivo: ${fileName}`);
+    console.log(`   📈 Total de registros: ${data.length.toLocaleString()}`);
+    console.log(`   📦 Tamaño de lote: ${this.batchSize}`);
+    console.log(`   ⏱️  Inicio: ${new Date().toLocaleTimeString()}\n`);
 
     try {
       for (let i = 0; i < data.length; i += this.batchSize) {
@@ -372,21 +410,49 @@ export class ExcelProcessor {
         const batchTime = Date.now() - batchStartTime;
         totalInserted += batch.length;
 
-        // Log cada 10 lotes o en el último lote
-        if (batchCount % 10 === 0 || endIndex === data.length) {
-          this.logger.verbose('Progreso de inserción', {
-            fileName,
-            batchNumber: batchCount,
-            recordsProcessed: totalInserted,
-            totalRecords: data.length,
-            progress: `${((totalInserted / data.length) * 100).toFixed(1)}%`,
-            batchTime,
-            averageTimePerRecord: batchTime / batch.length,
-          });
+        // Calcular progreso
+        const progress = ((totalInserted / data.length) * 100).toFixed(1);
+        const remainingRecords = data.length - totalInserted;
+        const estimatedTimeRemaining =
+          remainingRecords > 0
+            ? Math.round(((batchTime / batch.length) * remainingRecords) / 1000)
+            : 0;
+
+        // Mostrar progreso en consola
+        console.log(
+          `   ✅ Lote ${batchCount}: ${totalInserted.toLocaleString()}/${data.length.toLocaleString()} registros (${progress}%)`
+        );
+
+        // Mostrar tiempo estimado cada 5 lotes o en el último
+        if (batchCount % 5 === 0 || endIndex === data.length) {
+          const elapsedTime = Math.round((Date.now() - startTime) / 1000);
+          console.log(
+            `   ⏱️  Tiempo transcurrido: ${elapsedTime}s | Estimado restante: ${estimatedTimeRemaining}s`
+          );
+          console.log(
+            `   📊 Velocidad: ${Math.round(
+              totalInserted / (elapsedTime / 60)
+            )} registros/min\n`
+          );
         }
       }
 
       const totalTime = Date.now() - startTime;
+      const totalTimeSeconds = Math.round(totalTime / 1000);
+
+      console.log(`\n🎉 ¡Inserción completada exitosamente!`);
+      console.log(
+        `   📊 Total de registros insertados: ${totalInserted.toLocaleString()}`
+      );
+      console.log(`   ⏱️  Tiempo total: ${totalTimeSeconds}s`);
+      console.log(`   📦 Lotes procesados: ${batchCount}`);
+      console.log(
+        `   🚀 Velocidad promedio: ${Math.round(
+          totalInserted / (totalTimeSeconds / 60)
+        )} registros/min`
+      );
+      console.log(`   ⏰ Finalizado: ${new Date().toLocaleTimeString()}\n`);
+
       this.logger.info('Inserción en base de datos completada', {
         fileName,
         totalRecords: data.length,
@@ -398,6 +464,14 @@ export class ExcelProcessor {
       });
     } catch (error) {
       const totalTime = Date.now() - startTime;
+      console.log(`\n❌ Error durante la inserción:`);
+      console.log(
+        `   📊 Registros procesados hasta el error: ${totalInserted.toLocaleString()}`
+      );
+      console.log(
+        `   ⏱️  Tiempo transcurrido: ${Math.round(totalTime / 1000)}s\n`
+      );
+
       this.logger.error('Error en inserción de base de datos', error, {
         fileName,
         totalRecords: data.length,
@@ -421,7 +495,16 @@ export class ExcelProcessor {
     const licitaciones = batch.map((row) =>
       this.mapToLicitacion(row, fileName)
     );
+
+    // Mostrar progreso del lote actual
+    process.stdout.write(
+      `   🔄 Procesando lote de ${batch.length} registros... `
+    );
+
     await licitacionRepository.save(licitaciones);
+
+    // Confirmar que el lote se completó
+    process.stdout.write('✅\n');
   }
 
   /**
@@ -499,30 +582,51 @@ export class ExcelProcessor {
    */
   public async run(): Promise<void> {
     const startTime = Date.now();
+    console.log('\n🚀 Iniciando procesamiento de archivos Excel...');
+    console.log(`   📁 Directorio: ${this.excelDirectory}`);
+    console.log(`   📦 Tamaño de lote: ${this.batchSize}`);
+    console.log(`   ⏰ Inicio: ${new Date().toLocaleTimeString()}\n`);
+
     this.logger.info('🚀 Iniciando procesamiento de archivos Excel...', {
       excelDirectory: this.excelDirectory,
       batchSize: this.batchSize,
     });
 
     try {
+      console.log('🔍 Buscando archivo Excel más reciente...');
       const latestFile = await this.findLatestExcelFile();
 
       if (!latestFile) {
+        console.log('⚠️  No se encontraron archivos Excel para procesar');
+        console.log(`   📁 Directorio revisado: ${this.excelDirectory}\n`);
+
         this.logger.warn('No se encontraron archivos Excel para procesar', {
           directory: this.excelDirectory,
         });
         return;
       }
 
+      const fileName = path.basename(latestFile);
+      const fileSize = (await fs.stat(latestFile)).size;
+
+      console.log(`✅ Archivo encontrado: ${fileName}`);
+      console.log(`   📏 Tamaño: ${(fileSize / 1024 / 1024).toFixed(2)} MB\n`);
+
       this.logger.info('Archivo más reciente encontrado', {
-        fileName: path.basename(latestFile),
+        fileName: fileName,
         filePath: latestFile,
-        fileSize: (await fs.stat(latestFile)).size,
+        fileSize: fileSize,
       });
 
       await this.processExcelFile(latestFile);
 
       const totalTime = Date.now() - startTime;
+      const totalTimeSeconds = Math.round(totalTime / 1000);
+
+      console.log(`\n🎉 ¡Procesamiento completado exitosamente!`);
+      console.log(`   ⏱️  Tiempo total: ${totalTimeSeconds}s`);
+      console.log(`   ⏰ Finalizado: ${new Date().toLocaleTimeString()}\n`);
+
       this.logger.info('✅ Procesamiento completado exitosamente', {
         totalTime,
         totalTimeMs: totalTime,
@@ -530,6 +634,12 @@ export class ExcelProcessor {
       });
     } catch (error) {
       const totalTime = Date.now() - startTime;
+      const totalTimeSeconds = Math.round(totalTime / 1000);
+
+      console.log(`\n❌ Error en el procesamiento:`);
+      console.log(`   ⏱️  Tiempo transcurrido: ${totalTimeSeconds}s`);
+      console.log(`   ⏰ Error ocurrido: ${new Date().toLocaleTimeString()}\n`);
+
       this.logger.error('❌ Error en el procesamiento', error, {
         totalTime,
         totalTimeMs: totalTime,

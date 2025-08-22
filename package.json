@@ -24,7 +24,10 @@
     "logs:analyze": "ts-node scripts/log-analyzer.ts",
     "logs:clean": "find ./logs -name '*.log' -mtime +30 -delete",
     "logs:report": "npm run logs:analyze && echo 'Reporte generado en ./logs/report.md'",
-    "logs:test": "npm run build && node scripts/test-improved-logging.js"
+    "logs:test": "npm run build && node scripts/test-improved-logging.js",
+    "test:excel": "node scripts/create-test-excel.js",
+    "test:excel:large": "node scripts/create-large-test-excel.js",
+    "demo": "node scripts/demo-progress.js"
   },
   "keywords": [
     "excel",
