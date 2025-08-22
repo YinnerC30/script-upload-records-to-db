@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { AppDataSource } from '../config/database';
+import { AppDataSource, executeWithRetry } from '../config/database';
 import { Licitacion } from '../entities/Licitacion';
 import logger, { StructuredLogger } from '../utils/logger';
 
@@ -395,10 +395,17 @@ export class ExcelProcessor {
     console.log(`   📦 Tamaño de lote: ${this.batchSize}`);
     console.log(`   ⏱️  Inicio: ${new Date().toLocaleTimeString()}\n`);
 
-    // Iniciar transacción global
-    const queryRunner = AppDataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    // Iniciar transacción global con retry
+    const queryRunner = await executeWithRetry(
+      async () => {
+        const runner = AppDataSource.createQueryRunner();
+        await runner.connect();
+        await runner.startTransaction();
+        return runner;
+      },
+      3,
+      'create_transaction'
+    );
 
     try {
       for (let i = 0; i < data.length; i += this.batchSize) {
@@ -510,7 +517,6 @@ export class ExcelProcessor {
     fileName: string,
     queryRunner: any
   ): Promise<void> {
-    const licitacionRepository = queryRunner.manager.getRepository(Licitacion);
     const licitaciones = batch.map((row) =>
       this.mapToLicitacion(row, fileName)
     );
@@ -520,7 +526,15 @@ export class ExcelProcessor {
       `   🔄 Procesando lote de ${batch.length} registros... `
     );
 
-    await licitacionRepository.save(licitaciones);
+    await executeWithRetry(
+      async () => {
+        const licitacionRepository =
+          queryRunner.manager.getRepository(Licitacion);
+        return await licitacionRepository.save(licitaciones);
+      },
+      3,
+      `save_batch_${batch.length}_records`
+    );
 
     // Confirmar que el lote se completó
     process.stdout.write('✅\n');

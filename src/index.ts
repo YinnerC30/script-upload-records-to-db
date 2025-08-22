@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { initializeDatabase } from './config/database';
+import { initializeDatabase, closeDatabaseConnection } from './config/database';
 import { ExcelProcessor } from './services/ExcelProcessor';
 import {
   config,
@@ -38,13 +38,15 @@ async function main() {
 }
 
 // Manejar señales de terminación
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   logger.info('🛑 Recibida señal SIGINT, cerrando aplicación...');
+  await closeDatabaseConnection();
   process.exit(0);
 });
 
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   logger.info('🛑 Recibida señal SIGTERM, cerrando aplicación...');
+  await closeDatabaseConnection();
   process.exit(0);
 });
 

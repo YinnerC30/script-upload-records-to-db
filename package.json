@@ -50,7 +50,8 @@
     "logs:test": "npm run build && node scripts/test-improved-logging.js",
     "test:excel": "node scripts/create-test-excel.js",
     "test:excel:large": "node scripts/create-large-test-excel.js",
-    "demo": "node scripts/demo-progress.js"
+    "demo": "node scripts/demo-progress.js",
+    "test:retry": "npm run build && node scripts/test-database-retry.js"
   },
   "keywords": [
     "excel",
