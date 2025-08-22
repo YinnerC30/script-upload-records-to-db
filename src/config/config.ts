@@ -1,8 +1,18 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Cargar variables de entorno desde archivo .env si existe
-dotenv.config();
+// Determinar el directorio del ejecutable
+function getExecutableDir(): string {
+  if ((process as any).pkg) {
+    // Si es ejecutable, usar el directorio donde está el ejecutable
+    return path.dirname(process.execPath);
+  }
+  // Si no es ejecutable, usar el directorio actual
+  return process.cwd();
+}
+
+// Cargar variables de entorno desde archivo .env en el directorio del ejecutable
+dotenv.config({ path: path.join(getExecutableDir(), '.env') });
 
 // Función para obtener valor de variable de entorno con valor por defecto
 function getEnvVar(key: string, defaultValue?: string): string {
