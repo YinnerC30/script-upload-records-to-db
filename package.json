@@ -13,7 +13,14 @@
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "db:start": "docker compose up -d mysql",
+    "db:stop": "docker compose stop mysql",
+    "db:reset": "docker compose down -v && docker compose up -d mysql",
+    "db:restart": "docker compose restart mysql",
+    "db:logs": "docker compose logs mysql",
+    "db:clean": "docker compose down -v && docker volume rm script-upload-records-to-db_mysql_data",
+    "db:status": "docker compose ps mysql"
   },
   "keywords": [
     "excel",
