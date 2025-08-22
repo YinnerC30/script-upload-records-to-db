@@ -1,115 +1,124 @@
-# Dependencies
+# ==========================================
+# DEPENDENCIAS
+# ==========================================
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+.npm
+.yarn-integrity
+jspm_packages/
+bower_components
 
-# Build output
+# ==========================================
+# BUILD Y COMPILACIÓN
+# ==========================================
 dist/
 build/
+*.tsbuildinfo
+*.tgz
+*.zip
+*.tar.gz
+*.deb
+*.rpm
 
-# Environment variables
+# ==========================================
+# EJECUTABLES
+# ==========================================
+bin/
+*.exe
+*.bin
+*.app
+
+# ==========================================
+# VARIABLES DE ENTORNO
+# ==========================================
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.test
 
-# Logs
+# ==========================================
+# LOGS
+# ==========================================
 logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-
-# Runtime data
 pids
 *.pid
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
+# ==========================================
+# TESTING Y COBERTURA
+# ==========================================
 coverage/
 *.lcov
-
-# nyc test coverage
 .nyc_output
 
-# Grunt intermediate storage
-.grunt
-
-# Bower dependency directory
-bower_components
-
-# node-waf configuration
-.lock-wscript
-
-# Compiled binary addons
-build/Release
-
-# Dependency directories
-jspm_packages/
-
-# TypeScript cache
-*.tsbuildinfo
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Microbundle cache
+# ==========================================
+# CACHE Y ARCHIVOS TEMPORALES
+# ==========================================
+.cache
+.parcel-cache
 .rpt2_cache/
 .rts2_cache_cjs/
 .rts2_cache_es/
 .rts2_cache_umd/
-
-# Optional REPL history
+.eslintcache
+.grunt
+.lock-wscript
+build/Release
 .node_repl_history
+tmp/
+temp/
+.tmp/
+.temp/
 
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
-.env
-.env.test
-
-# parcel-bundler cache
-.cache
-.parcel-cache
-
-# Next.js build output
+# ==========================================
+# FRAMEWORKS ESPECÍFICOS
+# ==========================================
 .next
-
-# Nuxt.js build / generate output
 .nuxt
-dist
-
-# Gatsby files
-.cache/
 public
-
-# Storybook build outputs
 .out
 .storybook-out
 
-# Temporary folders
-tmp/
-temp/
+# ==========================================
+# ARCHIVOS DEL PROYECTO
+# ==========================================
+# Excel files (datos de prueba)
+excel-files/
+processed-files/
+error-files/
+test-files/
 
-# Editor directories and files
-.vscode/
-.idea/
+# Docker y base de datos
+mysql/data/
+docker-compose.override.yml
+
+# Archivos de respaldo
+*.bak
+*.backup
+*.old
+
+# ==========================================
+# EDITORES E IDEs
+# ==========================================
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.idea/workspace.xml
+.idea/tasks.xml
 *.swp
 *.swo
 *~
 
-# OS generated files
+# ==========================================
+# SISTEMA OPERATIVO
+# ==========================================
 .DS_Store
 .DS_Store?
 ._*
@@ -117,11 +126,11 @@ temp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+*.orig
+*.rej
 
-# Excel files (for testing)
-excel-files/
-processed-files/
-error-files/
-
-# Test files
-test-files/
+# ==========================================
+# EXCEPCIONES (archivos que SÍ queremos incluir)
+# ==========================================
+!env.example
+!mysql/init/

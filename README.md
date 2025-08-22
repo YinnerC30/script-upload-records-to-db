@@ -64,6 +64,31 @@ PROCESSING_INTERVAL=30000
 
 ## 🏃‍♂️ Uso
 
+### 🚀 Opción 1: Ejecutable (Recomendado)
+
+El proyecto incluye un ejecutable que no requiere Node.js instalado en el servidor:
+
+```bash
+# Construir el ejecutable
+npm run build:all
+
+# Ejecutar directamente
+./bin/script-upload-records-to-db
+
+# Instalar globalmente
+./install.sh
+
+# Ver demostración
+./demo-executable.sh
+```
+
+**Ventajas del ejecutable:**
+
+- ✅ No requiere Node.js en el servidor
+- ✅ Un solo archivo ejecutable
+- ✅ Más rápido y portable
+- ✅ Fácil de distribuir
+
 ### Modo Ejecución Única
 
 Para procesar archivos una sola vez:
@@ -94,6 +119,7 @@ node dist/index-watcher.js
 
 ```bash
 npm run build          # Compilar TypeScript
+npm run build:all      # Compilar y crear ejecutable
 npm run dev            # Ejecutar en modo desarrollo
 npm run start          # Ejecutar en modo producción
 npm run watch          # Ejecutar con nodemon (desarrollo)
@@ -400,3 +426,41 @@ Si tienes problemas o preguntas:
 2. Verifica la configuración en `.env`
 3. Asegúrate de que la base de datos esté accesible
 4. Verifica que los archivos Excel tengan la estructura correcta
+
+## 📦 Información del Ejecutable
+
+### ¿Qué es el ejecutable?
+
+El ejecutable es una versión compilada del proyecto que incluye todas las dependencias necesarias. No requiere Node.js instalado en el servidor donde se ejecute.
+
+### Características del Ejecutable
+
+- **Portabilidad**: Funciona en cualquier sistema Linux x64
+- **Autocontenido**: Incluye todas las dependencias
+- **Configuración flexible**: Usa variables de entorno o archivo .env
+- **Logging completo**: Mantiene todos los logs del proyecto original
+
+### Archivos Generados
+
+- `bin/script-upload-records-to-db`: Ejecutable principal
+- `install.sh`: Script de instalación
+- `demo-executable.sh`: Script de demostración
+- `README-EXECUTABLE.md`: Documentación completa del ejecutable
+
+### Comandos del Ejecutable
+
+```bash
+# Construir
+npm run build:all
+
+# Ejecutar
+./bin/script-upload-records-to-db
+
+# Instalar
+./install.sh
+
+# Demostración
+./demo-executable.sh
+```
+
+Para más información sobre el ejecutable, consulta `README-EXECUTABLE.md`.

@@ -1,10 +1,23 @@
 import 'reflect-metadata';
 import { initializeDatabase } from './config/database';
 import { ExcelProcessor } from './services/ExcelProcessor';
+import {
+  config,
+  validateConfig,
+  createRequiredDirectories,
+} from './config/config';
 import logger from './utils/logger';
 
 async function main() {
   try {
+    console.log('🚀 Iniciando aplicación de procesamiento de Excel...');
+
+    // Validar y mostrar configuración
+    validateConfig();
+
+    // Crear directorios necesarios
+    createRequiredDirectories();
+
     logger.info('🚀 Iniciando aplicación de procesamiento de Excel...');
 
     // Inicializar base de datos
