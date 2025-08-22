@@ -28,13 +28,24 @@
     ],
     "ignore": [
       "node_modules/typeorm/browser/**/*",
-      "node_modules/typeorm/cli/**/*"
+      "node_modules/typeorm/cli/**/*",
+      "node_modules/typeorm/browser",
+      "**/*.test.js",
+      "**/*.spec.js",
+      "**/*.d.ts",
+      "**/test/**/*",
+      "**/tests/**/*",
+      "**/__tests__/**/*",
+      "**/coverage/**/*",
+      "**/.nyc_output/**/*"
     ]
   },
   "scripts": {
     "build": "tsc",
     "build:executable": "npm run build && pkg .",
+    "build:executable:clean": "npm run build && pkg . > /dev/null 2>&1 && echo '✅ Ejecutable creado exitosamente'",
     "build:all": "npm run build && pkg . && chmod +x bin/script-upload-records-to-db",
+    "build:all:clean": "npm run build && pkg . > /dev/null 2>&1 && chmod +x bin/script-upload-records-to-db && echo '✅ Ejecutable creado y configurado exitosamente'",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "test": "vitest",
