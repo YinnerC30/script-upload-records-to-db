@@ -290,6 +290,49 @@ Para actualizar el ejecutable:
    sudo systemctl restart excel-processor
    ```
 
+## 🗑️ Desinstalación
+
+Para desinstalar completamente el ejecutable:
+
+### Desinstalación Básica
+
+```bash
+sudo ./uninstall.sh
+```
+
+### Opciones de Desinstalación
+
+```bash
+# Desinstalación forzada sin confirmación
+sudo ./uninstall.sh -f
+
+# Desinstalar desde directorio personalizado
+sudo ./uninstall.sh -d ~/bin
+
+# Solo eliminar configuración
+sudo ./uninstall.sh -c
+
+# Solo eliminar servicio systemd
+sudo ./uninstall.sh -s
+
+# Ver ayuda
+./uninstall.sh -h
+```
+
+### Verificación Post-Desinstalación
+
+```bash
+# Verificar que el ejecutable ya no existe
+which excel-processor
+
+# Verificar que el servicio ya no existe
+sudo systemctl status excel-processor
+
+# Verificar que los archivos se eliminaron
+ls -la /usr/local/bin/excel-processor
+ls -la /etc/systemd/system/excel-processor.service
+```
+
 ## 📞 Soporte
 
 Si encuentras problemas:
