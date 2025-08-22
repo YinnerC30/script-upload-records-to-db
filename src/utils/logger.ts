@@ -1,12 +1,21 @@
 import winston from 'winston';
 import path from 'path';
-import fs from 'fs';
+import fs from 'fs/promises';
 
 // Crear directorio de logs si no existe
 const logDir = path.dirname(process.env.LOG_FILE || './logs/app.log');
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
-}
+
+// Función async para crear directorio si no existe
+const ensureLogDirectory = async () => {
+  try {
+    await fs.access(logDir);
+  } catch {
+    await fs.mkdir(logDir, { recursive: true });
+  }
+};
+
+// Crear directorio de logs
+ensureLogDirectory().catch(console.error);
 
 // Configuración de niveles personalizados
 const customLevels = {

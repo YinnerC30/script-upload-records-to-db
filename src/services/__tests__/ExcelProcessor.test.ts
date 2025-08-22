@@ -1,22 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ExcelProcessor, ExcelRow } from '../ExcelProcessor';
-import * as fs from 'fs';
+import * as fs from 'fs/promises';
 import * as path from 'path';
 
 // Mock de las dependencias
-vi.mock('fs', () => ({
+vi.mock('fs/promises', () => ({
   default: {
-    existsSync: vi.fn(() => true),
-    mkdirSync: vi.fn(),
-    readdirSync: vi.fn(() => []),
-    statSync: vi.fn(() => ({ mtime: new Date() })),
-    renameSync: vi.fn(),
+    access: vi.fn(),
+    mkdir: vi.fn(),
+    readdir: vi.fn(() => []),
+    stat: vi.fn(() => ({ mtime: new Date() })),
+    rename: vi.fn(),
   },
-  existsSync: vi.fn(() => true),
-  mkdirSync: vi.fn(),
-  readdirSync: vi.fn(() => []),
-  statSync: vi.fn(() => ({ mtime: new Date() })),
-  renameSync: vi.fn(),
+  access: vi.fn(),
+  mkdir: vi.fn(),
+  readdir: vi.fn(() => []),
+  stat: vi.fn(() => ({ mtime: new Date() })),
+  rename: vi.fn(),
 }));
 
 vi.mock('path');
@@ -50,16 +50,16 @@ describe('ExcelProcessor', () => {
   });
 
   describe('findLatestExcelFile', () => {
-    it('should return null when no Excel files exist', () => {
-      mockFs.readdirSync.mockReturnValue(['file.txt', 'document.pdf'] as any);
+    it('should return null when no Excel files exist', async () => {
+      mockFs.readdir.mockResolvedValue(['file.txt', 'document.pdf'] as any);
       mockPath.extname.mockReturnValue('.txt');
 
-      const result = processor.findLatestExcelFile();
+      const result = await processor.findLatestExcelFile();
 
       expect(result).toBeNull();
     });
 
-    it('should return the most recent Excel file', () => {
+    it('should return the most recent Excel file', async () => {
       const mockStatsOld = {
         mtime: new Date('2023-01-01'),
       };
@@ -67,16 +67,16 @@ describe('ExcelProcessor', () => {
         mtime: new Date('2023-01-02'),
       };
 
-      mockFs.readdirSync.mockReturnValue(['old.xlsx', 'new.xlsx'] as any);
-      mockFs.statSync
-        .mockReturnValueOnce(mockStatsOld as any)
-        .mockReturnValueOnce(mockStatsNew as any);
+      mockFs.readdir.mockResolvedValue(['old.xlsx', 'new.xlsx'] as any);
+      mockFs.stat
+        .mockResolvedValueOnce(mockStatsOld as any)
+        .mockResolvedValueOnce(mockStatsNew as any);
       mockPath.join.mockImplementation((...args) => args.join('/'));
       mockPath.extname
         .mockReturnValueOnce('.xlsx')
         .mockReturnValueOnce('.xlsx');
 
-      const result = processor.findLatestExcelFile();
+      const result = await processor.findLatestExcelFile();
 
       expect(result).toBe('./excel-files/new.xlsx');
     });

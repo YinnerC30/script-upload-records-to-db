@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 interface LogEntry {
   timestamp: string;
@@ -55,11 +55,13 @@ export class LogAnalyzer {
   }
 
   async analyze(): Promise<LogStats> {
-    if (!fs.existsSync(this.logFile)) {
+    try {
+      await fs.access(this.logFile);
+    } catch {
       throw new Error(`Archivo de log no encontrado: ${this.logFile}`);
     }
 
-    const content = fs.readFileSync(this.logFile, 'utf-8');
+    const content = await fs.readFile(this.logFile, 'utf-8');
     const lines = content.split('\n').filter((line) => line.trim());
 
     const stats: LogStats = {
@@ -290,10 +292,12 @@ ${
     outputFile: string = './logs/report.md'
   ): Promise<void> {
     const dir = path.dirname(outputFile);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    try {
+      await fs.access(dir);
+    } catch {
+      await fs.mkdir(dir, { recursive: true });
     }
-    fs.writeFileSync(outputFile, report);
+    await fs.writeFile(outputFile, report);
   }
 
   // Método para generar reporte JSON
@@ -302,10 +306,12 @@ ${
     outputFile: string = './logs/report.json'
   ): Promise<void> {
     const dir = path.dirname(outputFile);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    try {
+      await fs.access(dir);
+    } catch {
+      await fs.mkdir(dir, { recursive: true });
     }
-    fs.writeFileSync(outputFile, JSON.stringify(stats, null, 2));
+    await fs.writeFile(outputFile, JSON.stringify(stats, null, 2));
   }
 }
 

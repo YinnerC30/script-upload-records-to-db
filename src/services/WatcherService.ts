@@ -1,4 +1,5 @@
-import * as fs from 'fs';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import logger from '../utils/logger';
 import { ExcelProcessor } from './ExcelProcessor';
 
@@ -8,6 +9,7 @@ export class WatcherService {
   private readonly processingInterval: number;
   private isProcessing: boolean = false;
   private intervalId: NodeJS.Timeout | null = null;
+  private watcherId: NodeJS.Timeout | null = null;
 
   constructor() {
     this.processor = new ExcelProcessor();
@@ -20,22 +22,22 @@ export class WatcherService {
   /**
    * Inicia el monitoreo continuo del directorio
    */
-  public startWatching(): void {
+  public async startWatching(): Promise<void> {
     logger.info(
       `👀 Iniciando monitoreo del directorio: ${this.watchDirectory}`
     );
     logger.info(`⏱️  Intervalo de procesamiento: ${this.processingInterval}ms`);
 
     // Procesar archivos existentes al inicio
-    this.processFiles();
+    await this.processFiles();
 
     // Configurar intervalo de procesamiento
-    this.intervalId = setInterval(() => {
-      this.processFiles();
+    this.intervalId = setInterval(async () => {
+      await this.processFiles();
     }, this.processingInterval);
 
     // Configurar watcher de archivos (opcional, para respuesta inmediata)
-    this.setupFileWatcher();
+    await this.setupFileWatcher();
   }
 
   /**
@@ -45,8 +47,14 @@ export class WatcherService {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
-      logger.info('🛑 Monitoreo detenido');
     }
+    
+    if (this.watcherId) {
+      clearTimeout(this.watcherId);
+      this.watcherId = null;
+    }
+    
+    logger.info('🛑 Monitoreo detenido');
   }
 
   /**
@@ -61,7 +69,7 @@ export class WatcherService {
     try {
       this.isProcessing = true;
 
-      const latestFile = this.processor.findLatestExcelFile();
+      const latestFile = await this.processor.findLatestExcelFile();
 
       if (latestFile) {
         logger.info(`📁 Archivo encontrado, iniciando procesamiento...`);
@@ -79,19 +87,32 @@ export class WatcherService {
   /**
    * Configura un watcher de archivos para respuesta inmediata
    */
-  private setupFileWatcher(): void {
+  private async setupFileWatcher(): Promise<void> {
     try {
-      fs.watch(this.watchDirectory, (eventType, filename) => {
-        if (
-          filename &&
-          (filename.endsWith('.xlsx') || filename.endsWith('.xls'))
-        ) {
-          logger.info(`📁 Archivo detectado: ${filename} (${eventType})`);
+      // Verificar que el directorio existe
+      try {
+        await fs.access(this.watchDirectory);
+      } catch {
+        await fs.mkdir(this.watchDirectory, { recursive: true });
+        logger.info(`📁 Directorio creado: ${this.watchDirectory}`);
+      }
 
+      // Usar fs.watchFile para mejor compatibilidad
+      const { watchFile } = await import('fs');
+      
+      watchFile(this.watchDirectory, { interval: 1000 }, async (curr, prev) => {
+        // Solo procesar si el directorio fue modificado
+        if (curr.mtime > prev.mtime) {
+          logger.info(`📁 Cambios detectados en el directorio: ${this.watchDirectory}`);
+          
           // Esperar un poco para asegurar que el archivo esté completamente escrito
-          setTimeout(() => {
-            this.processFiles();
-          }, 1000);
+          if (this.watcherId) {
+            clearTimeout(this.watcherId);
+          }
+          
+          this.watcherId = setTimeout(async () => {
+            await this.processFiles();
+          }, 2000);
         }
       });
 

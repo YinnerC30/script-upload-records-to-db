@@ -14,40 +14,54 @@ async function main() {
     const watcher = new WatcherService();
 
     // Iniciar monitoreo
-    watcher.startWatching();
+    await watcher.startWatching();
 
     logger.info('✅ Servicio de monitoreo iniciado exitosamente');
     logger.info('📋 Presiona Ctrl+C para detener el servicio');
 
-    // Mantener la aplicación corriendo
-    process.stdin.resume();
+    // Mantener la aplicación corriendo usando un intervalo en lugar de stdin.resume()
+    const keepAliveInterval = setInterval(() => {
+      // Este intervalo mantiene el proceso vivo
+      // Se limpiará cuando se reciba SIGINT o SIGTERM
+    }, 60000); // Verificar cada minuto
+
+    // Limpiar el intervalo cuando se detenga el proceso
+    const cleanup = () => {
+      clearInterval(keepAliveInterval);
+      watcher.stopWatching();
+    };
+
+    // Manejar señales de terminación
+    process.on('SIGINT', () => {
+      logger.info('🛑 Recibida señal SIGINT, cerrando servicio...');
+      cleanup();
+      process.exit(0);
+    });
+
+    process.on('SIGTERM', () => {
+      logger.info('🛑 Recibida señal SIGTERM, cerrando servicio...');
+      cleanup();
+      process.exit(0);
+    });
+
+    // Manejar errores no capturados
+    process.on('uncaughtException', (error) => {
+      logger.error('❌ Error no capturado:', error);
+      cleanup();
+      process.exit(1);
+    });
+
+    process.on('unhandledRejection', (reason, promise) => {
+      logger.error('❌ Promesa rechazada no manejada:', reason);
+      cleanup();
+      process.exit(1);
+    });
+
   } catch (error) {
     logger.error('❌ Error iniciando el servicio:', error);
     process.exit(1);
   }
 }
-
-// Manejar señales de terminación
-process.on('SIGINT', () => {
-  logger.info('🛑 Recibida señal SIGINT, cerrando servicio...');
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  logger.info('🛑 Recibida señal SIGTERM, cerrando servicio...');
-  process.exit(0);
-});
-
-// Manejar errores no capturados
-process.on('uncaughtException', (error) => {
-  logger.error('❌ Error no capturado:', error);
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error('❌ Promesa rechazada no manejada:', reason);
-  process.exit(1);
-});
 
 // Ejecutar aplicación
 main();

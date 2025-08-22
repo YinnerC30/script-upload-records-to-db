@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import * as fs from 'fs';
+import * as fs from 'fs/promises';
 import * as path from 'path';
 import { AppDataSource } from '../config/database';
 import { Licitacion } from '../entities/Licitacion';
@@ -56,39 +56,57 @@ export class ExcelProcessor {
     this.logger = new StructuredLogger('ExcelProcessor');
 
     // Crear directorios si no existen
-    [this.excelDirectory, this.processedDirectory, this.errorDirectory].forEach(
-      (dir) => {
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-        }
+    this.ensureDirectories();
+  }
+
+  /**
+   * Asegura que los directorios necesarios existan
+   */
+  private async ensureDirectories(): Promise<void> {
+    const directories = [this.excelDirectory, this.processedDirectory, this.errorDirectory];
+    
+    for (const dir of directories) {
+      try {
+        await fs.access(dir);
+      } catch {
+        await fs.mkdir(dir, { recursive: true });
       }
-    );
+    }
   }
 
   /**
    * Encuentra el archivo Excel más reciente en el directorio
    */
-  public findLatestExcelFile(): string | null {
+  public async findLatestExcelFile(): Promise<string | null> {
     try {
-      const files = fs
-        .readdirSync(this.excelDirectory)
-        .filter((file) => {
-          const ext = path.extname(file).toLowerCase();
-          return ext === '.xlsx' || ext === '.xls';
-        })
-        .map((file) => ({
-          name: file,
-          path: path.join(this.excelDirectory, file),
-          stats: fs.statSync(path.join(this.excelDirectory, file)),
-        }))
-        .sort((a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime());
+      const files = await fs.readdir(this.excelDirectory);
+      const excelFiles = files.filter((file) => {
+        const ext = path.extname(file).toLowerCase();
+        return ext === '.xlsx' || ext === '.xls';
+      });
 
-      if (files.length === 0) {
+      if (excelFiles.length === 0) {
         logger.info('No se encontraron archivos Excel en el directorio');
         return null;
       }
 
-      const latestFile = files[0];
+      // Obtener estadísticas de todos los archivos
+      const fileStats = await Promise.all(
+        excelFiles.map(async (file) => {
+          const filePath = path.join(this.excelDirectory, file);
+          const stats = await fs.stat(filePath);
+          return {
+            name: file,
+            path: filePath,
+            stats,
+          };
+        })
+      );
+
+      // Ordenar por fecha de modificación (más reciente primero)
+      fileStats.sort((a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime());
+
+      const latestFile = fileStats[0];
       if (latestFile) {
         logger.info(`Archivo más reciente encontrado: ${latestFile.name}`);
         return latestFile.path;
@@ -107,10 +125,14 @@ export class ExcelProcessor {
     const fileName = path.basename(filePath);
     const startTime = Date.now();
 
+    // Asegurar que los directorios existan antes de procesar
+    await this.ensureDirectories();
+
+    const fileStats = await fs.stat(filePath);
     this.logger.info('Iniciando procesamiento del archivo', {
       fileName,
       filePath,
-      fileSize: fs.statSync(filePath).size,
+      fileSize: fileStats.size,
     });
 
     try {
@@ -459,7 +481,7 @@ export class ExcelProcessor {
     fileName: string
   ): Promise<void> {
     const destination = path.join(this.processedDirectory, fileName);
-    fs.renameSync(filePath, destination);
+    await fs.rename(filePath, destination);
     logger.info(`Archivo movido a procesados: ${fileName}`);
   }
 
@@ -468,7 +490,7 @@ export class ExcelProcessor {
    */
   private async moveToError(filePath: string, fileName: string): Promise<void> {
     const destination = path.join(this.errorDirectory, fileName);
-    fs.renameSync(filePath, destination);
+    await fs.rename(filePath, destination);
     logger.info(`Archivo movido a errores: ${fileName}`);
   }
 
@@ -483,7 +505,7 @@ export class ExcelProcessor {
     });
 
     try {
-      const latestFile = this.findLatestExcelFile();
+      const latestFile = await this.findLatestExcelFile();
 
       if (!latestFile) {
         this.logger.warn('No se encontraron archivos Excel para procesar', {
@@ -495,7 +517,7 @@ export class ExcelProcessor {
       this.logger.info('Archivo más reciente encontrado', {
         fileName: path.basename(latestFile),
         filePath: latestFile,
-        fileSize: fs.statSync(latestFile).size,
+        fileSize: (await fs.stat(latestFile)).size,
       });
 
       await this.processExcelFile(latestFile);
