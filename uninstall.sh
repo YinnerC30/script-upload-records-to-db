@@ -169,20 +169,7 @@ uninstall_executable() {
     fi
 }
 
-# Función para limpiar directorio de instalación
-cleanup_install_directory() {
-    if [ -d "$INSTALL_DIR" ] && [ "$(ls -A "$INSTALL_DIR" 2>/dev/null | grep -E "(excel-processor|\.env)" | wc -l)" -eq 0 ]; then
-        print_info "El directorio de instalación está vacío de archivos relacionados"
-        if [ "$FORCE" = false ]; then
-            read -p "¿Eliminar directorio de instalación vacío? (y/N): " -n 1 -r
-            echo ""
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                sudo rmdir "$INSTALL_DIR" 2>/dev/null || true
-                print_success "Directorio de instalación eliminado"
-            fi
-        fi
-    fi
-}
+
 
 # Función para verificar desinstalación
 verify_uninstall() {
@@ -258,7 +245,6 @@ main() {
         uninstall_service
         uninstall_config
         uninstall_executable
-        cleanup_install_directory
     fi
     
     # Verificar desinstalación
