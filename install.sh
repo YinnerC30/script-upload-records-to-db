@@ -107,7 +107,9 @@ if [ "$CREATE_CONFIG" = true ]; then
     
     CONFIG_FILE="$INSTALL_DIR/.env"
     
-    cat > "$CONFIG_FILE" << EOF
+    # Usar sudo si el directorio requiere permisos de administrador
+    if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+        sudo tee "$CONFIG_FILE" > /dev/null << EOF
 # Configuración de Base de Datos
 DB_HOST=localhost
 DB_PORT=3306
@@ -133,6 +135,34 @@ LOG_RETENTION_DAYS=30
 BATCH_SIZE=100
 PROCESSING_INTERVAL=30000
 EOF
+    else
+        cat > "$CONFIG_FILE" << EOF
+# Configuración de Base de Datos
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=root
+DB_PASSWORD=password
+DB_DATABASE=excel_data
+
+# Configuración del Directorio de Archivos
+EXCEL_DIRECTORY=./excel-files
+PROCESSED_DIRECTORY=./processed-files
+ERROR_DIRECTORY=./error-files
+
+# Configuración de Logs Mejorada
+LOG_LEVEL=info
+LOG_FILE=./logs/app.log
+LOG_ENABLE_CONSOLE=true
+LOG_ENABLE_PERFORMANCE=true
+LOG_MAX_SIZE=5242880
+LOG_MAX_FILES=5
+LOG_RETENTION_DAYS=30
+
+# Configuración del Procesamiento
+BATCH_SIZE=100
+PROCESSING_INTERVAL=30000
+EOF
+    fi
 
     print_success "Archivo de configuración creado en $CONFIG_FILE"
     print_warning "⚠️  Recuerda editar las variables de entorno según tu configuración"
