@@ -112,6 +112,195 @@ describe('ExcelProcessor', () => {
       const result = await processor['validateData'](data);
       expect(result).toBe(true);
     });
+
+    // Nuevos tests para validaciones mejoradas
+    it('should validate required fields properly', async () => {
+      const data: ExcelRow[] = [
+        {
+          idLicitacion: '123',
+          nombre: 'Licitación Test',
+          organismo: 'Organismo Test',
+          unidad: 'Unidad Test'
+        }
+      ];
+
+      const result = await processor['validateData'](data);
+      expect(result).toBe(true);
+    });
+
+    it('should reject records with missing required fields', async () => {
+      const data: ExcelRow[] = [
+        {
+          idLicitacion: '', // Vacío
+          nombre: 'Licitación Test',
+          organismo: 'Organismo Test',
+          unidad: 'Unidad Test'
+        }
+      ];
+
+      const result = await processor['validateData'](data);
+      expect(result).toBe(false);
+    });
+
+    it('should validate date formats', async () => {
+      const data: ExcelRow[] = [
+        {
+          idLicitacion: '123',
+          nombre: 'Licitación Test',
+          organismo: 'Organismo Test',
+          unidad: 'Unidad Test',
+          fechaPublicacion: '2023-01-01',
+          fechaCierre: '2023-01-31'
+        }
+      ];
+
+      const result = await processor['validateData'](data);
+      expect(result).toBe(true);
+    });
+
+    it('should reject invalid date formats', async () => {
+      const data: ExcelRow[] = [
+        {
+          idLicitacion: '123',
+          nombre: 'Licitación Test',
+          organismo: 'Organismo Test',
+          unidad: 'Unidad Test',
+          fechaPublicacion: 'fecha-invalida',
+          fechaCierre: '2023-01-31'
+        }
+      ];
+
+      const result = await processor['validateData'](data);
+      expect(result).toBe(false);
+    });
+
+    it('should validate date ranges', async () => {
+      const data: ExcelRow[] = [
+        {
+          idLicitacion: '123',
+          nombre: 'Licitación Test',
+          organismo: 'Organismo Test',
+          unidad: 'Unidad Test',
+          fechaPublicacion: '2023-01-01',
+          fechaCierre: '2023-01-31' // Después de publicación
+        }
+      ];
+
+      const result = await processor['validateData'](data);
+      expect(result).toBe(true);
+    });
+
+    it('should reject invalid date ranges', async () => {
+      const data: ExcelRow[] = [
+        {
+          idLicitacion: '123',
+          nombre: 'Licitación Test',
+          organismo: 'Organismo Test',
+          unidad: 'Unidad Test',
+          fechaPublicacion: '2023-01-31',
+          fechaCierre: '2023-01-01' // Antes de publicación
+        }
+      ];
+
+      const result = await processor['validateData'](data);
+      expect(result).toBe(false);
+    });
+
+    it('should validate numeric fields', async () => {
+      const data: ExcelRow[] = [
+        {
+          idLicitacion: '123',
+          nombre: 'Licitación Test',
+          organismo: 'Organismo Test',
+          unidad: 'Unidad Test',
+          montoDisponible: 1000.50
+        }
+      ];
+
+      const result = await processor['validateData'](data);
+      expect(result).toBe(true);
+    });
+
+    it('should validate string numeric fields', async () => {
+      const data: ExcelRow[] = [
+        {
+          idLicitacion: '123',
+          nombre: 'Licitación Test',
+          organismo: 'Organismo Test',
+          unidad: 'Unidad Test',
+          montoDisponible: '1000.50'
+        }
+      ];
+
+      const result = await processor['validateData'](data);
+      expect(result).toBe(true);
+    });
+
+    it('should reject invalid numeric fields', async () => {
+      const data: ExcelRow[] = [
+        {
+          idLicitacion: '123',
+          nombre: 'Licitación Test',
+          organismo: 'Organismo Test',
+          unidad: 'Unidad Test',
+          montoDisponible: 'no-es-numero'
+        }
+      ];
+
+      const result = await processor['validateData'](data);
+      expect(result).toBe(false);
+    });
+
+    it('should validate field length limits', async () => {
+      const data: ExcelRow[] = [
+        {
+          idLicitacion: '123',
+          nombre: 'A'.repeat(500), // Máximo permitido
+          organismo: 'B'.repeat(300), // Máximo permitido
+          unidad: 'C'.repeat(200), // Máximo permitido
+          moneda: 'USD',
+          estado: 'Activo'
+        }
+      ];
+
+      const result = await processor['validateData'](data);
+      expect(result).toBe(true);
+    });
+
+    it('should reject fields exceeding length limits', async () => {
+      const data: ExcelRow[] = [
+        {
+          idLicitacion: '123',
+          nombre: 'A'.repeat(501), // Excede límite
+          organismo: 'Organismo Test',
+          unidad: 'Unidad Test'
+        }
+      ];
+
+      const result = await processor['validateData'](data);
+      expect(result).toBe(false);
+    });
+
+    it('should handle undefined rows gracefully', async () => {
+      const data: ExcelRow[] = [
+        {
+          idLicitacion: '123',
+          nombre: 'Licitación Test',
+          organismo: 'Organismo Test',
+          unidad: 'Unidad Test'
+        },
+        undefined as any, // Fila undefined
+        {
+          idLicitacion: '456',
+          nombre: 'Licitación Test 2',
+          organismo: 'Organismo Test 2',
+          unidad: 'Unidad Test 2'
+        }
+      ];
+
+      const result = await processor['validateData'](data);
+      expect(result).toBe(false);
+    });
   });
 
   describe('parseDate', () => {

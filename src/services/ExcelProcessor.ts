@@ -352,7 +352,7 @@ export class ExcelProcessor {
   }
 
   /**
-   * Valida los datos del Excel
+   * Valida los datos del Excel con validaciones completas
    */
   private async validateData(data: ExcelRow[]): Promise<boolean> {
     if (!Array.isArray(data) || data.length === 0) {
@@ -360,22 +360,268 @@ export class ExcelProcessor {
       return false;
     }
 
-    // Validar que todos los registros tengan al menos idLicitacion
-    const validRecords = data.every((row, index) => {
-      if (!row.idLicitacion) {
-        logger.warn(`Registro ${index + 1} sin idLicitacion`);
-        return false;
-      }
-      return true;
-    });
+    let validationErrors = 0;
+    const maxErrorsToLog = 10; // Limitar logs para no saturar
 
-    if (!validRecords) {
-      logger.warn('Algunos registros no tienen idLicitacion');
+    // Validar cada registro individualmente
+    for (let index = 0; index < data.length; index++) {
+      const row = data[index];
+      if (!row) {
+        logger.warn(`Registro ${index + 1}: fila vacía o undefined`);
+        validationErrors++;
+        continue;
+      }
+      const rowNumber = index + 1;
+      let rowHasErrors = false;
+
+      // 1. Validar idLicitacion (campo obligatorio)
+      if (!this.isValidIdLicitacion(row.idLicitacion)) {
+        if (validationErrors < maxErrorsToLog) {
+          logger.warn(`Registro ${rowNumber}: idLicitacion inválido o faltante`, {
+            value: row.idLicitacion,
+            rowNumber
+          });
+        }
+        validationErrors++;
+        rowHasErrors = true;
+      }
+
+      // 2. Validar nombre (campo obligatorio)
+      if (!this.isValidNombre(row.nombre)) {
+        if (validationErrors < maxErrorsToLog) {
+          logger.warn(`Registro ${rowNumber}: nombre inválido o faltante`, {
+            value: row.nombre,
+            rowNumber
+          });
+        }
+        validationErrors++;
+        rowHasErrors = true;
+      }
+
+      // 3. Validar fechaPublicacion
+      if (!this.isValidDate(row.fechaPublicacion)) {
+        if (validationErrors < maxErrorsToLog) {
+          logger.warn(`Registro ${rowNumber}: fechaPublicacion inválida`, {
+            value: row.fechaPublicacion,
+            rowNumber
+          });
+        }
+        validationErrors++;
+        rowHasErrors = true;
+      }
+
+      // 4. Validar fechaCierre
+      if (!this.isValidDate(row.fechaCierre)) {
+        if (validationErrors < maxErrorsToLog) {
+          logger.warn(`Registro ${rowNumber}: fechaCierre inválida`, {
+            value: row.fechaCierre,
+            rowNumber
+          });
+        }
+        validationErrors++;
+        rowHasErrors = true;
+      }
+
+      // 5. Validar organismo (campo obligatorio)
+      if (!this.isValidOrganismo(row.organismo)) {
+        if (validationErrors < maxErrorsToLog) {
+          logger.warn(`Registro ${rowNumber}: organismo inválido o faltante`, {
+            value: row.organismo,
+            rowNumber
+          });
+        }
+        validationErrors++;
+        rowHasErrors = true;
+      }
+
+      // 6. Validar unidad (campo obligatorio)
+      if (!this.isValidUnidad(row.unidad)) {
+        if (validationErrors < maxErrorsToLog) {
+          logger.warn(`Registro ${rowNumber}: unidad inválida o faltante`, {
+            value: row.unidad,
+            rowNumber
+          });
+        }
+        validationErrors++;
+        rowHasErrors = true;
+      }
+
+      // 7. Validar montoDisponible
+      if (!this.isValidMontoDisponible(row.montoDisponible)) {
+        if (validationErrors < maxErrorsToLog) {
+          logger.warn(`Registro ${rowNumber}: montoDisponible inválido`, {
+            value: row.montoDisponible,
+            rowNumber
+          });
+        }
+        validationErrors++;
+        rowHasErrors = true;
+      }
+
+      // 8. Validar moneda
+      if (!this.isValidMoneda(row.moneda)) {
+        if (validationErrors < maxErrorsToLog) {
+          logger.warn(`Registro ${rowNumber}: moneda inválida`, {
+            value: row.moneda,
+            rowNumber
+          });
+        }
+        validationErrors++;
+        rowHasErrors = true;
+      }
+
+      // 9. Validar estado
+      if (!this.isValidEstado(row.estado)) {
+        if (validationErrors < maxErrorsToLog) {
+          logger.warn(`Registro ${rowNumber}: estado inválido`, {
+            value: row.estado,
+            rowNumber
+          });
+        }
+        validationErrors++;
+        rowHasErrors = true;
+      }
+
+      // 10. Validar coherencia de fechas
+      if (!this.isValidDateRange(row.fechaPublicacion, row.fechaCierre)) {
+        if (validationErrors < maxErrorsToLog) {
+          logger.warn(`Registro ${rowNumber}: rango de fechas inválido`, {
+            fechaPublicacion: row.fechaPublicacion,
+            fechaCierre: row.fechaCierre,
+            rowNumber
+          });
+        }
+        validationErrors++;
+        rowHasErrors = true;
+      }
+
+      if (rowHasErrors && validationErrors >= maxErrorsToLog) {
+        logger.warn(`Demasiados errores de validación. Deteniendo logs detallados.`);
+        break;
+      }
+    }
+
+    if (validationErrors > 0) {
+      logger.error(`Validación fallida: ${validationErrors} errores encontrados en ${data.length} registros`);
       return false;
     }
 
     logger.info(`Validación exitosa: ${data.length} registros válidos`);
     return true;
+  }
+
+  /**
+   * Valida el campo idLicitacion
+   */
+  private isValidIdLicitacion(value: any): boolean {
+    if (!value || typeof value !== 'string') return false;
+    const trimmed = value.toString().trim();
+    return trimmed.length > 0 && trimmed.length <= 50;
+  }
+
+  /**
+   * Valida el campo nombre
+   */
+  private isValidNombre(value: any): boolean {
+    if (!value || typeof value !== 'string') return false;
+    const trimmed = value.toString().trim();
+    return trimmed.length > 0 && trimmed.length <= 500;
+  }
+
+  /**
+   * Valida el campo organismo
+   */
+  private isValidOrganismo(value: any): boolean {
+    if (!value) return true; // Campo opcional
+    if (typeof value !== 'string') return false;
+    const trimmed = value.toString().trim();
+    return trimmed.length <= 300;
+  }
+
+  /**
+   * Valida el campo unidad
+   */
+  private isValidUnidad(value: any): boolean {
+    if (!value) return true; // Campo opcional
+    if (typeof value !== 'string') return false;
+    const trimmed = value.toString().trim();
+    return trimmed.length <= 200;
+  }
+
+  /**
+   * Valida el campo moneda
+   */
+  private isValidMoneda(value: any): boolean {
+    if (!value) return true; // Campo opcional
+    if (typeof value !== 'string') return false;
+    const trimmed = value.toString().trim();
+    return trimmed.length <= 10;
+  }
+
+  /**
+   * Valida el campo estado
+   */
+  private isValidEstado(value: any): boolean {
+    if (!value) return true; // Campo opcional
+    if (typeof value !== 'string') return false;
+    const trimmed = value.toString().trim();
+    return trimmed.length <= 50;
+  }
+
+  /**
+   * Valida el campo montoDisponible
+   */
+  private isValidMontoDisponible(value: any): boolean {
+    if (value === undefined || value === null) return true; // Campo opcional
+    
+    // Si es número, validar que sea positivo
+    if (typeof value === 'number') {
+      return value >= 0 && !isNaN(value) && isFinite(value);
+    }
+    
+    // Si es string, intentar parsear
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed === '') return true; // Campo opcional
+      
+      const parsed = parseFloat(trimmed.replace(/[^\d.-]/g, ''));
+      return !isNaN(parsed) && isFinite(parsed) && parsed >= 0;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Valida una fecha
+   */
+  private isValidDate(value: any): boolean {
+    if (!value) return true; // Campo opcional
+    
+    if (value instanceof Date) {
+      return !isNaN(value.getTime());
+    }
+    
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed === '') return true; // Campo opcional
+      
+      const parsed = new Date(trimmed);
+      return !isNaN(parsed.getTime());
+    }
+    
+    return false;
+  }
+
+  /**
+   * Valida el rango de fechas (fechaPublicacion debe ser anterior a fechaCierre)
+   */
+  private isValidDateRange(fechaPublicacion: any, fechaCierre: any): boolean {
+    if (!fechaPublicacion || !fechaCierre) return true; // Si alguna fecha es opcional
+    
+    const pubDate = this.parseDate(fechaPublicacion);
+    const cierreDate = this.parseDate(fechaCierre);
+    
+    return pubDate <= cierreDate;
   }
 
   /**
