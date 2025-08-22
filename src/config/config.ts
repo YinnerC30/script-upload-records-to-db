@@ -65,7 +65,6 @@ export const config = {
   // Configuración del Procesamiento
   processing: {
     batchSize: getEnvVarNumber('BATCH_SIZE', 100),
-    interval: getEnvVarNumber('PROCESSING_INTERVAL', 30000), // 30 segundos
   },
 
   // Configuración del ejecutable
@@ -99,9 +98,6 @@ export function validateConfig(): void {
     `🗄️  Base de datos: ${config.database.host}:${config.database.port}/${config.database.database}`
   );
   console.log(`📊 Tamaño de lote: ${config.processing.batchSize}`);
-  console.log(
-    `⏱️  Intervalo de procesamiento: ${config.processing.interval}ms`
-  );
 }
 
 // Función para crear directorios necesarios

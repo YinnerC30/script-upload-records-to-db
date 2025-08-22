@@ -67,13 +67,9 @@ async function main() {
 
     // 5. Mostrar comandos de uso
     console.log('5️⃣  Comandos disponibles:\n');
-    console.log('   📁 Procesamiento único:');
+    console.log('   📁 Procesamiento:');
     console.log('      npm run dev          # Desarrollo');
     console.log('      npm start            # Producción\n');
-
-    console.log('   👀 Monitoreo continuo:');
-    console.log('      npm run watcher      # Desarrollo');
-    console.log('      npm run watcher:prod # Producción\n');
 
     console.log('   🧪 Pruebas:');
     console.log('      npm test             # Ejecutar pruebas');
@@ -84,7 +80,7 @@ async function main() {
     // 6. Instrucciones de uso
     console.log('6️⃣  Instrucciones de uso:\n');
     console.log('   a) Coloca archivos Excel en el directorio excel-files/');
-    console.log('   b) Ejecuta el script (modo único o continuo)');
+    console.log('   b) Ejecuta el script');
     console.log('   c) Revisa los logs en logs/app.log');
     console.log('   d) Los archivos procesados se mueven a processed-files/');
     console.log('   e) Los archivos con errores se mueven a error-files/\n');

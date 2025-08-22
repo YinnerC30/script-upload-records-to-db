@@ -5,7 +5,7 @@ Este proyecto es una aplicación Node.js que procesa automáticamente archivos E
 ## 🚀 Características
 
 - **Procesamiento automático**: Detecta y procesa el archivo Excel más reciente en un directorio
-- **Monitoreo continuo**: Opción de ejecutar como servicio que monitorea continuamente el directorio
+
 - **Validación de datos**: Valida la estructura y contenido de los archivos Excel
 - **Procesamiento por lotes**: Inserta registros en la base de datos en lotes para mejor rendimiento
 - **Logging completo**: Sistema de logs detallado con Winston
@@ -89,9 +89,9 @@ npm run build:all
 - ✅ Más rápido y portable
 - ✅ Fácil de distribuir
 
-### Modo Ejecución Única
+### Ejecución
 
-Para procesar archivos una sola vez:
+Para procesar archivos Excel:
 
 ```bash
 # Desarrollo
@@ -102,19 +102,6 @@ npm run build
 npm start
 ```
 
-### Modo Monitoreo Continuo
-
-Para ejecutar como servicio que monitorea continuamente el directorio:
-
-```bash
-# Desarrollo
-npx ts-node src/index-watcher.ts
-
-# Producción
-npm run build
-node dist/index-watcher.js
-```
-
 ### Scripts Disponibles
 
 ```bash
@@ -122,7 +109,6 @@ npm run build          # Compilar TypeScript
 npm run build:all      # Compilar y crear ejecutable
 npm run dev            # Ejecutar en modo desarrollo
 npm run start          # Ejecutar en modo producción
-npm run watch          # Ejecutar con nodemon (desarrollo)
 npm run test           # Ejecutar pruebas
 npm run test:watch     # Ejecutar pruebas en modo watch
 ```
@@ -137,12 +123,10 @@ script-upload-records-to-db/
 │   ├── entities/
 │   │   └── Licitacion.ts        # Entidad para licitaciones
 │   ├── services/
-│   │   ├── ExcelProcessor.ts    # Lógica principal de procesamiento
-│   │   └── WatcherService.ts    # Servicio de monitoreo continuo
+│   │   └── ExcelProcessor.ts    # Lógica principal de procesamiento
 │   ├── utils/
 │   │   └── logger.ts            # Configuración de Winston
-│   ├── index.ts                 # Punto de entrada (ejecución única)
-│   └── index-watcher.ts         # Punto de entrada (monitoreo continuo)
+│   └── index.ts                 # Punto de entrada principal
 ├── package.json
 ├── tsconfig.json
 ├── env.example
@@ -294,8 +278,7 @@ npm run logs:test       # Prueba el sistema de logging
 # Ejecutar todas las pruebas
 npm test
 
-# Ejecutar pruebas en modo watch
-npm run test:watch
+
 
 # Ejecutar pruebas específicas del mapeo de encabezados
 npm test -- --run src/services/__tests__/HeaderMapping.test.ts
@@ -318,17 +301,6 @@ Este script muestra:
 - 📊 Datos transformados
 
 ## 🔍 Monitoreo
-
-### Verificar Estado del Servicio
-
-Si ejecutas en modo watcher, puedes verificar el estado:
-
-```typescript
-// En el código
-const watcher = new WatcherService();
-const stats = watcher.getStats();
-console.log(stats);
-```
 
 ### Logs de Monitoreo
 

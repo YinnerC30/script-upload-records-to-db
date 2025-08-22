@@ -20,14 +20,12 @@ Opciones:
   -v, --version       Mostrar versión
   -c, --config        Mostrar configuración actual
   -d, --dry-run       Ejecutar sin procesar archivos (solo validar)
-  -w, --watch         Ejecutar en modo watcher (monitoreo continuo)
 
 Ejemplos:
   excel-processor                    # Procesamiento normal
   excel-processor --help             # Mostrar ayuda
   excel-processor --config           # Ver configuración
   excel-processor --dry-run          # Solo validar archivos
-  excel-processor --watch            # Modo monitoreo continuo
 
 Configuración:
   El programa usa variables de entorno o archivo .env
@@ -51,7 +49,6 @@ function showConfig() {
   console.log(`  📁 Directorio procesados: ${config.directories.processed}`);
   console.log(`  📁 Directorio errores: ${config.directories.error}`);
   console.log(`  📦 Tamaño de lote: ${config.processing.batchSize}`);
-  console.log(`  ⏱️  Intervalo: ${config.processing.interval}ms`);
 }
 
 // Variable global para modo dry-run
@@ -86,14 +83,6 @@ async function parseArguments() {
         console.log('🔍 Modo dry-run activado (solo validación)');
         isDryRun = true;
         break;
-
-      case '-w':
-      case '--watch':
-        console.log('👀 Modo watcher activado');
-        // Importar y ejecutar el watcher
-        const { main: watcherMain } = await import('./index-watcher');
-        await watcherMain();
-        return;
 
       default:
         console.error(`❌ Opción desconocida: ${arg}`);
