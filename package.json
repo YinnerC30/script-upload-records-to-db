@@ -27,7 +27,7 @@
   "scripts": {
     "build": "tsc",
     "build:executable": "npm run build && pkg .",
-    "build:all": "npm run build && pkg . && chmod +x bin/script-upload-records-to-db-linux",
+    "build:all": "npm run build && pkg . && chmod +x bin/script-upload-records-to-db",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "watch": "nodemon --exec ts-node src/index.ts",

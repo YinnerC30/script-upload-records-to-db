@@ -56,12 +56,14 @@ async function main() {
       cleanup();
       process.exit(1);
     });
-
   } catch (error) {
     logger.error('❌ Error iniciando el servicio:', error);
     process.exit(1);
   }
 }
+
+// Exportar función main para uso externo
+export { main };
 
 // Ejecutar aplicación
 main();

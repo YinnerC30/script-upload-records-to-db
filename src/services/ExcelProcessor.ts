@@ -45,14 +45,16 @@ export class ExcelProcessor {
   private readonly processedDirectory: string;
   private readonly errorDirectory: string;
   private readonly batchSize: number;
+  private readonly dryRun: boolean;
   private logger: StructuredLogger;
 
-  constructor() {
+  constructor(dryRun: boolean = false) {
     this.excelDirectory = process.env.EXCEL_DIRECTORY || './excel-files';
     this.processedDirectory =
       process.env.PROCESSED_DIRECTORY || './processed-files';
     this.errorDirectory = process.env.ERROR_DIRECTORY || './error-files';
     this.batchSize = parseInt(process.env.BATCH_SIZE || '100');
+    this.dryRun = dryRun;
     this.logger = new StructuredLogger('ExcelProcessor');
 
     // Crear directorios si no existen
@@ -186,47 +188,98 @@ export class ExcelProcessor {
         throw new Error('Los datos del archivo Excel no son válidos');
       }
 
-      // Guardar en base de datos
-      const saveStartTime = Date.now();
-      await this.saveToDatabase(data, fileName);
-      const saveTime = Date.now() - saveStartTime;
+      // Guardar en base de datos (saltar en modo dry-run)
+      if (this.dryRun) {
+        console.log('🔍 [DRY-RUN] Simulando guardado en base de datos...');
+        console.log(
+          `   📊 Se simularían ${data.length.toLocaleString()} registros`
+        );
+        console.log(`   📦 Tamaño de lote: ${this.batchSize}`);
 
-      this.logger.performance('save_to_database', saveTime, {
-        fileName,
-        recordsCount: data.length,
-        batchSize: this.batchSize,
-      });
+        // Simular tiempo de guardado
+        const simulatedSaveTime = Math.round(data.length * 0.1); // 0.1ms por registro
+        console.log(`   ⏱️  Tiempo simulado: ${simulatedSaveTime}ms`);
 
-      // Mover archivo a directorio procesado
-      console.log('📦 Moviendo archivo a directorio procesado...');
-      const moveStartTime = Date.now();
-      await this.moveToProcessed(filePath, fileName);
-      const moveTime = Date.now() - moveStartTime;
+        this.logger.info('Simulación de guardado en base de datos (dry-run)', {
+          fileName,
+          recordsCount: data.length,
+          batchSize: this.batchSize,
+          simulatedTime: simulatedSaveTime,
+        });
+      } else {
+        const saveStartTime = Date.now();
+        await this.saveToDatabase(data, fileName);
+        const saveTime = Date.now() - saveStartTime;
 
-      console.log(`   ✅ Archivo movido en ${moveTime}ms`);
+        this.logger.performance('save_to_database', saveTime, {
+          fileName,
+          recordsCount: data.length,
+          batchSize: this.batchSize,
+        });
+      }
 
-      this.logger.performance('move_file', moveTime, {
-        fileName,
-        destination: this.processedDirectory,
-      });
+      // Mover archivo a directorio procesado (saltar en modo dry-run)
+      if (this.dryRun) {
+        console.log('🔍 [DRY-RUN] Simulando movimiento de archivo...');
+        console.log(`   📁 Origen: ${filePath}`);
+        console.log(`   📁 Destino: ${this.processedDirectory}/${fileName}`);
+
+        this.logger.info('Simulación de movimiento de archivo (dry-run)', {
+          fileName,
+          source: filePath,
+          destination: this.processedDirectory,
+        });
+      } else {
+        console.log('📦 Moviendo archivo a directorio procesado...');
+        const moveStartTime = Date.now();
+        await this.moveToProcessed(filePath, fileName);
+        const moveTime = Date.now() - moveStartTime;
+
+        console.log(`   ✅ Archivo movido en ${moveTime}ms`);
+
+        this.logger.performance('move_file', moveTime, {
+          fileName,
+          destination: this.processedDirectory,
+        });
+      }
 
       const totalTime = Date.now() - startTime;
       const totalTimeSeconds = Math.round(totalTime / 1000);
 
-      console.log(`\n🎉 ¡Procesamiento completado exitosamente!`);
-      console.log(
-        `   📊 Total de registros procesados: ${data.length.toLocaleString()}`
-      );
-      console.log(`   ⏱️  Tiempo total: ${totalTimeSeconds}s`);
-      console.log(`   ⏰ Finalizado: ${new Date().toLocaleTimeString()}\n`);
+      if (this.dryRun) {
+        console.log(`\n🔍 ¡Validación completada exitosamente! (MODO DRY-RUN)`);
+        console.log(
+          `   📊 Total de registros validados: ${data.length.toLocaleString()}`
+        );
+        console.log(`   ⏱️  Tiempo total: ${totalTimeSeconds}s`);
+        console.log(`   ⏰ Finalizado: ${new Date().toLocaleTimeString()}`);
+        console.log(
+          `   💡 No se realizaron cambios en la base de datos ni archivos\n`
+        );
 
-      this.logger.info('Archivo procesado exitosamente', {
-        fileName,
-        recordsCount: data.length,
-        totalTime,
-        totalTimeMs: totalTime,
-        sessionId: this.logger.getSessionId(),
-      });
+        this.logger.info('Validación completada exitosamente (dry-run)', {
+          fileName,
+          recordsCount: data.length,
+          totalTime,
+          totalTimeMs: totalTime,
+          sessionId: this.logger.getSessionId(),
+        });
+      } else {
+        console.log(`\n🎉 ¡Procesamiento completado exitosamente!`);
+        console.log(
+          `   📊 Total de registros procesados: ${data.length.toLocaleString()}`
+        );
+        console.log(`   ⏱️  Tiempo total: ${totalTimeSeconds}s`);
+        console.log(`   ⏰ Finalizado: ${new Date().toLocaleTimeString()}\n`);
+
+        this.logger.info('Archivo procesado exitosamente', {
+          fileName,
+          recordsCount: data.length,
+          totalTime,
+          totalTimeMs: totalTime,
+          sessionId: this.logger.getSessionId(),
+        });
+      }
 
       // Logging de métricas
       this.logger.metrics('records_processed', data.length, 'records', {
@@ -377,10 +430,13 @@ export class ExcelProcessor {
       // 1. Validar idLicitacion (campo obligatorio)
       if (!this.isValidIdLicitacion(row.idLicitacion)) {
         if (validationErrors < maxErrorsToLog) {
-          logger.warn(`Registro ${rowNumber}: idLicitacion inválido o faltante`, {
-            value: row.idLicitacion,
-            rowNumber
-          });
+          logger.warn(
+            `Registro ${rowNumber}: idLicitacion inválido o faltante`,
+            {
+              value: row.idLicitacion,
+              rowNumber,
+            }
+          );
         }
         validationErrors++;
         rowHasErrors = true;
@@ -391,7 +447,7 @@ export class ExcelProcessor {
         if (validationErrors < maxErrorsToLog) {
           logger.warn(`Registro ${rowNumber}: nombre inválido o faltante`, {
             value: row.nombre,
-            rowNumber
+            rowNumber,
           });
         }
         validationErrors++;
@@ -403,7 +459,7 @@ export class ExcelProcessor {
         if (validationErrors < maxErrorsToLog) {
           logger.warn(`Registro ${rowNumber}: fechaPublicacion inválida`, {
             value: row.fechaPublicacion,
-            rowNumber
+            rowNumber,
           });
         }
         validationErrors++;
@@ -415,7 +471,7 @@ export class ExcelProcessor {
         if (validationErrors < maxErrorsToLog) {
           logger.warn(`Registro ${rowNumber}: fechaCierre inválida`, {
             value: row.fechaCierre,
-            rowNumber
+            rowNumber,
           });
         }
         validationErrors++;
@@ -427,7 +483,7 @@ export class ExcelProcessor {
         if (validationErrors < maxErrorsToLog) {
           logger.warn(`Registro ${rowNumber}: organismo inválido o faltante`, {
             value: row.organismo,
-            rowNumber
+            rowNumber,
           });
         }
         validationErrors++;
@@ -439,7 +495,7 @@ export class ExcelProcessor {
         if (validationErrors < maxErrorsToLog) {
           logger.warn(`Registro ${rowNumber}: unidad inválida o faltante`, {
             value: row.unidad,
-            rowNumber
+            rowNumber,
           });
         }
         validationErrors++;
@@ -451,7 +507,7 @@ export class ExcelProcessor {
         if (validationErrors < maxErrorsToLog) {
           logger.warn(`Registro ${rowNumber}: montoDisponible inválido`, {
             value: row.montoDisponible,
-            rowNumber
+            rowNumber,
           });
         }
         validationErrors++;
@@ -463,7 +519,7 @@ export class ExcelProcessor {
         if (validationErrors < maxErrorsToLog) {
           logger.warn(`Registro ${rowNumber}: moneda inválida`, {
             value: row.moneda,
-            rowNumber
+            rowNumber,
           });
         }
         validationErrors++;
@@ -475,7 +531,7 @@ export class ExcelProcessor {
         if (validationErrors < maxErrorsToLog) {
           logger.warn(`Registro ${rowNumber}: estado inválido`, {
             value: row.estado,
-            rowNumber
+            rowNumber,
           });
         }
         validationErrors++;
@@ -488,7 +544,7 @@ export class ExcelProcessor {
           logger.warn(`Registro ${rowNumber}: rango de fechas inválido`, {
             fechaPublicacion: row.fechaPublicacion,
             fechaCierre: row.fechaCierre,
-            rowNumber
+            rowNumber,
           });
         }
         validationErrors++;
@@ -496,13 +552,17 @@ export class ExcelProcessor {
       }
 
       if (rowHasErrors && validationErrors >= maxErrorsToLog) {
-        logger.warn(`Demasiados errores de validación. Deteniendo logs detallados.`);
+        logger.warn(
+          `Demasiados errores de validación. Deteniendo logs detallados.`
+        );
         break;
       }
     }
 
     if (validationErrors > 0) {
-      logger.error(`Validación fallida: ${validationErrors} errores encontrados en ${data.length} registros`);
+      logger.error(
+        `Validación fallida: ${validationErrors} errores encontrados en ${data.length} registros`
+      );
       return false;
     }
 
@@ -573,21 +633,21 @@ export class ExcelProcessor {
    */
   private isValidMontoDisponible(value: any): boolean {
     if (value === undefined || value === null) return true; // Campo opcional
-    
+
     // Si es número, validar que sea positivo
     if (typeof value === 'number') {
       return value >= 0 && !isNaN(value) && isFinite(value);
     }
-    
+
     // Si es string, intentar parsear
     if (typeof value === 'string') {
       const trimmed = value.trim();
       if (trimmed === '') return true; // Campo opcional
-      
+
       const parsed = parseFloat(trimmed.replace(/[^\d.-]/g, ''));
       return !isNaN(parsed) && isFinite(parsed) && parsed >= 0;
     }
-    
+
     return false;
   }
 
@@ -596,19 +656,19 @@ export class ExcelProcessor {
    */
   private isValidDate(value: any): boolean {
     if (!value) return true; // Campo opcional
-    
+
     if (value instanceof Date) {
       return !isNaN(value.getTime());
     }
-    
+
     if (typeof value === 'string') {
       const trimmed = value.trim();
       if (trimmed === '') return true; // Campo opcional
-      
+
       const parsed = new Date(trimmed);
       return !isNaN(parsed.getTime());
     }
-    
+
     return false;
   }
 
@@ -617,10 +677,10 @@ export class ExcelProcessor {
    */
   private isValidDateRange(fechaPublicacion: any, fechaCierre: any): boolean {
     if (!fechaPublicacion || !fechaCierre) return true; // Si alguna fecha es opcional
-    
+
     const pubDate = this.parseDate(fechaPublicacion);
     const cierreDate = this.parseDate(fechaCierre);
-    
+
     return pubDate <= cierreDate;
   }
 

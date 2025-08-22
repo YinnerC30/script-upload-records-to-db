@@ -8,8 +8,106 @@ import {
 } from './config/config';
 import logger from './utils/logger';
 
+// Función para mostrar ayuda
+function showHelp() {
+  console.log(`
+🚀 Excel Processor - Procesador de Archivos Excel
+
+Uso: excel-processor [OPCIONES]
+
+Opciones:
+  -h, --help          Mostrar esta ayuda
+  -v, --version       Mostrar versión
+  -c, --config        Mostrar configuración actual
+  -d, --dry-run       Ejecutar sin procesar archivos (solo validar)
+  -w, --watch         Ejecutar en modo watcher (monitoreo continuo)
+
+Ejemplos:
+  excel-processor                    # Procesamiento normal
+  excel-processor --help             # Mostrar ayuda
+  excel-processor --config           # Ver configuración
+  excel-processor --dry-run          # Solo validar archivos
+  excel-processor --watch            # Modo monitoreo continuo
+
+Configuración:
+  El programa usa variables de entorno o archivo .env
+  Ver README.md para más detalles sobre configuración
+`);
+}
+
+// Función para mostrar versión
+function showVersion() {
+  const packageJson = require('../package.json');
+  console.log(`Excel Processor v${packageJson.version}`);
+}
+
+// Función para mostrar configuración
+function showConfig() {
+  console.log('📋 Configuración actual:');
+  console.log(
+    `  🗄️  Base de datos: ${config.database.host}:${config.database.port}/${config.database.database}`
+  );
+  console.log(`  📁 Directorio Excel: ${config.directories.excel}`);
+  console.log(`  📁 Directorio procesados: ${config.directories.processed}`);
+  console.log(`  📁 Directorio errores: ${config.directories.error}`);
+  console.log(`  📦 Tamaño de lote: ${config.processing.batchSize}`);
+  console.log(`  ⏱️  Intervalo: ${config.processing.interval}ms`);
+}
+
+// Variable global para modo dry-run
+let isDryRun = false;
+
+// Función para procesar argumentos
+async function parseArguments() {
+  const args = process.argv.slice(2);
+
+  for (const arg of args) {
+    switch (arg) {
+      case '-h':
+      case '--help':
+        showHelp();
+        process.exit(0);
+        break;
+
+      case '-v':
+      case '--version':
+        showVersion();
+        process.exit(0);
+        break;
+
+      case '-c':
+      case '--config':
+        showConfig();
+        process.exit(0);
+        break;
+
+      case '-d':
+      case '--dry-run':
+        console.log('🔍 Modo dry-run activado (solo validación)');
+        isDryRun = true;
+        break;
+
+      case '-w':
+      case '--watch':
+        console.log('👀 Modo watcher activado');
+        // Importar y ejecutar el watcher
+        const { main: watcherMain } = await import('./index-watcher');
+        await watcherMain();
+        return;
+
+      default:
+        console.error(`❌ Opción desconocida: ${arg}`);
+        console.log('Usa --help para ver las opciones disponibles');
+        process.exit(1);
+    }
+  }
+}
+
 async function main() {
   try {
+    // Procesar argumentos primero
+    await parseArguments();
+
     console.log('🚀 Iniciando aplicación de procesamiento de Excel...');
 
     // Validar y mostrar configuración
@@ -24,7 +122,7 @@ async function main() {
     await initializeDatabase();
 
     // Crear procesador de Excel
-    const processor = new ExcelProcessor();
+    const processor = new ExcelProcessor(isDryRun);
 
     // Ejecutar procesamiento
     await processor.run();

@@ -180,7 +180,10 @@ fi
 print_success "🎉 Instalación completada exitosamente!"
 print_info "Para usar el ejecutable:"
 echo "  $EXECUTABLE_NAME                    # Ejecutar directamente"
-echo "  $EXECUTABLE_NAME --help             # Ver ayuda (si implementado)"
+echo "  $EXECUTABLE_NAME --help             # Ver ayuda"
+echo "  $EXECUTABLE_NAME --version          # Ver versión"
+echo "  $EXECUTABLE_NAME --config           # Ver configuración"
+echo "  $EXECUTABLE_NAME --watch            # Modo monitoreo continuo"
 
 if [ "$INSTALL_SERVICE" = true ]; then
     print_info "Para iniciar el servicio:"
