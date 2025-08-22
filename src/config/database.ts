@@ -36,16 +36,13 @@ export const AppDataSource = new DataSource({
   logging: process.env.NODE_ENV === 'development',
   ssl: false,
 
-  // Configuración de pool de conexiones
+  // Configuración de pool de conexiones (MySQL2 compatible)
   extra: {
     connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'),
-    acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT || '60000'),
-    timeout: parseInt(process.env.DB_TIMEOUT || '60000'),
-    reconnect: true,
-    maxReconnectAttempts: parseInt(
-      process.env.DB_MAX_RECONNECT_ATTEMPTS || '5'
-    ),
-    reconnectDelay: parseInt(process.env.DB_RECONNECT_DELAY || '1000'),
+    connectTimeout: parseInt(process.env.DB_CONNECT_TIMEOUT_MS || '30000'),
+    // Opciones de reconexión modernas para MySQL2
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0,
   },
 
   // Configuración de timeouts
