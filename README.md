@@ -1,44 +1,58 @@
-# Script de Procesamiento de Archivos Excel
+# 📊 Script de Procesamiento de Archivos Excel
 
-Este proyecto es una aplicación Node.js que procesa automáticamente archivos Excel, extrae los datos y los inserta en una base de datos MySQL usando TypeORM.
+Este proyecto es una aplicación Node.js que procesa automáticamente archivos Excel, extrae los datos y los inserta en una base de datos MySQL usando TypeORM. Está diseñado para manejar licitaciones públicas con un sistema robusto de validación, logging y manejo de errores.
 
-## 🚀 Características
+## 🚀 Características Principales
 
-- **Procesamiento automático**: Detecta y procesa el archivo Excel más reciente en un directorio
+### ✅ Funcionalidades Core
 
-- **Validación de datos**: Valida la estructura y contenido de los archivos Excel
-- **Procesamiento por lotes**: Inserta registros en la base de datos en lotes para mejor rendimiento
-- **Logging completo**: Sistema de logs detallado con Winston
-- **Manejo de errores**: Archivos con errores se mueven a un directorio separado
-- **Configuración flexible**: Variables de entorno para personalizar el comportamiento
+- **Procesamiento automático**: Detecta y procesa el archivo Excel más reciente
+- **Validación robusta**: Sistema completo de validación de datos
+- **Procesamiento por lotes**: Inserción optimizada en la base de datos
+- **Logging estructurado**: Sistema de logs detallado con Winston
+- **Manejo de errores**: Archivos con errores se mueven a directorio separado
+- **Configuración flexible**: Variables de entorno para personalización
 
-## 📋 Requisitos
+### ✅ Características Avanzadas
 
-- Node.js 18+
-- MySQL 8.0+
-- TypeScript
+- **Mapeo automático de encabezados**: Compatibilidad con diferentes formatos de Excel
+- **Lógica de retry**: Reconexión automática a la base de datos
+- **Progreso en tiempo real**: Monitoreo detallado del procesamiento
+- **Ejecutable standalone**: No requiere Node.js en el servidor
+- **Métricas de rendimiento**: Análisis automático de logs
 
-## 🛠️ Instalación
+## 📋 Requisitos del Sistema
 
-1. **Clonar o navegar al directorio del proyecto:**
+### Requisitos Mínimos
+
+- **Node.js**: 18.0.0 o superior
+- **MySQL**: 8.0.0 o superior
+- **RAM**: 512MB mínimo
+- **Espacio**: 100MB para la aplicación + espacio para archivos
+
+### Requisitos Recomendados
+
+- **Node.js**: 20.0.0 o superior
+- **MySQL**: 8.0.0 o superior
+- **RAM**: 1GB o más
+- **Espacio**: 500MB para la aplicación + espacio para archivos
+
+## 🛠️ Instalación y Configuración
+
+### 1. Instalación Básica
 
 ```bash
+# Clonar o navegar al directorio del proyecto
 cd script-upload-records-to-db
-```
 
-2. **Instalar dependencias:**
-
-```bash
+# Instalar dependencias
 npm install
-```
 
-3. **Configurar variables de entorno:**
-
-```bash
+# Configurar variables de entorno
 cp env.example .env
 ```
 
-4. **Editar el archivo `.env` con tus configuraciones:**
+### 2. Configuración del Archivo .env
 
 ```env
 # Configuración de Base de Datos
@@ -48,6 +62,14 @@ DB_USERNAME=root
 DB_PASSWORD=tu_password
 DB_DATABASE=excel_data
 
+# Configuración de Retry y Pool de Conexiones
+DB_RETRY_MAX_ATTEMPTS=5
+DB_RETRY_INITIAL_DELAY=1000
+DB_RETRY_MAX_DELAY=30000
+DB_RETRY_BACKOFF_MULTIPLIER=2
+DB_CONNECTION_LIMIT=10
+DB_CONNECT_TIMEOUT_MS=30000
+
 # Configuración del Directorio de Archivos
 EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
@@ -56,17 +78,44 @@ ERROR_DIRECTORY=./error-files
 # Configuración de Logs
 LOG_LEVEL=info
 LOG_FILE=./logs/app.log
+LOG_ENABLE_CONSOLE=true
+LOG_ENABLE_PERFORMANCE=true
+LOG_MAX_SIZE=5242880
+LOG_MAX_FILES=5
+LOG_RETENTION_DAYS=30
 
 # Configuración del Procesamiento
 BATCH_SIZE=100
 PROCESSING_INTERVAL=30000
 ```
 
-## 🏃‍♂️ Uso
+### 3. Configuración de Base de Datos
 
-### 🚀 Opción 1: Ejecutable (Recomendado)
+```bash
+# Iniciar MySQL con Docker
+npm run db:start
 
-El proyecto incluye un ejecutable que no requiere Node.js instalado en el servidor:
+# Verificar estado
+npm run db:status
+
+# Ver logs
+npm run db:logs
+```
+
+## 🏃‍♂️ Uso del Aplicativo
+
+### Opción 1: Desarrollo
+
+```bash
+# Ejecutar en modo desarrollo
+npm run dev
+
+# Ejecutar en modo producción
+npm run build
+npm start
+```
+
+### Opción 2: Ejecutable (Recomendado)
 
 ```bash
 # Construir el ejecutable
@@ -75,39 +124,27 @@ npm run build:all
 # Ejecutar directamente
 ./bin/script-upload-records-to-db
 
-# Instalar globalmente (incluye configuración automática)
+# Instalar globalmente
 ./install.sh
 
 # Ver demostración
 ./demo-executable.sh
 ```
 
-**Ventajas del ejecutable:**
-
-- ✅ No requiere Node.js en el servidor
-- ✅ Un solo archivo ejecutable
-- ✅ Más rápido y portable
-- ✅ Fácil de distribuir
-
-### 🔧 Configuración del Archivo .env
-
-El script permite modificar la configuración del archivo `.env` directamente desde la línea de comandos:
+### Opción 3: Configuración desde Línea de Comandos
 
 ```bash
-# Mostrar ayuda de configuración
+# Mostrar ayuda
 ./bin/script-upload-records-to-db --help
 
 # Ver configuración actual
 ./bin/script-upload-records-to-db --config
 
-# Cambiar configuración de base de datos
+# Configurar base de datos
 ./bin/script-upload-records-to-db --db-host 192.168.1.100 --db-port 3307
 
-# Cambiar directorios
+# Configurar directorios
 ./bin/script-upload-records-to-db --excel-dir ./my-excel-files --processed-dir ./my-processed-files
-
-# Cambiar configuración de procesamiento
-./bin/script-upload-records-to-db --batch-size 200 --log-level debug
 
 # Configuración completa
 ./bin/script-upload-records-to-db \
@@ -120,15 +157,6 @@ El script permite modificar la configuración del archivo `.env` directamente de
   --batch-size 1000 \
   --log-level info
 ```
-
-**Opciones disponibles:**
-
-- `--db-host`, `--db-port`, `--db-username`, `--db-password`, `--db-database`
-- `--excel-dir`, `--processed-dir`, `--error-dir`
-- `--batch-size`, `--log-level`
-- `--log-file`, `--log-console`, `--log-performance`
-
-📖 Ver [documentación completa de configuración](docs/CONFIGURACION_AMBIENTE.md)
 
 ### ⏰ Programación Automática
 
@@ -159,146 +187,79 @@ Para ejecutar el programa automáticamente en horarios específicos:
 0 15 * * 6,0 excel-processor
 ```
 
-### Ejecución
-
-Para procesar archivos Excel:
-
-```bash
-# Desarrollo
-npm run dev
-
-# Producción
-npm run build
-npm start
-```
-
-### Scripts Disponibles
-
-```bash
-npm run build          # Compilar TypeScript
-npm run build:all      # Compilar y crear ejecutable
-npm run dev            # Ejecutar en modo desarrollo
-npm run start          # Ejecutar en modo producción
-npm run test           # Ejecutar pruebas
-npm run test:watch     # Ejecutar pruebas en modo watch
-npm run test:env-config # Probar configuración del archivo .env
-```
-
-## 📁 Estructura del Proyecto
-
-```
-script-upload-records-to-db/
-├── src/
-│   ├── config/
-│   │   └── database.ts          # Configuración de TypeORM
-│   ├── entities/
-│   │   └── Licitacion.ts        # Entidad para licitaciones
-│   ├── services/
-│   │   └── ExcelProcessor.ts    # Lógica principal de procesamiento
-│   ├── utils/
-│   │   └── logger.ts            # Configuración de Winston
-│   └── index.ts                 # Punto de entrada principal
-├── package.json
-├── tsconfig.json
-├── env.example
-└── README.md
-```
-
-## 📊 Estructura de Datos Esperada
-
-El script espera archivos Excel con las siguientes columnas. **Importante**: El sistema incluye un mapeo automático de encabezados que permite compatibilidad con diferentes formatos de nombres de columnas.
+## 📊 Estructura de Datos
 
 ### Campos Esperados por el Sistema
 
-| Campo del Sistema | Tipo   | Descripción               | Requerido |
-| ----------------- | ------ | ------------------------- | --------- |
-| idLicitacion      | string | ID único de la licitación | ✅        |
-| nombre            | string | Nombre de la licitación   | ❌        |
-| fechaPublicacion  | date   | Fecha de publicación      | ❌        |
-| fechaCierre       | date   | Fecha de cierre           | ❌        |
-| organismo         | string | Organismo que publica     | ❌        |
-| unidad            | string | Unidad del organismo      | ❌        |
-| montoDisponible   | number | Monto disponible          | ❌        |
-| moneda            | string | Moneda (CLP, USD, etc.)   | ❌        |
-| estado            | string | Estado de la licitación   | ❌        |
+| Campo del Sistema | Tipo   | Descripción               | Requerido | Límite |
+| ----------------- | ------ | ------------------------- | --------- | ------ |
+| idLicitacion      | string | ID único de la licitación | ✅        | 50     |
+| nombre            | string | Nombre de la licitación   | ✅        | 500    |
+| fechaPublicacion  | date   | Fecha de publicación      | ❌        | -      |
+| fechaCierre       | date   | Fecha de cierre           | ❌        | -      |
+| organismo         | string | Organismo que publica     | ❌        | 300    |
+| unidad            | string | Unidad del organismo      | ❌        | 200    |
+| montoDisponible   | number | Monto disponible          | ❌        | 15,2   |
+| moneda            | string | Moneda (CLP, USD, etc.)   | ❌        | 10     |
+| estado            | string | Estado de la licitación   | ❌        | 50     |
 
 ### Mapeo Automático de Encabezados
 
-El sistema mapea automáticamente los siguientes encabezados del Excel a los campos del sistema:
+El sistema mapea automáticamente los siguientes encabezados del Excel:
 
-| Encabezado del Excel   | Campo del Sistema  |
-| ---------------------- | ------------------ |
-| `ID`                   | `idLicitacion`     |
-| `Nombre`               | `nombre`           |
-| `Fecha de Publicación` | `fechaPublicacion` |
-| `Fecha de cierre`      | `fechaCierre`      |
-| `Organismo`            | `organismo`        |
-| `Unidad`               | `unidad`           |
-| `Monto Disponible`     | `montoDisponible`  |
-| `Moneda`               | `moneda`           |
-| `Estado`               | `estado`           |
+| Encabezado del Excel   | Campo del Sistema  | Variaciones Soportadas              |
+| ---------------------- | ------------------ | ----------------------------------- |
+| `ID`                   | `idLicitacion`     | id_licitacion, idlicitacion         |
+| `Nombre`               | `nombre`           | -                                   |
+| `Fecha de Publicación` | `fechaPublicacion` | fecha_publicacion, fechapublicacion |
+| `Fecha de cierre`      | `fechaCierre`      | fecha_cierre, fechacierre           |
+| `Organismo`            | `organismo`        | -                                   |
+| `Unidad`               | `unidad`           | -                                   |
+| `Monto Disponible`     | `montoDisponible`  | monto_disponible, montodisponible   |
+| `Moneda`               | `moneda`           | -                                   |
+| `Estado`               | `estado`           | -                                   |
 
 **Características del mapeo:**
 
-- ✅ **Insensible a mayúsculas/minúsculas**
-- ✅ **Maneja acentos y caracteres especiales**
-- ✅ **Normaliza espacios múltiples**
-- ✅ **Soporta variaciones de nombres**
-- ✅ **Logs detallados de mapeo**
+- ✅ Insensible a mayúsculas/minúsculas
+- ✅ Maneja acentos y caracteres especiales
+- ✅ Normaliza espacios múltiples
+- ✅ Soporta variaciones de nombres
 
-### Ejemplo de Compatibilidad
+## 🔧 Configuración Avanzada
 
-Tu archivo Excel puede tener encabezados como:
+### Variables de Entorno Detalladas
 
-```
-ID | Nombre | Fecha de Publicación | Fecha de cierre | Organismo | Unidad | Monto Disponible | Moneda | Estado
-```
+| Variable                 | Descripción                          | Valor por Defecto   | Tipo   |
+| ------------------------ | ------------------------------------ | ------------------- | ------ |
+| `DB_HOST`                | Host de la base de datos             | `localhost`         | string |
+| `DB_PORT`                | Puerto de la base de datos           | `3306`              | number |
+| `DB_USERNAME`            | Usuario de la base de datos          | `root`              | string |
+| `DB_PASSWORD`            | Contraseña de la base de datos       | `password`          | string |
+| `DB_DATABASE`            | Nombre de la base de datos           | `excel_data`        | string |
+| `DB_RETRY_MAX_ATTEMPTS`  | Máximo intentos de reconexión        | `5`                 | number |
+| `DB_RETRY_INITIAL_DELAY` | Delay inicial en ms                  | `1000`              | number |
+| `DB_RETRY_MAX_DELAY`     | Delay máximo en ms                   | `30000`             | number |
+| `DB_CONNECTION_LIMIT`    | Límite de conexiones en el pool      | `10`                | number |
+| `DB_CONNECT_TIMEOUT_MS`  | Timeout de conexión en ms            | `30000`             | number |
+| `EXCEL_DIRECTORY`        | Directorio a monitorear              | `./excel-files`     | string |
+| `PROCESSED_DIRECTORY`    | Directorio para archivos procesados  | `./processed-files` | string |
+| `ERROR_DIRECTORY`        | Directorio para archivos con errores | `./error-files`     | string |
+| `LOG_LEVEL`              | Nivel de logging                     | `info`              | string |
+| `LOG_FILE`               | Archivo de logs                      | `./logs/app.log`    | string |
+| `BATCH_SIZE`             | Tamaño del lote para inserción       | `100`               | number |
+| `PROCESSING_INTERVAL`    | Intervalo de procesamiento (ms)      | `30000`             | number |
 
-Y el sistema los mapeará automáticamente a:
+### Directorios Automáticos
 
-```
-idLicitacion | nombre | fechaPublicacion | fechaCierre | organismo | unidad | montoDisponible | moneda | estado
-```
-
-## 🔧 Configuración
-
-### Variables de Entorno
-
-| Variable              | Descripción                          | Valor por Defecto   |
-| --------------------- | ------------------------------------ | ------------------- |
-| `DB_HOST`             | Host de la base de datos             | `localhost`         |
-| `DB_PORT`             | Puerto de la base de datos           | `3306`              |
-| `DB_USERNAME`         | Usuario de la base de datos          | `root`              |
-| `DB_PASSWORD`         | Contraseña de la base de datos       | `password`          |
-| `DB_DATABASE`         | Nombre de la base de datos           | `excel_data`        |
-| `EXCEL_DIRECTORY`     | Directorio a monitorear              | `./excel-files`     |
-| `PROCESSED_DIRECTORY` | Directorio para archivos procesados  | `./processed-files` |
-| `ERROR_DIRECTORY`     | Directorio para archivos con errores | `./error-files`     |
-| `LOG_LEVEL`           | Nivel de logging                     | `info`              |
-| `LOG_FILE`            | Archivo de logs                      | `./logs/app.log`    |
-| `BATCH_SIZE`          | Tamaño del lote para inserción       | `100`               |
-| `PROCESSING_INTERVAL` | Intervalo de procesamiento (ms)      | `30000`             |
-
-### Directorios
-
-El script crea automáticamente los siguientes directorios:
+El script crea automáticamente:
 
 - `excel-files/`: Archivos Excel a procesar
 - `processed-files/`: Archivos procesados exitosamente
 - `error-files/`: Archivos que generaron errores
 - `logs/`: Archivos de logs
 
-## 📝 Logs Mejorados
-
-El sistema genera logs estructurados y detallados con las siguientes características:
-
-### Archivos de Log
-
-- `logs/app.log`: Logs generales con toda la información
-- `logs/app.error.log`: Solo errores para monitoreo rápido
-- `logs/app.performance.log`: Métricas de rendimiento detalladas
-- `logs/report.md`: Reporte automático de análisis
-- `logs/report.json`: Datos estructurados para análisis
+## 📊 Sistema de Logging
 
 ### Características del Logging
 
@@ -307,6 +268,14 @@ El sistema genera logs estructurados y detallados con las siguientes caracterís
 - **Métricas de Rendimiento**: Tiempos de operación automáticos
 - **Formato Estructurado**: JSON para análisis automatizado
 - **Rotación Automática**: Gestión de archivos de log
+
+### Archivos de Log
+
+- `logs/app.log`: Logs generales con toda la información
+- `logs/app.error.log`: Solo errores para monitoreo rápido
+- `logs/app.performance.log`: Métricas de rendimiento detalladas
+- `logs/report.md`: Reporte automático de análisis
+- `logs/report.json`: Datos estructurados para análisis
 
 ### Niveles de Log
 
@@ -325,7 +294,7 @@ npm run logs:clean      # Limpia logs antiguos (>30 días)
 npm run logs:test       # Prueba el sistema de logging
 ```
 
-### Ejemplo de Log Mejorado
+### Ejemplo de Log Estructurado
 
 ```json
 {
@@ -341,50 +310,67 @@ npm run logs:test       # Prueba el sistema de logging
 }
 ```
 
-📖 **Documentación completa**: [docs/LOGGING_IMPROVEMENTS.md](docs/LOGGING_IMPROVEMENTS.md)
+## 🔍 Validaciones de Datos
 
-## 🧪 Pruebas
+### Validaciones Implementadas
 
-```bash
-# Ejecutar todas las pruebas
-npm test
+#### 1. Campos Obligatorios
 
+- **idLicitacion**: Debe estar presente y no estar vacío (máximo 50 caracteres)
+- **nombre**: Debe estar presente y no estar vacío (máximo 500 caracteres)
 
+#### 2. Campos Opcionales con Validación
 
-# Ejecutar pruebas específicas del mapeo de encabezados
-npm test -- --run src/services/__tests__/HeaderMapping.test.ts
+- **organismo**: Si está presente, máximo 300 caracteres
+- **unidad**: Si está presente, máximo 200 caracteres
+- **moneda**: Si está presente, máximo 10 caracteres
+- **estado**: Si está presente, máximo 50 caracteres
+
+#### 3. Validación de Fechas
+
+- **fechaPublicacion**: Formato de fecha válido (opcional)
+- **fechaCierre**: Formato de fecha válido (opcional)
+- **Rango de fechas**: La fecha de cierre debe ser posterior o igual a la fecha de publicación
+
+#### 4. Validación de Montos
+
+- **montoDisponible**: Debe ser un número válido y no negativo (opcional)
+- Soporta tanto números como strings numéricos
+- Maneja formatos de moneda (ej: "$1,234.56")
+
+#### 5. Validación de Estructura
+
+- Verifica que no haya filas `undefined` o vacías
+- Valida que los datos sean un array válido
+
+### Métricas de Validación
+
+- **Límite de logs**: Máximo 10 errores detallados para evitar saturación
+- **Logs estructurados**: Incluyen número de fila y valor problemático
+- **Resumen final**: Total de errores encontrados vs registros procesados
+
+## 🔄 Manejo de Errores y Retry
+
+### Lógica de Retry para Base de Datos
+
+#### Configuración de Retry
+
+```env
+DB_RETRY_MAX_ATTEMPTS=5              # Número máximo de intentos
+DB_RETRY_INITIAL_DELAY=1000          # Delay inicial en ms
+DB_RETRY_MAX_DELAY=30000             # Delay máximo en ms
+DB_RETRY_BACKOFF_MULTIPLIER=2        # Multiplicador de backoff exponencial
 ```
 
-### Probar el Mapeo de Encabezados
+#### Backoff Exponencial
 
-Para verificar que el mapeo de encabezados funciona correctamente:
+- Intento 1: 1000ms
+- Intento 2: 2000ms
+- Intento 3: 4000ms
+- Intento 4: 8000ms
+- Intento 5: 16000ms (limitado a 30000ms)
 
-```bash
-# Ejecutar script de demostración
-node scripts/test-header-mapping.js
-```
-
-Este script muestra:
-
-- 📋 Encabezados detectados en el archivo
-- ✅ Mapeo exitoso de cada encabezado
-- ⚠️ Encabezados no mapeados (si los hay)
-- 📊 Datos transformados
-
-## 🔍 Monitoreo
-
-### Logs de Monitoreo
-
-Los logs incluyen información sobre:
-
-- Archivos detectados
-- Progreso de procesamiento
-- Errores y advertencias
-- Estadísticas de inserción
-
-## 🚨 Manejo de Errores
-
-### Tipos de Errores
+### Tipos de Errores Manejados
 
 1. **Archivo no encontrado**: No hay archivos Excel en el directorio
 2. **Archivo corrupto**: El archivo Excel no se puede leer
@@ -393,37 +379,287 @@ Los logs incluyen información sobre:
 5. **Error de permisos**: Problemas de acceso a archivos
 6. **Encabezados no mapeados**: Columnas del Excel que no coinciden con el mapeo
 
-### Problemas Comunes con Encabezados
-
-#### Encabezados No Mapeados
-
-Si ves en los logs mensajes como:
-
-```
-⚠️ Encabezado no mapeado: "Campo Desconocido"
-```
-
-**Solución:**
-
-1. Verifica que los encabezados de tu Excel coincidan con los esperados
-2. Revisa el mapeo en `src/services/ExcelProcessor.ts`
-3. Agrega nuevos mapeos si es necesario
-
-#### Datos No Se Procesan
-
-Si los datos no se insertan en la base de datos:
-
-**Verificar:**
-
-1. Que al menos el campo `idLicitacion` esté presente
-2. Que los encabezados se mapeen correctamente
-3. Revisar los logs para ver el mapeo realizado
-
-### Recuperación
+### Recuperación Automática
 
 - Los archivos con errores se mueven a `error-files/`
 - Los logs detallan el error específico
 - El servicio continúa funcionando después de un error
+- Reconexión automática a la base de datos
+
+## 📈 Monitoreo y Progreso
+
+### Progreso Detallado por Lotes
+
+```
+✅ Lote 1: 100/5,000 registros (2.0%)
+✅ Lote 2: 200/5,000 registros (4.0%)
+✅ Lote 3: 300/5,000 registros (6.0%)
+```
+
+### Métricas de Tiempo
+
+```
+⏱️  Tiempo transcurrido: 45s | Estimado restante: 120s
+📊 Velocidad: 1,200 registros/min
+```
+
+### Estadísticas Finales
+
+```
+🎉 ¡Inserción completada exitosamente!
+   📊 Total de registros insertados: 5,000
+   ⏱️  Tiempo total: 165s
+   📦 Lotes procesados: 50
+   🚀 Velocidad promedio: 1,818 registros/min
+   ⏰ Finalizado: 15:30:45
+```
+
+## 🧪 Pruebas y Desarrollo
+
+### Scripts de Prueba Disponibles
+
+```bash
+# Ejecutar todas las pruebas
+npm test
+
+# Ejecutar pruebas en modo watch
+npm run test:watch
+
+# Ejecutar pruebas con UI
+npm run test:ui
+
+# Ejecutar pruebas con cobertura
+npm run test:coverage
+
+# Probar configuración del archivo .env
+npm run test:env-config
+
+# Probar lógica de retry de base de datos
+npm run test:retry
+
+# Probar sistema de logging
+npm run logs:test
+```
+
+### Scripts de Generación de Datos
+
+```bash
+# Crear archivo Excel de prueba pequeño
+npm run test:excel
+
+# Crear archivo Excel de prueba grande
+npm run test:excel:large 10000
+
+# Ejecutar demostración de progreso
+npm run demo
+```
+
+### Comandos de Base de Datos
+
+```bash
+# Iniciar base de datos
+npm run db:start
+
+# Detener base de datos
+npm run db:stop
+
+# Reiniciar base de datos
+npm run db:restart
+
+# Ver logs de base de datos
+npm run db:logs
+
+# Ver estado de base de datos
+npm run db:status
+
+# Limpiar base de datos
+npm run db:clean
+```
+
+### Scripts Disponibles
+
+```bash
+npm run build          # Compilar TypeScript
+npm run build:all      # Compilar y crear ejecutable
+npm run dev            # Ejecutar en modo desarrollo
+npm run start          # Ejecutar en modo producción
+npm run test           # Ejecutar pruebas
+npm run test:watch     # Ejecutar pruebas en modo watch
+npm run test:env-config # Probar configuración del archivo .env
+```
+
+## 🔧 Solución de Problemas
+
+### Problemas Comunes
+
+#### 1. Error: "No se encontraron archivos Excel"
+
+**Causa**: No hay archivos Excel en el directorio configurado
+**Solución**:
+
+```bash
+# Verificar directorio
+ls -la ./excel-files/
+
+# Crear archivo de prueba
+npm run test:excel
+```
+
+#### 2. Error: "Base de datos no disponible"
+
+**Causa**: MySQL no está ejecutándose o configuración incorrecta
+**Solución**:
+
+```bash
+# Verificar estado de MySQL
+npm run db:status
+
+# Iniciar MySQL si no está ejecutándose
+npm run db:start
+
+# Verificar configuración
+./bin/script-upload-records-to-db --config
+```
+
+#### 3. Error: "Encabezado no mapeado"
+
+**Causa**: Los encabezados del Excel no coinciden con el mapeo esperado
+**Solución**:
+
+```bash
+# Verificar mapeo de encabezados
+node scripts/test-header-mapping.js
+
+# Revisar logs para ver encabezados detectados
+tail -f logs/app.log
+```
+
+#### 4. Error: "Permisos denegados"
+
+**Causa**: Problemas de permisos en archivos o directorios
+**Solución**:
+
+```bash
+# Dar permisos de ejecución
+chmod +x bin/script-upload-records-to-db
+
+# Verificar permisos de directorios
+ls -la excel-files/ processed-files/ error-files/
+```
+
+#### 5. Error: "Variable de entorno requerida"
+
+**Causa**: Falta configuración en el archivo .env
+**Solución**:
+
+```bash
+# Crear archivo .env desde ejemplo
+cp env.example .env
+
+# Editar configuración
+nano .env
+```
+
+### Logs de Debug
+
+```bash
+# Ejecutar con nivel de log debug
+LOG_LEVEL=debug npm run dev
+
+# Ver logs en tiempo real
+tail -f logs/app.log
+
+# Ver solo errores
+tail -f logs/app.error.log
+
+# Ver métricas de rendimiento
+tail -f logs/app.performance.log
+```
+
+### Verificación de Funcionalidad
+
+```bash
+# Probar ejecutable
+./bin/script-upload-records-to-db --dry-run
+
+# Verificar conexión a base de datos
+npm run test:retry
+
+# Probar sistema de logging
+npm run logs:test
+```
+
+## 📁 Estructura del Proyecto
+
+```
+script-upload-records-to-db/
+├── src/
+│   ├── config/
+│   │   ├── config.ts          # Configuración general
+│   │   └── database.ts        # Configuración de TypeORM
+│   ├── entities/
+│   │   └── Licitacion.ts      # Entidad para licitaciones
+│   ├── services/
+│   │   ├── __tests__/
+│   │   │   ├── ExcelProcessor.test.ts
+│   │   │   └── HeaderMapping.test.ts
+│   │   └── ExcelProcessor.ts  # Lógica principal de procesamiento
+│   ├── utils/
+│   │   └── logger.ts          # Configuración de Winston
+│   └── index.ts               # Punto de entrada principal
+├── scripts/
+│   ├── create-test-excel.js
+│   ├── create-large-test-excel.js
+│   ├── demo-progress.js
+│   ├── log-analyzer.ts
+│   ├── test-database-retry.js
+│   ├── test-env-config.js
+│   └── test-header-mapping.js
+├── bin/                       # Ejecutables generados
+├── logs/                      # Archivos de log
+├── excel-files/               # Archivos Excel a procesar
+├── processed-files/           # Archivos procesados
+├── error-files/               # Archivos con errores
+├── package.json
+├── tsconfig.json
+├── vitest.config.ts
+└── README.md
+```
+
+## 📦 Información del Ejecutable
+
+### ¿Qué es el ejecutable?
+
+El ejecutable es una versión compilada del proyecto que incluye todas las dependencias necesarias. No requiere Node.js instalado en el servidor donde se ejecute.
+
+### Características del Ejecutable
+
+- **Portabilidad**: Funciona en cualquier sistema Linux x64
+- **Autocontenido**: Incluye todas las dependencias
+- **Configuración flexible**: Usa variables de entorno o archivo .env
+- **Logging completo**: Mantiene todos los logs del proyecto original
+
+### Archivos Generados
+
+- `bin/script-upload-records-to-db`: Ejecutable principal
+- `install.sh`: Script de instalación
+- `demo-executable.sh`: Script de demostración
+
+### Comandos del Ejecutable
+
+```bash
+# Construir
+npm run build:all
+
+# Ejecutar
+./bin/script-upload-records-to-db
+
+# Instalar
+./install.sh
+
+# Demostración
+./demo-executable.sh
+```
 
 ## 🔄 Flujo de Procesamiento
 
@@ -470,40 +706,68 @@ Si tienes problemas o preguntas:
 3. Asegúrate de que la base de datos esté accesible
 4. Verifica que los archivos Excel tengan la estructura correcta
 
-## 📦 Información del Ejecutable
+## 📚 Referencias Técnicas
 
-### ¿Qué es el ejecutable?
+### Dependencias Principales
 
-El ejecutable es una versión compilada del proyecto que incluye todas las dependencias necesarias. No requiere Node.js instalado en el servidor donde se ejecute.
+| Dependencia        | Versión | Propósito                       |
+| ------------------ | ------- | ------------------------------- |
+| `typeorm`          | ^0.3.20 | ORM para base de datos          |
+| `mysql2`           | ^3.9.2  | Driver de MySQL                 |
+| `xlsx`             | ^0.18.5 | Procesamiento de archivos Excel |
+| `winston`          | ^3.13.0 | Sistema de logging              |
+| `dotenv`           | ^16.4.5 | Variables de entorno            |
+| `reflect-metadata` | ^0.2.1  | Metadatos para TypeORM          |
 
-### Características del Ejecutable
-
-- **Portabilidad**: Funciona en cualquier sistema Linux x64
-- **Autocontenido**: Incluye todas las dependencias
-- **Configuración flexible**: Usa variables de entorno o archivo .env
-- **Logging completo**: Mantiene todos los logs del proyecto original
-
-### Archivos Generados
-
-- `bin/script-upload-records-to-db`: Ejecutable principal
-- `install.sh`: Script de instalación
-- `demo-executable.sh`: Script de demostración
-- `README-EXECUTABLE.md`: Documentación completa del ejecutable
-
-### Comandos del Ejecutable
+### Scripts de Build
 
 ```bash
-# Construir
-npm run build:all
-
-# Ejecutar
-./bin/script-upload-records-to-db
-
-# Instalar
-./install.sh
-
-# Demostración
-./demo-executable.sh
+npm run build                    # Compilar TypeScript
+npm run build:executable         # Crear ejecutable
+npm run build:executable:clean   # Crear ejecutable sin warnings
+npm run build:all               # Compilar y crear ejecutable
+npm run build:all:clean         # Build completo sin warnings
 ```
 
-Para más información sobre el ejecutable, consulta `README-EXECUTABLE.md`.
+### Configuración de TypeScript
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}
+```
+
+### Configuración de Vitest
+
+```typescript
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    environment: 'node',
+    setupFiles: ['./src/test/setup.ts'],
+    globals: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+    },
+  },
+});
+```
+
+---
+
+**Última actualización**: Agosto 2025  
+**Versión**: 1.0.0
