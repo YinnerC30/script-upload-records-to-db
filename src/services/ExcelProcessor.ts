@@ -703,12 +703,12 @@ export class ExcelProcessor {
     console.log(`   ⏱️  Inicio: ${new Date().toLocaleTimeString()}\n`);
 
     // Verificar conectividad con la API
-    console.log('🔍 Verificando conectividad con la API...');
-    const isApiHealthy = await this.apiService.checkApiHealth();
-    if (!isApiHealthy) {
-      throw new Error('No se pudo conectar con la API REST');
-    }
-    console.log('✅ API REST disponible\n');
+    // console.log('🔍 Verificando conectividad con la API...');
+    // const isApiHealthy = await this.apiService.checkApiHealth();
+    // if (!isApiHealthy) {
+    //   throw new Error('No se pudo conectar con la API REST');
+    // }
+    // console.log('✅ API REST disponible\n');
 
     try {
       for (let i = 0; i < data.length; i += this.batchSize) {
