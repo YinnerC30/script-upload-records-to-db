@@ -78,6 +78,14 @@ export const config = {
     batchSize: getEnvVarNumber('BATCH_SIZE', 100),
   },
 
+  // Configuración de la API REST
+  api: {
+    baseURL: getEnvVar('API_BASE_URL', 'http://localhost:3000/api'),
+    apiKey: getEnvVar('API_KEY', ''),
+    timeout: getEnvVarNumber('API_TIMEOUT', 30000),
+    retryAttempts: getEnvVarNumber('API_RETRY_ATTEMPTS', 3),
+  },
+
   // Configuración del ejecutable
   executable: {
     // Determinar si estamos ejecutando como binario
@@ -108,6 +116,7 @@ export function validateConfig(): void {
   console.log(
     `🗄️  Base de datos: ${config.database.host}:${config.database.port}/${config.database.database}`
   );
+  console.log(`🌐 API REST: ${config.api.baseURL}`);
   console.log(`📊 Tamaño de lote: ${config.processing.batchSize}`);
 }
 

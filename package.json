@@ -68,6 +68,7 @@
     "demo": "node scripts/demo-progress.js",
     "test:retry": "npm run build && node scripts/test-database-retry.js",
     "test:env-config": "npm run build && node scripts/test-env-config.js",
+    "test:api": "npm run build && node scripts/test-api-integration.js",
     "release": "./scripts/create-release.sh",
     "release:patch": "./scripts/create-release.sh $(npm version patch --no-git-tag-version | sed 's/v//')",
     "release:minor": "./scripts/create-release.sh $(npm version minor --no-git-tag-version | sed 's/v//')",
@@ -82,6 +83,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "axios": "^1.6.7",
     "dotenv": "^16.4.5",
     "mysql2": "^3.9.2",
     "reflect-metadata": "^0.2.1",
@@ -90,6 +92,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/axios": "^0.9.36",
     "@types/node": "^22.10.2",
     "@vitest/ui": "^2.1.8",
     "pkg": "^5.8.1",

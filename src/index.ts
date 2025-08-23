@@ -1,11 +1,9 @@
-import 'reflect-metadata';
 import {
   config,
   createRequiredDirectories,
   updateEnvFile,
   validateConfig,
 } from './config/config';
-import { closeDatabaseConnection, initializeDatabase } from './config/database';
 import { ExcelProcessor } from './services/ExcelProcessor';
 import logger from './utils/logger';
 
@@ -22,12 +20,10 @@ Opciones generales:
   -c, --config                  Mostrar configuración actual
   -d, --dry-run                 Ejecutar sin procesar archivos (solo validar)
 
-Opciones de configuración de base de datos:
-  --db-host <host>              Configurar host de base de datos
-  --db-port <port>              Configurar puerto de base de datos
-  --db-username <username>      Configurar usuario de base de datos
-  --db-password <password>      Configurar contraseña de base de datos
-  --db-database <database>      Configurar nombre de base de datos
+Opciones de configuración de API REST:
+  --api-url <url>               Configurar URL base de la API
+  --api-key <key>               Configurar API key para autenticación
+  --api-timeout <timeout>       Configurar timeout de la API (ms)
 
 Opciones de configuración de directorios:
   --excel-dir <path>            Configurar directorio de archivos Excel
@@ -48,8 +44,8 @@ Ejemplos:
   excel-processor --help                             # Mostrar ayuda
   excel-processor --config                           # Ver configuración
   excel-processor --dry-run                          # Solo validar archivos
-  excel-processor --db-host 192.168.1.100            # Cambiar host de BD
-  excel-processor --db-port 3307                     # Cambiar puerto de BD
+  excel-processor --api-url https://api.example.com  # Cambiar URL de API
+  excel-processor --api-key my-api-key               # Configurar API key
   excel-processor --excel-dir ./my-excel-files       # Cambiar directorio Excel
   excel-processor --batch-size 200                   # Cambiar tamaño de lote
   excel-processor --log-level debug                  # Cambiar nivel de logs
@@ -67,9 +63,7 @@ function showVersion() {
 // Función para mostrar configuración
 function showConfig() {
   console.log('📋 Configuración actual:');
-  console.log(
-    `  🗄️  Base de datos: ${config.database.host}:${config.database.port}/${config.database.database}`
-  );
+  console.log(`  🌐 API REST: ${config.api.baseURL}`);
   console.log(`  📁 Directorio Excel: ${config.directories.excel}`);
   console.log(`  📁 Directorio procesados: ${config.directories.processed}`);
   console.log(`  📁 Directorio errores: ${config.directories.error}`);
@@ -112,78 +106,48 @@ async function parseArguments() {
         isDryRun = true;
         break;
 
-      // Opciones de base de datos
-      case '--db-host':
+      // Opciones de API REST
+      case '--api-url':
         if (i + 1 < args.length) {
           const value = args[++i];
           if (value) {
-            envUpdates['DB_HOST'] = value;
+            envUpdates['API_BASE_URL'] = value;
           } else {
-            console.error('❌ Error: --db-host requiere un valor');
+            console.error('❌ Error: --api-url requiere un valor');
             process.exit(1);
           }
         } else {
-          console.error('❌ Error: --db-host requiere un valor');
+          console.error('❌ Error: --api-url requiere un valor');
           process.exit(1);
         }
         break;
 
-      case '--db-port':
+      case '--api-key':
         if (i + 1 < args.length) {
-          const port = args[++i];
-          if (port && /^\d+$/.test(port)) {
-            envUpdates['DB_PORT'] = port;
+          const value = args[++i];
+          if (value) {
+            envUpdates['API_KEY'] = value;
           } else {
-            console.error('❌ Error: --db-port debe ser un número válido');
+            console.error('❌ Error: --api-key requiere un valor');
             process.exit(1);
           }
         } else {
-          console.error('❌ Error: --db-port requiere un valor');
+          console.error('❌ Error: --api-key requiere un valor');
           process.exit(1);
         }
         break;
 
-      case '--db-username':
+      case '--api-timeout':
         if (i + 1 < args.length) {
-          const value = args[++i];
-          if (value) {
-            envUpdates['DB_USERNAME'] = value;
+          const timeout = args[++i];
+          if (timeout && /^\d+$/.test(timeout)) {
+            envUpdates['API_TIMEOUT'] = timeout;
           } else {
-            console.error('❌ Error: --db-username requiere un valor');
+            console.error('❌ Error: --api-timeout debe ser un número válido');
             process.exit(1);
           }
         } else {
-          console.error('❌ Error: --db-username requiere un valor');
-          process.exit(1);
-        }
-        break;
-
-      case '--db-password':
-        if (i + 1 < args.length) {
-          const value = args[++i];
-          if (value) {
-            envUpdates['DB_PASSWORD'] = value;
-          } else {
-            console.error('❌ Error: --db-password requiere un valor');
-            process.exit(1);
-          }
-        } else {
-          console.error('❌ Error: --db-password requiere un valor');
-          process.exit(1);
-        }
-        break;
-
-      case '--db-database':
-        if (i + 1 < args.length) {
-          const value = args[++i];
-          if (value) {
-            envUpdates['DB_DATABASE'] = value;
-          } else {
-            console.error('❌ Error: --db-database requiere un valor');
-            process.exit(1);
-          }
-        } else {
-          console.error('❌ Error: --db-database requiere un valor');
+          console.error('❌ Error: --api-timeout requiere un valor');
           process.exit(1);
         }
         break;
@@ -355,9 +319,6 @@ async function main() {
 
     logger.info('🚀 Iniciando aplicación de procesamiento de Excel...');
 
-    // Inicializar base de datos
-    await initializeDatabase();
-
     // Crear procesador de Excel
     const processor = new ExcelProcessor(isDryRun);
 
@@ -375,13 +336,11 @@ async function main() {
 // Manejar señales de terminación
 process.on('SIGINT', async () => {
   logger.info('🛑 Recibida señal SIGINT, cerrando aplicación...');
-  await closeDatabaseConnection();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   logger.info('🛑 Recibida señal SIGTERM, cerrando aplicación...');
-  await closeDatabaseConnection();
   process.exit(0);
 });
 

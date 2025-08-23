@@ -1,8 +1,7 @@
 import * as XLSX from 'xlsx';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { AppDataSource, executeWithRetry } from '../config/database';
-import { Licitacion } from '../entities/Licitacion';
+import { ApiService, LicitacionApiData } from './ApiService';
 import logger, { StructuredLogger } from '../utils/logger';
 
 export interface ExcelRow {
@@ -46,6 +45,7 @@ export class ExcelProcessor {
   private readonly errorDirectory: string;
   private readonly batchSize: number;
   private readonly dryRun: boolean;
+  private readonly apiService: ApiService;
   private logger: StructuredLogger;
 
   constructor(dryRun: boolean = false) {
@@ -55,6 +55,7 @@ export class ExcelProcessor {
     this.errorDirectory = process.env.ERROR_DIRECTORY || './error-files';
     this.batchSize = parseInt(process.env.BATCH_SIZE || '100');
     this.dryRun = dryRun;
+    this.apiService = new ApiService();
     this.logger = new StructuredLogger('ExcelProcessor');
 
     // Crear directorios si no existen
@@ -188,30 +189,30 @@ export class ExcelProcessor {
         throw new Error('Los datos del archivo Excel no son válidos');
       }
 
-      // Guardar en base de datos (saltar en modo dry-run)
+      // Enviar a API REST (saltar en modo dry-run)
       if (this.dryRun) {
-        console.log('🔍 [DRY-RUN] Simulando guardado en base de datos...');
+        console.log('🔍 [DRY-RUN] Simulando envío a API REST...');
         console.log(
           `   📊 Se simularían ${data.length.toLocaleString()} registros`
         );
         console.log(`   📦 Tamaño de lote: ${this.batchSize}`);
 
-        // Simular tiempo de guardado
-        const simulatedSaveTime = Math.round(data.length * 0.1); // 0.1ms por registro
-        console.log(`   ⏱️  Tiempo simulado: ${simulatedSaveTime}ms`);
+        // Simular tiempo de envío
+        const simulatedSendTime = Math.round(data.length * 0.1); // 0.1ms por registro
+        console.log(`   ⏱️  Tiempo simulado: ${simulatedSendTime}ms`);
 
-        this.logger.info('Simulación de guardado en base de datos (dry-run)', {
+        this.logger.info('Simulación de envío a API REST (dry-run)', {
           fileName,
           recordsCount: data.length,
           batchSize: this.batchSize,
-          simulatedTime: simulatedSaveTime,
+          simulatedTime: simulatedSendTime,
         });
       } else {
-        const saveStartTime = Date.now();
-        await this.saveToDatabase(data, fileName);
-        const saveTime = Date.now() - saveStartTime;
+        const sendStartTime = Date.now();
+        await this.sendToApi(data, fileName);
+        const sendTime = Date.now() - sendStartTime;
 
-        this.logger.performance('save_to_database', saveTime, {
+        this.logger.performance('send_to_api', sendTime, {
           fileName,
           recordsCount: data.length,
           batchSize: this.batchSize,
@@ -685,33 +686,29 @@ export class ExcelProcessor {
   }
 
   /**
-   * Guarda los datos en la base de datos por lotes
+   * Envía los datos a la API REST por lotes
    */
-  private async saveToDatabase(
+  private async sendToApi(
     data: ExcelRow[],
     fileName: string
   ): Promise<void> {
     const startTime = Date.now();
-    let totalInserted = 0;
+    let totalSent = 0;
     let batchCount = 0;
 
-    console.log(`\n📊 Iniciando inserción en base de datos:`);
+    console.log(`\n🌐 Iniciando envío a API REST:`);
     console.log(`   📁 Archivo: ${fileName}`);
     console.log(`   📈 Total de registros: ${data.length.toLocaleString()}`);
     console.log(`   📦 Tamaño de lote: ${this.batchSize}`);
     console.log(`   ⏱️  Inicio: ${new Date().toLocaleTimeString()}\n`);
 
-    // Iniciar transacción global con retry
-    const queryRunner = await executeWithRetry(
-      async () => {
-        const runner = AppDataSource.createQueryRunner();
-        await runner.connect();
-        await runner.startTransaction();
-        return runner;
-      },
-      3,
-      'create_transaction'
-    );
+    // Verificar conectividad con la API
+    console.log('🔍 Verificando conectividad con la API...');
+    const isApiHealthy = await this.apiService.checkApiHealth();
+    if (!isApiHealthy) {
+      throw new Error('No se pudo conectar con la API REST');
+    }
+    console.log('✅ API REST disponible\n');
 
     try {
       for (let i = 0; i < data.length; i += this.batchSize) {
@@ -722,15 +719,15 @@ export class ExcelProcessor {
 
         batchCount++;
 
-        // Procesar lote dentro de la transacción
-        await this.processBatchWithTransaction(batch, fileName, queryRunner);
+        // Procesar lote enviándolo a la API
+        await this.processBatchWithApi(batch, fileName, batchCount);
 
         const batchTime = Date.now() - batchStartTime;
-        totalInserted += batch.length;
+        totalSent += batch.length;
 
         // Calcular progreso
-        const progress = ((totalInserted / data.length) * 100).toFixed(1);
-        const remainingRecords = data.length - totalInserted;
+        const progress = ((totalSent / data.length) * 100).toFixed(1);
+        const remainingRecords = data.length - totalSent;
         const estimatedTimeRemaining =
           remainingRecords > 0
             ? Math.round(((batchTime / batch.length) * remainingRecords) / 1000)
@@ -738,7 +735,7 @@ export class ExcelProcessor {
 
         // Mostrar progreso en consola
         console.log(
-          `   ✅ Lote ${batchCount}: ${totalInserted.toLocaleString()}/${data.length.toLocaleString()} registros (${progress}%)`
+          `   ✅ Lote ${batchCount}: ${totalSent.toLocaleString()}/${data.length.toLocaleString()} registros (${progress}%)`
         );
 
         // Mostrar tiempo estimado cada 5 lotes o en el último
@@ -749,97 +746,88 @@ export class ExcelProcessor {
           );
           console.log(
             `   📊 Velocidad: ${Math.round(
-              totalInserted / (elapsedTime / 60)
+              totalSent / (elapsedTime / 60)
             )} registros/min\n`
           );
         }
       }
 
-      // Commit de la transacción
-      await queryRunner.commitTransaction();
-
       const totalTime = Date.now() - startTime;
       const totalTimeSeconds = Math.round(totalTime / 1000);
 
-      console.log(`\n🎉 ¡Inserción completada exitosamente!`);
+      console.log(`\n🎉 ¡Envío a API completado exitosamente!`);
       console.log(
-        `   📊 Total de registros insertados: ${totalInserted.toLocaleString()}`
+        `   📊 Total de registros enviados: ${totalSent.toLocaleString()}`
       );
       console.log(`   ⏱️  Tiempo total: ${totalTimeSeconds}s`);
       console.log(`   📦 Lotes procesados: ${batchCount}`);
       console.log(
         `   🚀 Velocidad promedio: ${Math.round(
-          totalInserted / (totalTimeSeconds / 60)
+          totalSent / (totalTimeSeconds / 60)
         )} registros/min`
       );
       console.log(`   ⏰ Finalizado: ${new Date().toLocaleTimeString()}\n`);
 
-      this.logger.info('Inserción en base de datos completada', {
+      this.logger.info('Envío a API completado', {
         fileName,
         totalRecords: data.length,
-        totalInserted,
+        totalSent,
         totalTime,
         totalTimeMs: totalTime,
         averageTimePerRecord: totalTime / data.length,
         batchesProcessed: batchCount,
       });
     } catch (error) {
-      // Rollback automático en caso de error
-      await queryRunner.rollbackTransaction();
-
       const totalTime = Date.now() - startTime;
-      console.log(`\n❌ Error durante la inserción - ROLLBACK realizado:`);
+      console.log(`\n❌ Error durante el envío a la API:`);
       console.log(
-        `   📊 Registros procesados hasta el error: ${totalInserted.toLocaleString()}`
+        `   📊 Registros procesados hasta el error: ${totalSent.toLocaleString()}`
       );
       console.log(
         `   ⏱️  Tiempo transcurrido: ${Math.round(totalTime / 1000)}s`
       );
       console.log(
-        `   🔄 Todos los cambios han sido revertidos automáticamente\n`
+        `   🔄 Los registros ya enviados permanecen en la API\n`
       );
 
-      this.logger.error('Error en inserción - Rollback realizado', error, {
+      this.logger.error('Error en envío a API', error, {
         fileName,
         totalRecords: data.length,
-        totalInserted,
+        totalSent,
         totalTime,
         totalTimeMs: totalTime,
         batchesProcessed: batchCount,
-        rollbackPerformed: true,
       });
       throw error;
-    } finally {
-      // Liberar recursos
-      await queryRunner.release();
     }
   }
 
   /**
-   * Procesa un lote de registros dentro de una transacción
+   * Procesa un lote de registros enviándolo a la API
    */
-  private async processBatchWithTransaction(
+  private async processBatchWithApi(
     batch: ExcelRow[],
     fileName: string,
-    queryRunner: any
+    batchNumber: number
   ): Promise<void> {
     const licitaciones = batch.map((row) =>
-      this.mapToLicitacion(row, fileName)
+      this.mapToLicitacionApiData(row, fileName)
     );
 
     // Mostrar progreso del lote actual
     process.stdout.write(
-      `   🔄 Procesando lote de ${batch.length} registros... `
+      `   🔄 Enviando lote ${batchNumber} de ${batch.length} registros a la API... `
     );
 
-    await executeWithRetry(
+    await this.apiService.executeWithRetry(
       async () => {
-        const licitacionRepository =
-          queryRunner.manager.getRepository(Licitacion);
-        return await licitacionRepository.save(licitaciones);
+        return await this.apiService.sendLicitacionesBatch(
+          licitaciones,
+          batchNumber
+        );
       },
       3,
-      `save_batch_${batch.length}_records`
+      `send_batch_${batchNumber}_${batch.length}_records`
     );
 
     // Confirmar que el lote se completó
@@ -847,47 +835,22 @@ export class ExcelProcessor {
   }
 
   /**
-   * Procesa un lote de registros (método original para compatibilidad)
+   * Mapea una fila del Excel a LicitacionApiData
    */
-  private async processBatch(
-    batch: ExcelRow[],
-    fileName: string
-  ): Promise<void> {
-    const licitacionRepository = AppDataSource.getRepository(Licitacion);
-    const licitaciones = batch.map((row) =>
-      this.mapToLicitacion(row, fileName)
-    );
-
-    // Mostrar progreso del lote actual
-    process.stdout.write(
-      `   🔄 Procesando lote de ${batch.length} registros... `
-    );
-
-    await licitacionRepository.save(licitaciones);
-
-    // Confirmar que el lote se completó
-    process.stdout.write('✅\n');
-  }
-
-  /**
-   * Mapea una fila del Excel a la entidad Licitacion
-   */
-  private mapToLicitacion(row: ExcelRow, fileName: string): Licitacion {
-    const licitacion = new Licitacion();
-
-    licitacion.idLicitacion = row.idLicitacion || '';
-    licitacion.nombre = row.nombre || '';
-    licitacion.fechaPublicacion = this.parseDate(row.fechaPublicacion);
-    licitacion.fechaCierre = this.parseDate(row.fechaCierre);
-    licitacion.organismo = row.organismo || '';
-    licitacion.unidad = row.unidad || '';
-    licitacion.montoDisponible = this.parseNumber(row.montoDisponible);
-    licitacion.moneda = row.moneda || 'CLP';
-    licitacion.estado = row.estado || '';
-    licitacion.fileName = fileName;
-    licitacion.processedAt = new Date();
-
-    return licitacion;
+  private mapToLicitacionApiData(row: ExcelRow, fileName: string): LicitacionApiData {
+    return {
+      idLicitacion: row.idLicitacion || '',
+      nombre: row.nombre || '',
+      fechaPublicacion: this.parseDate(row.fechaPublicacion).toISOString(),
+      fechaCierre: this.parseDate(row.fechaCierre).toISOString(),
+      organismo: row.organismo || '',
+      unidad: row.unidad || '',
+      montoDisponible: this.parseNumber(row.montoDisponible),
+      moneda: row.moneda || 'CLP',
+      estado: row.estado || '',
+      fileName: fileName,
+      processedAt: new Date().toISOString(),
+    };
   }
 
   /**
