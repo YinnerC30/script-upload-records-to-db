@@ -97,14 +97,10 @@ Se ha completado exitosamente la refactorización del proyecto para cambiar de i
 
 ## 🚀 Próximos Pasos Recomendados
 
-### 1. **Implementación de API**
-- Crear el endpoint de API REST correspondiente
-- Implementar los endpoints esperados:
-  - `GET /health`
-  - `POST /licitaciones`
-  - `POST /licitaciones/batch`
-  - `GET /licitaciones/:id/exists`
-  - `GET /stats`
+### 1. **Configuración de API**
+- Configurar la URL de la API REST existente
+- Asegurar que el endpoint `/up_compra.php` esté disponible
+- Verificar que la API acepte el formato JSON especificado
 
 ### 2. **Testing en Producción**
 - Probar con API real

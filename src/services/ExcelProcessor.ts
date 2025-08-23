@@ -839,18 +839,29 @@ export class ExcelProcessor {
    */
   private mapToLicitacionApiData(row: ExcelRow, fileName: string): LicitacionApiData {
     return {
-      idLicitacion: row.idLicitacion || '',
+      licitacion_id: row.idLicitacion || '',
       nombre: row.nombre || '',
-      fechaPublicacion: this.parseDate(row.fechaPublicacion).toISOString(),
-      fechaCierre: this.parseDate(row.fechaCierre).toISOString(),
+      fecha_publicacion: this.formatDateForApi(this.parseDate(row.fechaPublicacion)),
+      fecha_cierre: this.formatDateForApi(this.parseDate(row.fechaCierre)),
       organismo: row.organismo || '',
       unidad: row.unidad || '',
-      montoDisponible: this.parseNumber(row.montoDisponible),
+      monto_disponible: this.parseNumber(row.montoDisponible),
       moneda: row.moneda || 'CLP',
       estado: row.estado || '',
-      fileName: fileName,
-      processedAt: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Formatea una fecha para el formato requerido por la API (YYYY-MM-DD HH:mm)
+   */
+  private formatDateForApi(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
   }
 
   /**

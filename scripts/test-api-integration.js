@@ -11,24 +11,24 @@ const { ApiService } = require('../dist/services/ApiService');
 // Mock de datos de prueba
 const mockExcelData = [
   {
-    idLicitacion: 'LIC-001-2024',
-    nombre: 'Adquisición de equipos informáticos',
-    fechaPublicacion: '2024-01-15',
-    fechaCierre: '2024-02-15',
-    organismo: 'Ministerio de Tecnología',
-    unidad: 'Dirección de Informática',
-    montoDisponible: 50000000,
+    licitacion_id: '5178-4406-COT25',
+    nombre: '400145/B5/SP 1010890/IZ (SERVICIO DE COFFE)',
+    fecha_publicacion: '2025-08-22 21:00',
+    fecha_cierre: '2025-08-25 20:00',
+    organismo: 'UNIVERSIDAD DE CHILE',
+    unidad: 'UCHILE Facultad Medicina (5178)',
+    monto_disponible: 650000,
     moneda: 'CLP',
-    estado: 'Abierta'
+    estado: 'Publicada'
   },
   {
-    idLicitacion: 'LIC-002-2024',
+    licitacion_id: 'LIC-002-2024',
     nombre: 'Servicios de mantenimiento de software',
-    fechaPublicacion: '2024-01-20',
-    fechaCierre: '2024-02-20',
+    fecha_publicacion: '2024-01-20 10:00',
+    fecha_cierre: '2024-02-20 18:00',
     organismo: 'Ministerio de Tecnología',
     unidad: 'Dirección de Sistemas',
-    montoDisponible: 25000000,
+    monto_disponible: 25000000,
     moneda: 'CLP',
     estado: 'Abierta'
   }
@@ -53,51 +53,24 @@ async function testApiIntegration() {
     console.log('\n2️⃣ Probando envío de datos individuales...');
     for (const data of mockExcelData) {
       try {
-        const licitacionData = {
-          idLicitacion: data.idLicitacion,
-          nombre: data.nombre,
-          fechaPublicacion: new Date(data.fechaPublicacion).toISOString(),
-          fechaCierre: new Date(data.fechaCierre).toISOString(),
-          organismo: data.organismo,
-          unidad: data.unidad,
-          montoDisponible: data.montoDisponible,
-          moneda: data.moneda,
-          estado: data.estado,
-          fileName: 'test-file.xlsx',
-          processedAt: new Date().toISOString()
-        };
-
         if (isHealthy) {
-          const response = await apiService.sendLicitacion(licitacionData);
-          console.log(`✅ Licitación ${data.idLicitacion} enviada:`, response.success);
+          const response = await apiService.sendLicitacion(data);
+          console.log(`✅ Licitación ${data.licitacion_id} enviada:`, response.success);
         } else {
-          console.log(`🔍 [SIMULACIÓN] Licitación ${data.idLicitacion} sería enviada`);
+          console.log(`🔍 [SIMULACIÓN] Licitación ${data.licitacion_id} sería enviada`);
         }
       } catch (error) {
-        console.log(`❌ Error enviando licitación ${data.idLicitacion}:`, error.message);
+        console.log(`❌ Error enviando licitación ${data.licitacion_id}:`, error.message);
       }
     }
 
     // 3. Probar envío de lote
     console.log('\n3️⃣ Probando envío de lote...');
     try {
-      const licitacionesBatch = mockExcelData.map(data => ({
-        idLicitacion: data.idLicitacion,
-        nombre: data.nombre,
-        fechaPublicacion: new Date(data.fechaPublicacion).toISOString(),
-        fechaCierre: new Date(data.fechaCierre).toISOString(),
-        organismo: data.organismo,
-        unidad: data.unidad,
-        montoDisponible: data.montoDisponible,
-        moneda: data.moneda,
-        estado: data.estado,
-        fileName: 'test-batch.xlsx',
-        processedAt: new Date().toISOString()
-      }));
-
       if (isHealthy) {
-        const response = await apiService.sendLicitacionesBatch(licitacionesBatch, 1);
+        const response = await apiService.sendLicitacionesBatch(mockExcelData, 1);
         console.log('✅ Lote enviado:', response.success);
+        console.log(`   📊 Éxitos: ${response.data.successCount}, Errores: ${response.data.errorCount}`);
       } else {
         console.log('🔍 [SIMULACIÓN] Lote sería enviado');
       }
@@ -109,7 +82,7 @@ async function testApiIntegration() {
     console.log('\n4️⃣ Probando verificación de existencia...');
     try {
       if (isHealthy) {
-        const exists = await apiService.checkLicitacionExists('LIC-001-2024');
+        const exists = await apiService.checkLicitacionExists('5178-4406-COT25');
         console.log('✅ Verificación de existencia:', exists);
       } else {
         console.log('🔍 [SIMULACIÓN] Verificación de existencia sería ejecutada');

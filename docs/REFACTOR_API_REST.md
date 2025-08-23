@@ -194,27 +194,38 @@ Simula el procesamiento sin enviar datos reales a la API.
 
 ```typescript
 interface LicitacionApiData {
-  idLicitacion: string;
+  licitacion_id: string;
   nombre: string;
-  fechaPublicacion: string; // ISO 8601
-  fechaCierre: string;      // ISO 8601
+  fecha_publicacion: string; // Formato: "YYYY-MM-DD HH:mm"
+  fecha_cierre: string;      // Formato: "YYYY-MM-DD HH:mm"
   organismo: string;
   unidad: string;
-  montoDisponible: number;
+  monto_disponible: number;
   moneda: string;
   estado: string;
-  fileName: string;
-  processedAt: string;      // ISO 8601
 }
 ```
 
-### Endpoints esperados en la API:
+**Ejemplo de datos enviados a la API:**
+```json
+{
+  "licitacion_id": "5178-4406-COT25",
+  "nombre": "400145/B5/SP 1010890/IZ (SERVICIO DE COFFE)",
+  "fecha_publicacion": "2025-08-22 21:00",
+  "fecha_cierre": "2025-08-25 20:00",
+  "organismo": "UNIVERSIDAD DE CHILE",
+  "unidad": "UCHILE Facultad Medicina (5178)",
+  "monto_disponible": 650000,
+  "moneda": "CLP",
+  "estado": "Publicada"
+}
+```
 
-- `GET /health` - Health check
-- `POST /licitaciones` - Crear licitación individual
-- `POST /licitaciones/batch` - Crear múltiples licitaciones
-- `GET /licitaciones/:id/exists` - Verificar existencia
-- `GET /stats` - Obtener estadísticas
+### Endpoint disponible en la API:
+
+- `POST /up_compra.php` - Crear licitación individual
+
+**Nota**: La API solo acepta un registro por request y no tiene endpoints para verificación de existencia o estadísticas.
 
 ## 🚀 Beneficios de la Refactorización
 
