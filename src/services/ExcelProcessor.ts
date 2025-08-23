@@ -17,6 +17,15 @@ export interface ExcelRow {
   [key: string]: any;
 }
 
+// Nueva interfaz para manejar registros fallidos
+export interface FailedRecord {
+  originalRow: ExcelRow;
+  licitacionData: LicitacionApiData;
+  error: string;
+  statusCode?: number;
+  rowIndex: number;
+}
+
 // Mapeo de encabezados del Excel a campos del código (normalizados)
 const HEADER_MAPPING: { [key: string]: string } = {
   id: 'idLicitacion',
@@ -190,6 +199,11 @@ export class ExcelProcessor {
       }
 
       // Enviar a API REST (saltar en modo dry-run)
+      let sendResult: {
+        successCount: number;
+        failedRecords: FailedRecord[];
+      } | null = null;
+
       if (this.dryRun) {
         console.log('🔍 [DRY-RUN] Simulando envío a API REST...');
         console.log(
@@ -209,13 +223,14 @@ export class ExcelProcessor {
         });
       } else {
         const sendStartTime = Date.now();
-        await this.sendToApi(data, fileName);
+        sendResult = await this.sendToApi(data, fileName);
         const sendTime = Date.now() - sendStartTime;
 
         this.logger.performance('send_to_api', sendTime, {
           fileName,
           recordsCount: data.length,
-          batchSize: this.batchSize,
+          successCount: sendResult.successCount,
+          failedCount: sendResult.failedRecords.length,
         });
       }
 
@@ -266,16 +281,28 @@ export class ExcelProcessor {
           sessionId: this.logger.getSessionId(),
         });
       } else {
-        console.log(`\n🎉 ¡Procesamiento completado exitosamente!`);
+        // Obtener estadísticas del envío
+        const successCount = sendResult ? sendResult.successCount : data.length;
+        const failedCount = sendResult ? sendResult.failedRecords.length : 0;
+
+        console.log(`\n🎉 ¡Procesamiento completado!`);
         console.log(
           `   📊 Total de registros procesados: ${data.length.toLocaleString()}`
+        );
+        console.log(
+          `   ✅ Registros exitosos: ${successCount.toLocaleString()}`
+        );
+        console.log(
+          `   ❌ Registros fallidos: ${failedCount.toLocaleString()}`
         );
         console.log(`   ⏱️  Tiempo total: ${totalTimeSeconds}s`);
         console.log(`   ⏰ Finalizado: ${new Date().toLocaleTimeString()}\n`);
 
-        this.logger.info('Archivo procesado exitosamente', {
+        this.logger.info('Archivo procesado', {
           fileName,
           recordsCount: data.length,
+          successCount,
+          failedCount,
           totalTime,
           totalTimeMs: totalTime,
           sessionId: this.logger.getSessionId(),
@@ -686,117 +713,79 @@ export class ExcelProcessor {
   }
 
   /**
-   * Envía los datos a la API REST por lotes
+   * Envía los datos a la API REST con manejo individual de errores
    */
   private async sendToApi(
     data: ExcelRow[],
     fileName: string
-  ): Promise<void> {
+  ): Promise<{ successCount: number; failedRecords: FailedRecord[] }> {
     const startTime = Date.now();
-    let totalSent = 0;
-    let batchCount = 0;
 
     console.log(`\n🌐 Iniciando envío a API REST:`);
     console.log(`   📁 Archivo: ${fileName}`);
     console.log(`   📈 Total de registros: ${data.length.toLocaleString()}`);
-    console.log(`   📦 Tamaño de lote: ${this.batchSize}`);
     console.log(`   ⏱️  Inicio: ${new Date().toLocaleTimeString()}\n`);
 
-    // Verificar conectividad con la API
-    // console.log('🔍 Verificando conectividad con la API...');
-    // const isApiHealthy = await this.apiService.checkApiHealth();
-    // if (!isApiHealthy) {
-    //   throw new Error('No se pudo conectar con la API REST');
-    // }
-    // console.log('✅ API REST disponible\n');
-
     try {
-      for (let i = 0; i < data.length; i += this.batchSize) {
-        const batchStartTime = Date.now();
-        const batch = data.slice(i, i + this.batchSize);
-        const startIndex = i + 1;
-        const endIndex = Math.min(i + this.batchSize, data.length);
-
-        batchCount++;
-
-        // Procesar lote enviándolo a la API
-        await this.processBatchWithApi(batch, fileName, batchCount);
-
-        const batchTime = Date.now() - batchStartTime;
-        totalSent += batch.length;
-
-        // Calcular progreso
-        const progress = ((totalSent / data.length) * 100).toFixed(1);
-        const remainingRecords = data.length - totalSent;
-        const estimatedTimeRemaining =
-          remainingRecords > 0
-            ? Math.round(((batchTime / batch.length) * remainingRecords) / 1000)
-            : 0;
-
-        // Mostrar progreso en consola
-        console.log(
-          `   ✅ Lote ${batchCount}: ${totalSent.toLocaleString()}/${data.length.toLocaleString()} registros (${progress}%)`
-        );
-
-        // Mostrar tiempo estimado cada 5 lotes o en el último
-        if (batchCount % 5 === 0 || endIndex === data.length) {
-          const elapsedTime = Math.round((Date.now() - startTime) / 1000);
-          console.log(
-            `   ⏱️  Tiempo transcurrido: ${elapsedTime}s | Estimado restante: ${estimatedTimeRemaining}s`
-          );
-          console.log(
-            `   📊 Velocidad: ${Math.round(
-              totalSent / (elapsedTime / 60)
-            )} registros/min\n`
-          );
-        }
-      }
+      // Procesar registros individualmente
+      const result = await this.processRecordsIndividually(data, fileName);
 
       const totalTime = Date.now() - startTime;
       const totalTimeSeconds = Math.round(totalTime / 1000);
 
-      console.log(`\n🎉 ¡Envío a API completado exitosamente!`);
+      console.log(`\n🎉 ¡Envío a API completado!`);
       console.log(
-        `   📊 Total de registros enviados: ${totalSent.toLocaleString()}`
+        `   📊 Total de registros procesados: ${data.length.toLocaleString()}`
+      );
+      console.log(
+        `   ✅ Registros exitosos: ${result.successCount.toLocaleString()}`
+      );
+      console.log(
+        `   ❌ Registros fallidos: ${result.failedRecords.length.toLocaleString()}`
       );
       console.log(`   ⏱️  Tiempo total: ${totalTimeSeconds}s`);
-      console.log(`   📦 Lotes procesados: ${batchCount}`);
       console.log(
         `   🚀 Velocidad promedio: ${Math.round(
-          totalSent / (totalTimeSeconds / 60)
+          result.successCount / (totalTimeSeconds / 60)
         )} registros/min`
       );
       console.log(`   ⏰ Finalizado: ${new Date().toLocaleTimeString()}\n`);
 
+      // Si hay registros fallidos, crear archivo Excel
+      if (result.failedRecords.length > 0) {
+        const failedFilePath = await this.createFailedRecordsFile(
+          result.failedRecords,
+          fileName
+        );
+        console.log(
+          `   📁 Registros fallidos guardados en: ${failedFilePath}\n`
+        );
+      }
+
       this.logger.info('Envío a API completado', {
         fileName,
         totalRecords: data.length,
-        totalSent,
+        successCount: result.successCount,
+        failedCount: result.failedRecords.length,
         totalTime,
         totalTimeMs: totalTime,
         averageTimePerRecord: totalTime / data.length,
-        batchesProcessed: batchCount,
       });
+
+      return result;
     } catch (error) {
       const totalTime = Date.now() - startTime;
-      console.log(`\n❌ Error durante el envío a la API:`);
-      console.log(
-        `   📊 Registros procesados hasta el error: ${totalSent.toLocaleString()}`
-      );
+      console.log(`\n❌ Error crítico durante el envío a la API:`);
       console.log(
         `   ⏱️  Tiempo transcurrido: ${Math.round(totalTime / 1000)}s`
       );
-      console.log(
-        `   🔄 Los registros ya enviados permanecen en la API\n`
-      );
+      console.log(`   🔄 Error de conectividad o sistema\n`);
 
-      this.logger.error('Error en envío a API', error, {
+      this.logger.error('Error crítico en envío a API', error, {
         fileName,
         totalRecords: data.length,
-        totalSent,
         totalTime,
         totalTimeMs: totalTime,
-        batchesProcessed: batchCount,
       });
       throw error;
     }
@@ -837,11 +826,16 @@ export class ExcelProcessor {
   /**
    * Mapea una fila del Excel a LicitacionApiData
    */
-  private mapToLicitacionApiData(row: ExcelRow, fileName: string): LicitacionApiData {
+  private mapToLicitacionApiData(
+    row: ExcelRow,
+    fileName: string
+  ): LicitacionApiData {
     return {
       licitacion_id: row.idLicitacion || '',
       nombre: row.nombre || '',
-      fecha_publicacion: this.formatDateForApi(this.parseDate(row.fechaPublicacion)),
+      fecha_publicacion: this.formatDateForApi(
+        this.parseDate(row.fechaPublicacion)
+      ),
       fecha_cierre: this.formatDateForApi(this.parseDate(row.fechaCierre)),
       organismo: row.organismo || '',
       unidad: row.unidad || '',
@@ -860,7 +854,7 @@ export class ExcelProcessor {
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
-    
+
     return `${year}-${month}-${day} ${hours}:${minutes}`;
   }
 
@@ -911,6 +905,150 @@ export class ExcelProcessor {
     const destination = path.join(this.errorDirectory, fileName);
     await fs.rename(filePath, destination);
     logger.info(`Archivo movido a errores: ${fileName}`);
+  }
+
+  /**
+   * Crea un archivo Excel con los registros fallidos
+   */
+  private async createFailedRecordsFile(
+    failedRecords: FailedRecord[],
+    originalFileName: string
+  ): Promise<string> {
+    if (failedRecords.length === 0) {
+      return '';
+    }
+
+    // Crear nombre del archivo de registros fallidos
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[:.]/g, '-')
+      .slice(0, 19);
+    const baseName = path.parse(originalFileName).name;
+    const failedFileName = `${baseName}_failed_${timestamp}.xlsx`;
+    const failedFilePath = path.join(this.errorDirectory, failedFileName);
+
+    // Preparar datos para el Excel
+    const workbook = XLSX.utils.book_new();
+    const worksheetData = failedRecords.map((record, index) => ({
+      'Fila Original': record.rowIndex + 1,
+      'ID Licitación': record.originalRow.idLicitacion || '',
+      Nombre: record.originalRow.nombre || '',
+      'Fecha Publicación': record.originalRow.fechaPublicacion || '',
+      'Fecha Cierre': record.originalRow.fechaCierre || '',
+      Organismo: record.originalRow.organismo || '',
+      Unidad: record.originalRow.unidad || '',
+      'Monto Disponible': record.originalRow.montoDisponible || '',
+      Moneda: record.originalRow.moneda || '',
+      Estado: record.originalRow.estado || '',
+      Error: record.error,
+      'Código de Estado': record.statusCode || 'N/A',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Registros Fallidos');
+
+    // Escribir el archivo
+    XLSX.writeFile(workbook, failedFilePath);
+
+    this.logger.info('Archivo de registros fallidos creado', {
+      failedFileName,
+      failedFilePath,
+      failedRecordsCount: failedRecords.length,
+      originalFileName,
+    });
+
+    return failedFilePath;
+  }
+
+  /**
+   * Procesa registros individualmente y maneja errores por registro
+   */
+  private async processRecordsIndividually(
+    data: ExcelRow[],
+    fileName: string
+  ): Promise<{ successCount: number; failedRecords: FailedRecord[] }> {
+    const failedRecords: FailedRecord[] = [];
+    let successCount = 0;
+
+    console.log(
+      `\n🔄 Procesando ${data.length.toLocaleString()} registros individualmente...`
+    );
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      if (!row) continue;
+
+      try {
+        const licitacionData = this.mapToLicitacionApiData(row, fileName);
+
+        // Enviar registro individual a la API
+        const response = await this.apiService.executeWithRetry(
+          async () => {
+            return await this.apiService.sendLicitacionWithResponse(
+              licitacionData
+            );
+          },
+          3,
+          `send_record_${i + 1}_${licitacionData.licitacion_id}`
+        );
+
+        // Verificar si la respuesta es exitosa
+        if (response.status === 200) {
+          successCount++;
+
+          // Mostrar progreso cada 100 registros
+          if (successCount % 100 === 0 || i === data.length - 1) {
+            const progress = (((i + 1) / data.length) * 100).toFixed(1);
+            console.log(
+              `   ✅ Progreso: ${i + 1}/${
+                data.length
+              } (${progress}%) - Exitosos: ${successCount}`
+            );
+          }
+        } else {
+          // Registro falló pero la API respondió (código 400, 422, etc.)
+          const failedRecord: FailedRecord = {
+            originalRow: row,
+            licitacionData,
+            error: `API respondió con código ${response.status}`,
+            statusCode: response.status,
+            rowIndex: i,
+          };
+          failedRecords.push(failedRecord);
+
+          this.logger.warn('Registro falló en API', {
+            rowIndex: i + 1,
+            licitacion_id: licitacionData.licitacion_id,
+            statusCode: response.status,
+            error: `API respondió con código ${response.status}`,
+          });
+        }
+      } catch (error: any) {
+        // Error de red, timeout, etc.
+        const failedRecord: FailedRecord = {
+          originalRow: row,
+          licitacionData: this.mapToLicitacionApiData(row, fileName),
+          error: error.message || 'Error de conexión',
+          statusCode: error.response?.status,
+          rowIndex: i,
+        };
+        failedRecords.push(failedRecord);
+
+        this.logger.error('Error procesando registro individual', {
+          rowIndex: i + 1,
+          licitacion_id: row.idLicitacion,
+          error: error.message,
+          statusCode: error.response?.status,
+        });
+      }
+
+      // Pequeña pausa entre envíos para no sobrecargar la API
+      if (i < data.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+    }
+
+    return { successCount, failedRecords };
   }
 
   /**

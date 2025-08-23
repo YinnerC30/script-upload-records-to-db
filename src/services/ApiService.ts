@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { config } from '../config/config';
-import logger, { StructuredLogger } from '../utils/logger';
+import { StructuredLogger } from '../utils/logger';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -299,19 +298,52 @@ export class ApiService {
         message:
           response.status === 200
             ? 'Licitación enviada exitosamente'
-            : 'Error enviando licitación',
+            : `API respondió con código ${response.status}`,
       };
     } catch (error: any) {
-      this.logger.error('Error enviando licitación a la API', {
-        error: error.message,
+      this.logger.error('Error enviando licitación individual', {
         licitacion_id: licitacion.licitacion_id,
-        status: error.response?.status,
-        data: error.response?.data,
+        error: error.message,
+        statusCode: error.response?.status,
       });
 
-      throw new Error(
-        `Error enviando licitación ${licitacion.licitacion_id} a la API: ${error.message}`
-      );
+      return {
+        success: false,
+        error: error.message,
+        message: `Error enviando licitación: ${error.message}`,
+      };
+    }
+  }
+
+  /**
+   * Envía una licitación individual y retorna la respuesta completa
+   */
+  async sendLicitacionWithResponse(
+    licitacion: LicitacionApiData
+  ): Promise<any> {
+    try {
+      this.logger.debug('Enviando licitación individual a la API', {
+        licitacion_id: licitacion.licitacion_id,
+        endpoint: '/up_compra.php',
+      });
+
+      const response = await this.client.post('/up_compra.php', licitacion);
+
+      this.logger.debug('Licitación enviada exitosamente', {
+        licitacion_id: licitacion.licitacion_id,
+        responseStatus: response.status,
+        success: response.status === 200,
+      });
+
+      return response;
+    } catch (error: any) {
+      this.logger.error('Error enviando licitación individual', {
+        licitacion_id: licitacion.licitacion_id,
+        error: error.message,
+        statusCode: error.response?.status,
+      });
+
+      throw error;
     }
   }
 
