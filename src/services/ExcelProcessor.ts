@@ -808,16 +808,7 @@ export class ExcelProcessor {
       `   🔄 Enviando lote ${batchNumber} de ${batch.length} registros a la API... `
     );
 
-    await this.apiService.executeWithRetry(
-      async () => {
-        return await this.apiService.sendLicitacionesBatch(
-          licitaciones,
-          batchNumber
-        );
-      },
-      3,
-      `send_batch_${batchNumber}_${batch.length}_records`
-    );
+    await this.apiService.sendLicitacionesBatch(licitaciones, batchNumber);
 
     // Confirmar que el lote se completó
     process.stdout.write('✅\n');
@@ -982,14 +973,8 @@ export class ExcelProcessor {
         const licitacionData = this.mapToLicitacionApiData(row, fileName);
 
         // Enviar registro individual a la API
-        const response = await this.apiService.executeWithRetry(
-          async () => {
-            return await this.apiService.sendLicitacionWithResponse(
-              licitacionData
-            );
-          },
-          3,
-          `send_record_${i + 1}_${licitacionData.licitacion_id}`
+        const response = await this.apiService.sendLicitacionWithResponse(
+          licitacionData
         );
 
         // Verificar si la respuesta es exitosa

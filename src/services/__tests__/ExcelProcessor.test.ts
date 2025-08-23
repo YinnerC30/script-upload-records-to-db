@@ -20,13 +20,6 @@ vi.mock('fs/promises', () => ({
 }));
 
 vi.mock('path');
-vi.mock('../../config/database', () => ({
-  AppDataSource: {
-    getRepository: vi.fn(() => ({
-      save: vi.fn().mockResolvedValue([]),
-    })),
-  },
-}));
 
 vi.mock('xlsx', () => ({
   readFile: vi.fn(),
@@ -120,8 +113,8 @@ describe('ExcelProcessor', () => {
           idLicitacion: '123',
           nombre: 'Licitación Test',
           organismo: 'Organismo Test',
-          unidad: 'Unidad Test'
-        }
+          unidad: 'Unidad Test',
+        },
       ];
 
       const result = await processor['validateData'](data);
@@ -134,8 +127,8 @@ describe('ExcelProcessor', () => {
           idLicitacion: '', // Vacío
           nombre: 'Licitación Test',
           organismo: 'Organismo Test',
-          unidad: 'Unidad Test'
-        }
+          unidad: 'Unidad Test',
+        },
       ];
 
       const result = await processor['validateData'](data);
@@ -150,8 +143,8 @@ describe('ExcelProcessor', () => {
           organismo: 'Organismo Test',
           unidad: 'Unidad Test',
           fechaPublicacion: '2023-01-01',
-          fechaCierre: '2023-01-31'
-        }
+          fechaCierre: '2023-01-31',
+        },
       ];
 
       const result = await processor['validateData'](data);
@@ -166,8 +159,8 @@ describe('ExcelProcessor', () => {
           organismo: 'Organismo Test',
           unidad: 'Unidad Test',
           fechaPublicacion: 'fecha-invalida',
-          fechaCierre: '2023-01-31'
-        }
+          fechaCierre: '2023-01-31',
+        },
       ];
 
       const result = await processor['validateData'](data);
@@ -182,8 +175,8 @@ describe('ExcelProcessor', () => {
           organismo: 'Organismo Test',
           unidad: 'Unidad Test',
           fechaPublicacion: '2023-01-01',
-          fechaCierre: '2023-01-31' // Después de publicación
-        }
+          fechaCierre: '2023-01-31', // Después de publicación
+        },
       ];
 
       const result = await processor['validateData'](data);
@@ -198,8 +191,8 @@ describe('ExcelProcessor', () => {
           organismo: 'Organismo Test',
           unidad: 'Unidad Test',
           fechaPublicacion: '2023-01-31',
-          fechaCierre: '2023-01-01' // Antes de publicación
-        }
+          fechaCierre: '2023-01-01', // Antes de publicación
+        },
       ];
 
       const result = await processor['validateData'](data);
@@ -213,8 +206,8 @@ describe('ExcelProcessor', () => {
           nombre: 'Licitación Test',
           organismo: 'Organismo Test',
           unidad: 'Unidad Test',
-          montoDisponible: 1000.50
-        }
+          montoDisponible: 1000.5,
+        },
       ];
 
       const result = await processor['validateData'](data);
@@ -228,8 +221,8 @@ describe('ExcelProcessor', () => {
           nombre: 'Licitación Test',
           organismo: 'Organismo Test',
           unidad: 'Unidad Test',
-          montoDisponible: '1000.50'
-        }
+          montoDisponible: '1000.50',
+        },
       ];
 
       const result = await processor['validateData'](data);
@@ -243,8 +236,8 @@ describe('ExcelProcessor', () => {
           nombre: 'Licitación Test',
           organismo: 'Organismo Test',
           unidad: 'Unidad Test',
-          montoDisponible: 'no-es-numero'
-        }
+          montoDisponible: 'no-es-numero',
+        },
       ];
 
       const result = await processor['validateData'](data);
@@ -259,8 +252,8 @@ describe('ExcelProcessor', () => {
           organismo: 'B'.repeat(300), // Máximo permitido
           unidad: 'C'.repeat(200), // Máximo permitido
           moneda: 'USD',
-          estado: 'Activo'
-        }
+          estado: 'Activo',
+        },
       ];
 
       const result = await processor['validateData'](data);
@@ -273,8 +266,8 @@ describe('ExcelProcessor', () => {
           idLicitacion: '123',
           nombre: 'A'.repeat(501), // Excede límite
           organismo: 'Organismo Test',
-          unidad: 'Unidad Test'
-        }
+          unidad: 'Unidad Test',
+        },
       ];
 
       const result = await processor['validateData'](data);
@@ -287,15 +280,15 @@ describe('ExcelProcessor', () => {
           idLicitacion: '123',
           nombre: 'Licitación Test',
           organismo: 'Organismo Test',
-          unidad: 'Unidad Test'
+          unidad: 'Unidad Test',
         },
         undefined as any, // Fila undefined
         {
           idLicitacion: '456',
           nombre: 'Licitación Test 2',
           organismo: 'Organismo Test 2',
-          unidad: 'Unidad Test 2'
-        }
+          unidad: 'Unidad Test 2',
+        },
       ];
 
       const result = await processor['validateData'](data);
