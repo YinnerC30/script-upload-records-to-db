@@ -130,6 +130,13 @@ Thumbs.db
 *.rej
 
 # ==========================================
+# RELEASES Y ARCHIVOS GENERADOS
+# ==========================================
+release-v*/
+RELEASE_NOTES_v*.md
+*.zip
+
+# ==========================================
 # EXCEPCIONES (archivos que SÍ queremos incluir)
 # ==========================================
 !env.example
