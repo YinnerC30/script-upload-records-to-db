@@ -2,6 +2,17 @@ const XLSX = require('xlsx');
 const fs = require('fs/promises');
 const path = require('path');
 
+// Función para generar IDs únicos
+function generateUniqueId(prefix = 'LIC', index = 0) {
+  const timestamp = Date.now();
+  const randomSuffix = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, '0');
+  return `${prefix}${timestamp}${randomSuffix}${index
+    .toString()
+    .padStart(6, '0')}`;
+}
+
 // Función para generar datos de prueba con muchos registros
 function generateTestData(count = 1000) {
   const data = [];
@@ -39,7 +50,7 @@ function generateTestData(count = 1000) {
   ];
 
   for (let i = 1; i <= count; i++) {
-    const id = `LIC${i.toString().padStart(6, '0')}`;
+    const id = generateUniqueId('LIC', i);
     const organismo = organismos[Math.floor(Math.random() * organismos.length)];
     const unidad = unidades[Math.floor(Math.random() * unidades.length)];
     const tipo =
@@ -100,8 +111,12 @@ async function createLargeTestExcel() {
       await fs.mkdir(excelDir, { recursive: true });
     }
 
-    // Guardar archivo
-    const fileName = `licitaciones-large-${recordCount}.xlsx`;
+    // Generar nombre de archivo con timestamp para evitar conflictos
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[:.]/g, '-')
+      .slice(0, -5);
+    const fileName = `licitaciones-large-${recordCount}-${timestamp}.xlsx`;
     const filePath = path.join(excelDir, fileName);
 
     console.log('💾 Guardando archivo...');
@@ -121,6 +136,15 @@ async function createLargeTestExcel() {
     Object.keys(testData[0]).forEach((header) => {
       console.log(`  - ${header}`);
     });
+
+    // Mostrar algunos ejemplos de IDs únicos generados
+    console.log('\n🆔 Ejemplos de IDs únicos generados:');
+    testData.slice(0, 5).forEach((record, index) => {
+      console.log(`  ${index + 1}. ${record.ID}`);
+    });
+    if (testData.length > 5) {
+      console.log(`  ... y ${testData.length - 5} más`);
+    }
 
     console.log('\n🚀 Ahora puedes ejecutar el procesamiento con:');
     console.log(`   npm start`);
