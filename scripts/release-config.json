@@ -1,0 +1,47 @@
+{
+  "project": {
+    "name": "script-upload-records-to-db",
+    "description": "Script para procesar archivos Excel y subir registros a MySQL usando TypeORM",
+    "repository": "https://github.com/tu-usuario/script-upload-records-to-db",
+    "author": "Tu Nombre",
+    "license": "MIT"
+  },
+  "release": {
+    "files": [
+      "bin/script-upload-records-to-db",
+      "env.example",
+      "README.md",
+      "DOCUMENTACION_CONSOLIDADA.md"
+    ],
+    "exclude": [
+      "node_modules",
+      "dist",
+      "logs",
+      "*.log",
+      "*.tmp",
+      "coverage",
+      ".nyc_output",
+      "*.zip"
+    ],
+    "install_script": true,
+    "create_zip": true,
+    "auto_version": true
+  },
+  "build": {
+    "targets": ["node18-linux-x64"],
+    "output_path": "bin",
+    "clean_build": true
+  },
+  "git": {
+    "branch": "main",
+    "commit_message_template": "chore(release): bump version to {version}",
+    "tag_message_template": "Release v{version}",
+    "push_tags": true,
+    "push_changes": true
+  },
+  "documentation": {
+    "generate_changelog": true,
+    "include_installation_guide": true,
+    "include_compatibility_info": true
+  }
+}

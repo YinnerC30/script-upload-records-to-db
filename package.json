@@ -67,7 +67,11 @@
     "test:excel:large": "node scripts/create-large-test-excel.js",
     "demo": "node scripts/demo-progress.js",
     "test:retry": "npm run build && node scripts/test-database-retry.js",
-    "test:env-config": "npm run build && node scripts/test-env-config.js"
+    "test:env-config": "npm run build && node scripts/test-env-config.js",
+    "release": "./scripts/create-release.sh",
+    "release:patch": "./scripts/create-release.sh $(npm version patch --no-git-tag-version | sed 's/v//')",
+    "release:minor": "./scripts/create-release.sh $(npm version minor --no-git-tag-version | sed 's/v//')",
+    "release:major": "./scripts/create-release.sh $(npm version major --no-git-tag-version | sed 's/v//')"
   },
   "keywords": [
     "excel",
