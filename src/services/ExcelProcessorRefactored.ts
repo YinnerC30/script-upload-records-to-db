@@ -174,18 +174,6 @@ export class ExcelProcessorRefactored {
         }
       }
 
-      // Verificar conectividad de API
-      if (!this.dryRun) {
-        console.log('🌐 Verificando conectividad con la API...');
-        const isHealthy = await this.apiService.checkApiHealth();
-        if (!isHealthy) {
-          console.log('❌ No se puede conectar con la API');
-          await this.fileProcessor.moveToError(filePath, fileName);
-          return;
-        }
-        console.log('✅ API conectada correctamente');
-      }
-
       // Procesar datos
       if (this.dryRun) {
         console.log('🔍 Modo dry-run: Solo validación, no se enviarán datos');
