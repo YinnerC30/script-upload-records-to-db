@@ -98,19 +98,84 @@ export class ApiService {
    */
   async checkApiHealth(): Promise<boolean> {
     try {
-      // Intentar hacer una petición POST vacía al endpoint para verificar conectividad
-      const response = await this.client.post('/up_compra.php', {});
-      const isHealthy = response.status === 200 || response.status === 400; // 400 es esperado para datos vacíos
+      this.logger.info('Iniciando verificación de salud de la API', {
+        baseURL: this.baseURL,
+        endpoint: '/up_compra.php',
+        timeout: this.timeout,
+      });
+
+      // Primero verificar conectividad básica con GET
+      try {
+        const healthResponse = await this.client.get('/');
+        this.logger.info('API Health Check - Conectividad básica OK', {
+          status: healthResponse.status,
+          url: this.baseURL,
+        });
+      } catch (getError: any) {
+        // Si GET falla, intentar con POST vacío (algunas APIs solo aceptan POST)
+        this.logger.debug('GET falló, intentando POST vacío para health check');
+      }
+
+      // Intentar hacer una petición POST con datos mínimos para verificar conectividad
+      const testData = {
+        licitacion_id: `HEALTH_CHECK_${Date.now()}`, // ID único para evitar duplicados
+        nombre: 'Health Check',
+        fecha_publicacion: new Date().toISOString(),
+        fecha_cierre: new Date(Date.now() + 86400000).toISOString(), // +24 horas
+        organismo: 'Health Check',
+        unidad: 'Health Check',
+        monto_disponible: 0,
+        moneda: 'CLP',
+        estado: 'Publicada',
+      };
+
+      const response = await this.client.post('/up_compra.php', testData);
+
+      // Considerar saludable si responde con 200 o 400 (400 puede ser esperado para datos de prueba)
+      const isHealthy = response.status === 200 || response.status === 400;
 
       this.logger.info('API Health Check', {
         status: response.status,
         healthy: isHealthy,
         url: `${this.baseURL}/up_compra.php`,
+        responseData: response.data,
       });
 
       return isHealthy;
-    } catch (error) {
-      this.logger.error('API Health Check Failed', error);
+    } catch (error: any) {
+      this.logger.error('API Health Check Failed', {
+        error: error.message,
+        code: error.code,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        baseURL: this.baseURL,
+        endpoint: '/up_compra.php',
+      });
+
+      // Proporcionar información más específica sobre el error
+      if (error.code === 'ECONNREFUSED') {
+        this.logger.error(
+          'El servidor no está ejecutándose o no es accesible',
+          {
+            baseURL: this.baseURL,
+            suggestion:
+              'Verifica que el servidor esté ejecutándose y la URL sea correcta',
+          }
+        );
+      } else if (error.code === 'ENOTFOUND') {
+        this.logger.error('El dominio no se puede resolver', {
+          baseURL: this.baseURL,
+          suggestion: 'Verifica la URL y la conectividad de red',
+        });
+      } else if (error.code === 'ETIMEDOUT') {
+        this.logger.error('La conexión se agotó por tiempo', {
+          timeout: this.timeout,
+          suggestion:
+            'Considera aumentar el timeout o verificar la conectividad',
+        });
+      }
+
       return false;
     }
   }
