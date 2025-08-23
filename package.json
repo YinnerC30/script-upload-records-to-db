@@ -18,13 +18,18 @@
       "node_modules/winston/**/*",
       "node_modules/dotenv/**/*",
       "node_modules/class-transformer/**/*",
-      "node_modules/class-validator/**/*"
+      "node_modules/class-validator/**/*",
+      "node_modules/axios/**/*",
+      "node_modules/follow-redirects/**/*",
+      "node_modules/proxy-from-env/**/*"
     ],
     "scripts": [
       "node_modules/xlsx/**/*.js",
       "node_modules/typeorm/**/*.js",
       "node_modules/mysql2/**/*.js",
-      "node_modules/reflect-metadata/**/*.js"
+      "node_modules/reflect-metadata/**/*.js",
+      "node_modules/axios/**/*.js",
+      "node_modules/follow-redirects/**/*.js"
     ],
     "ignore": [
       "node_modules/typeorm/browser/**/*",
@@ -90,6 +95,8 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^1.6.7",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
     "dotenv": "^16.4.5",
     "mysql2": "^3.9.2",
     "reflect-metadata": "^0.2.1",
