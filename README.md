@@ -1,6 +1,6 @@
 # 📊 Script de Procesamiento de Archivos Excel
 
-Este proyecto es una aplicación Node.js que procesa automáticamente archivos Excel, extrae los datos y los inserta en una base de datos MySQL usando TypeORM. Está diseñado para manejar licitaciones públicas con un sistema robusto de validación, logging y manejo de errores.
+Este proyecto es una aplicación Node.js que procesa automáticamente archivos Excel, extrae los datos y los envía a una API REST. Está diseñado para manejar licitaciones públicas con un sistema robusto de validación, logging y manejo de errores.
 
 ## 🚀 Características Principales
 
@@ -8,7 +8,7 @@ Este proyecto es una aplicación Node.js que procesa automáticamente archivos E
 
 - **Procesamiento automático**: Detecta y procesa el archivo Excel más reciente
 - **Validación robusta**: Sistema completo de validación de datos
-- **Procesamiento por lotes**: Inserción optimizada en la base de datos
+- **Envío a API REST**: Envío optimizado de datos a API externa
 - **Logging estructurado**: Sistema de logs detallado con Winston
 - **Manejo de errores**: Archivos con errores se mueven a directorio separado
 - **Configuración flexible**: Variables de entorno para personalización
@@ -16,26 +16,27 @@ Este proyecto es una aplicación Node.js que procesa automáticamente archivos E
 ### ✅ Características Avanzadas
 
 - **Mapeo automático de encabezados**: Compatibilidad con diferentes formatos de Excel
-- **Lógica de retry**: Reconexión automática a la base de datos
+- **Lógica de retry**: Reintentos automáticos para llamadas a la API
 - **Progreso en tiempo real**: Monitoreo detallado del procesamiento
 - **Ejecutable standalone**: No requiere Node.js en el servidor
 - **Métricas de rendimiento**: Análisis automático de logs
+- **Modo dry-run**: Validación sin envío real de datos
 
 ## 📋 Requisitos del Sistema
 
 ### Requisitos Mínimos
 
 - **Node.js**: 18.0.0 o superior
-- **MySQL**: 8.0.0 o superior
 - **RAM**: 512MB mínimo
 - **Espacio**: 100MB para la aplicación + espacio para archivos
+- **Conectividad**: Acceso a internet para API REST
 
 ### Requisitos Recomendados
 
 - **Node.js**: 20.0.0 o superior
-- **MySQL**: 8.0.0 o superior
 - **RAM**: 1GB o más
 - **Espacio**: 500MB para la aplicación + espacio para archivos
+- **Conectividad**: Conexión estable a internet
 
 ## 🛠️ Instalación y Configuración
 
@@ -55,20 +56,11 @@ cp env.example .env
 ### 2. Configuración del Archivo .env
 
 ```env
-# Configuración de Base de Datos
-DB_HOST=localhost
-DB_PORT=3306
-DB_USERNAME=root
-DB_PASSWORD=tu_password
-DB_DATABASE=excel_data
-
-# Configuración de Retry y Pool de Conexiones
-DB_RETRY_MAX_ATTEMPTS=5
-DB_RETRY_INITIAL_DELAY=1000
-DB_RETRY_MAX_DELAY=30000
-DB_RETRY_BACKOFF_MULTIPLIER=2
-DB_CONNECTION_LIMIT=10
-DB_CONNECT_TIMEOUT_MS=30000
+# Configuración de API REST
+API_BASE_URL=http://localhost:3000/api
+API_KEY=your-api-key-here
+API_TIMEOUT=30000
+API_RETRY_ATTEMPTS=3
 
 # Configuración del Directorio de Archivos
 EXCEL_DIRECTORY=./excel-files
@@ -86,20 +78,6 @@ LOG_RETENTION_DAYS=30
 
 # Configuración del Procesamiento
 BATCH_SIZE=100
-PROCESSING_INTERVAL=30000
-```
-
-### 3. Configuración de Base de Datos
-
-```bash
-# Iniciar MySQL con Docker
-npm run db:start
-
-# Verificar estado
-npm run db:status
-
-# Ver logs
-npm run db:logs
 ```
 
 ## 🏃‍♂️ Uso del Aplicativo
@@ -140,19 +118,19 @@ npm run build:all
 # Ver configuración actual
 ./bin/script-upload-records-to-db --config
 
-# Configurar base de datos
-./bin/script-upload-records-to-db --db-host 192.168.1.100 --db-port 3307
+# Configurar API
+./bin/script-upload-records-to-db --api-url https://api.example.com --api-key my-key
 
 # Configurar directorios
 ./bin/script-upload-records-to-db --excel-dir ./my-excel-files --processed-dir ./my-processed-files
 
+# Modo dry-run (solo validación)
+./bin/script-upload-records-to-db --dry-run
+
 # Configuración completa
 ./bin/script-upload-records-to-db \
-  --db-host 192.168.1.100 \
-  --db-port 3307 \
-  --db-username admin \
-  --db-password secret123 \
-  --db-database production_data \
+  --api-url https://api.example.com \
+  --api-key secret123 \
   --excel-dir ./production/excel \
   --batch-size 1000 \
   --log-level info
@@ -230,25 +208,18 @@ El sistema mapea automáticamente los siguientes encabezados del Excel:
 
 ### Variables de Entorno Detalladas
 
-| Variable                 | Descripción                          | Valor por Defecto   | Tipo   |
-| ------------------------ | ------------------------------------ | ------------------- | ------ |
-| `DB_HOST`                | Host de la base de datos             | `localhost`         | string |
-| `DB_PORT`                | Puerto de la base de datos           | `3306`              | number |
-| `DB_USERNAME`            | Usuario de la base de datos          | `root`              | string |
-| `DB_PASSWORD`            | Contraseña de la base de datos       | `password`          | string |
-| `DB_DATABASE`            | Nombre de la base de datos           | `excel_data`        | string |
-| `DB_RETRY_MAX_ATTEMPTS`  | Máximo intentos de reconexión        | `5`                 | number |
-| `DB_RETRY_INITIAL_DELAY` | Delay inicial en ms                  | `1000`              | number |
-| `DB_RETRY_MAX_DELAY`     | Delay máximo en ms                   | `30000`             | number |
-| `DB_CONNECTION_LIMIT`    | Límite de conexiones en el pool      | `10`                | number |
-| `DB_CONNECT_TIMEOUT_MS`  | Timeout de conexión en ms            | `30000`             | number |
-| `EXCEL_DIRECTORY`        | Directorio a monitorear              | `./excel-files`     | string |
-| `PROCESSED_DIRECTORY`    | Directorio para archivos procesados  | `./processed-files` | string |
-| `ERROR_DIRECTORY`        | Directorio para archivos con errores | `./error-files`     | string |
-| `LOG_LEVEL`              | Nivel de logging                     | `info`              | string |
-| `LOG_FILE`               | Archivo de logs                      | `./logs/app.log`    | string |
-| `BATCH_SIZE`             | Tamaño del lote para inserción       | `100`               | number |
-| `PROCESSING_INTERVAL`    | Intervalo de procesamiento (ms)      | `30000`             | number |
+| Variable              | Descripción                          | Valor por Defecto           | Tipo   |
+| --------------------- | ------------------------------------ | --------------------------- | ------ |
+| `API_BASE_URL`        | URL base de la API REST              | `http://localhost:3000/api` | string |
+| `API_KEY`             | Clave de autenticación para la API   | `''`                        | string |
+| `API_TIMEOUT`         | Timeout para llamadas API en ms      | `30000`                     | number |
+| `API_RETRY_ATTEMPTS`  | Número de reintentos para API        | `3`                         | number |
+| `EXCEL_DIRECTORY`     | Directorio a monitorear              | `./excel-files`             | string |
+| `PROCESSED_DIRECTORY` | Directorio para archivos procesados  | `./processed-files`         | string |
+| `ERROR_DIRECTORY`     | Directorio para archivos con errores | `./error-files`             | string |
+| `LOG_LEVEL`           | Nivel de logging                     | `info`                      | string |
+| `LOG_FILE`            | Archivo de logs                      | `./logs/app.log`            | string |
+| `BATCH_SIZE`          | Tamaño del lote para envío           | `100`                       | number |
 
 ### Directorios Automáticos
 
@@ -351,31 +322,27 @@ npm run logs:test       # Prueba el sistema de logging
 
 ## 🔄 Manejo de Errores y Retry
 
-### Lógica de Retry para Base de Datos
+### Lógica de Retry para API REST
 
 #### Configuración de Retry
 
 ```env
-DB_RETRY_MAX_ATTEMPTS=5              # Número máximo de intentos
-DB_RETRY_INITIAL_DELAY=1000          # Delay inicial en ms
-DB_RETRY_MAX_DELAY=30000             # Delay máximo en ms
-DB_RETRY_BACKOFF_MULTIPLIER=2        # Multiplicador de backoff exponencial
+API_RETRY_ATTEMPTS=3              # Número máximo de intentos
+API_TIMEOUT=30000                 # Timeout en ms
 ```
 
-#### Backoff Exponencial
+#### Estrategia de Retry
 
-- Intento 1: 1000ms
-- Intento 2: 2000ms
-- Intento 3: 4000ms
-- Intento 4: 8000ms
-- Intento 5: 16000ms (limitado a 30000ms)
+- Intento 1: Envío inmediato
+- Intento 2: Espera 1 segundo
+- Intento 3: Espera 2 segundos
 
 ### Tipos de Errores Manejados
 
 1. **Archivo no encontrado**: No hay archivos Excel en el directorio
 2. **Archivo corrupto**: El archivo Excel no se puede leer
 3. **Datos inválidos**: Los datos no cumplen con la estructura esperada
-4. **Error de base de datos**: Problemas de conexión o inserción
+4. **Error de API**: Problemas de conectividad o respuesta de la API
 5. **Error de permisos**: Problemas de acceso a archivos
 6. **Encabezados no mapeados**: Columnas del Excel que no coinciden con el mapeo
 
@@ -384,7 +351,7 @@ DB_RETRY_BACKOFF_MULTIPLIER=2        # Multiplicador de backoff exponencial
 - Los archivos con errores se mueven a `error-files/`
 - Los logs detallan el error específico
 - El servicio continúa funcionando después de un error
-- Reconexión automática a la base de datos
+- Reintentos automáticos para llamadas a la API
 
 ## 📈 Monitoreo y Progreso
 
@@ -406,8 +373,8 @@ DB_RETRY_BACKOFF_MULTIPLIER=2        # Multiplicador de backoff exponencial
 ### Estadísticas Finales
 
 ```
-🎉 ¡Inserción completada exitosamente!
-   📊 Total de registros insertados: 5,000
+🎉 ¡Envío completado exitosamente!
+   📊 Total de registros enviados: 5,000
    ⏱️  Tiempo total: 165s
    📦 Lotes procesados: 50
    🚀 Velocidad promedio: 1,818 registros/min
@@ -434,8 +401,8 @@ npm run test:coverage
 # Probar configuración del archivo .env
 npm run test:env-config
 
-# Probar lógica de retry de base de datos
-npm run test:retry
+# Probar integración con API
+npm run test:api
 
 # Probar sistema de logging
 npm run logs:test
@@ -454,28 +421,6 @@ npm run test:excel:large 10000
 npm run demo
 ```
 
-### Comandos de Base de Datos
-
-```bash
-# Iniciar base de datos
-npm run db:start
-
-# Detener base de datos
-npm run db:stop
-
-# Reiniciar base de datos
-npm run db:restart
-
-# Ver logs de base de datos
-npm run db:logs
-
-# Ver estado de base de datos
-npm run db:status
-
-# Limpiar base de datos
-npm run db:clean
-```
-
 ### Scripts Disponibles
 
 ```bash
@@ -486,6 +431,7 @@ npm run start          # Ejecutar en modo producción
 npm run test           # Ejecutar pruebas
 npm run test:watch     # Ejecutar pruebas en modo watch
 npm run test:env-config # Probar configuración del archivo .env
+npm run test:api       # Probar integración con API
 ```
 
 ## 🔧 Solución de Problemas
@@ -505,20 +451,20 @@ ls -la ./excel-files/
 npm run test:excel
 ```
 
-#### 2. Error: "Base de datos no disponible"
+#### 2. Error: "API no disponible"
 
-**Causa**: MySQL no está ejecutándose o configuración incorrecta
+**Causa**: La API REST no está accesible o configuración incorrecta
 **Solución**:
 
 ```bash
-# Verificar estado de MySQL
-npm run db:status
-
-# Iniciar MySQL si no está ejecutándose
-npm run db:start
+# Verificar conectividad
+curl -X GET http://localhost:3000/api
 
 # Verificar configuración
 ./bin/script-upload-records-to-db --config
+
+# Probar con modo dry-run
+./bin/script-upload-records-to-db --dry-run
 ```
 
 #### 3. Error: "Encabezado no mapeado"
@@ -582,8 +528,8 @@ tail -f logs/app.performance.log
 # Probar ejecutable
 ./bin/script-upload-records-to-db --dry-run
 
-# Verificar conexión a base de datos
-npm run test:retry
+# Verificar conectividad con API
+npm run test:api
 
 # Probar sistema de logging
 npm run logs:test
@@ -595,15 +541,20 @@ npm run logs:test
 script-upload-records-to-db/
 ├── src/
 │   ├── config/
-│   │   ├── config.ts          # Configuración general
-│   │   └── database.ts        # Configuración de TypeORM
-│   ├── entities/
-│   │   └── Licitacion.ts      # Entidad para licitaciones
+│   │   └── config.ts          # Configuración general
 │   ├── services/
 │   │   ├── __tests__/
 │   │   │   ├── ExcelProcessor.test.ts
 │   │   │   └── HeaderMapping.test.ts
-│   │   └── ExcelProcessor.ts  # Lógica principal de procesamiento
+│   │   ├── ApiService.ts      # Servicio para API REST
+│   │   ├── ExcelProcessorRefactored.ts  # Lógica principal de procesamiento
+│   │   ├── ExcelValidator.ts  # Validación de datos
+│   │   ├── DataTransformer.ts # Transformación de datos
+│   │   └── FileProcessor.ts   # Manejo de archivos
+│   ├── cli/
+│   │   ├── argumentParser.ts  # Parser de argumentos CLI
+│   │   ├── commandHandler.ts  # Manejador de comandos
+│   │   └── environmentManager.ts # Gestor de variables de entorno
 │   ├── utils/
 │   │   └── logger.ts          # Configuración de Winston
 │   └── index.ts               # Punto de entrada principal
@@ -612,7 +563,7 @@ script-upload-records-to-db/
 │   ├── create-large-test-excel.js
 │   ├── demo-progress.js
 │   ├── log-analyzer.ts
-│   ├── test-database-retry.js
+│   ├── test-api-integration.js
 │   ├── test-env-config.js
 │   └── test-header-mapping.js
 ├── bin/                       # Ejecutables generados
@@ -666,9 +617,10 @@ npm run build:all
 1. **Detección**: Busca el archivo Excel más reciente
 2. **Lectura**: Lee y parsea el archivo Excel
 3. **Validación**: Valida la estructura de datos
-4. **Inserción**: Inserta registros en la base de datos por lotes
-5. **Movimiento**: Mueve archivo a directorio procesado
-6. **Logging**: Registra todo el proceso
+4. **Transformación**: Convierte datos al formato esperado por la API
+5. **Envío**: Envía registros a la API REST por lotes
+6. **Movimiento**: Mueve archivo a directorio procesado
+7. **Logging**: Registra todo el proceso
 
 ## 📈 Rendimiento
 
@@ -678,12 +630,14 @@ npm run build:all
 - **Validación eficiente**: Solo valida campos requeridos
 - **Logging asíncrono**: No bloquea el procesamiento
 - **Manejo de memoria**: Libera recursos después de cada archivo
+- **Reintentos inteligentes**: Manejo de errores de red
 
 ### Recomendaciones
 
-- Ajusta `BATCH_SIZE` según la memoria disponible
-- Usa `PROCESSING_INTERVAL` para controlar la frecuencia
+- Ajusta `BATCH_SIZE` según la capacidad de la API
+- Usa `API_TIMEOUT` para controlar timeouts de red
 - Monitorea los logs para detectar problemas de rendimiento
+- Configura `API_RETRY_ATTEMPTS` según la estabilidad de la API
 
 ## 🤝 Contribución
 
@@ -703,21 +657,22 @@ Si tienes problemas o preguntas:
 
 1. Revisa los logs en `logs/app.log`
 2. Verifica la configuración en `.env`
-3. Asegúrate de que la base de datos esté accesible
+3. Asegúrate de que la API REST esté accesible
 4. Verifica que los archivos Excel tengan la estructura correcta
+5. Usa el modo dry-run para validar sin enviar datos
 
 ## 📚 Referencias Técnicas
 
 ### Dependencias Principales
 
-| Dependencia        | Versión | Propósito                       |
-| ------------------ | ------- | ------------------------------- |
-| `typeorm`          | ^0.3.20 | ORM para base de datos          |
-| `mysql2`           | ^3.9.2  | Driver de MySQL                 |
-| `xlsx`             | ^0.18.5 | Procesamiento de archivos Excel |
-| `winston`          | ^3.13.0 | Sistema de logging              |
-| `dotenv`           | ^16.4.5 | Variables de entorno            |
-| `reflect-metadata` | ^0.2.1  | Metadatos para TypeORM          |
+| Dependencia         | Versión | Propósito                       |
+| ------------------- | ------- | ------------------------------- |
+| `axios`             | ^1.6.7  | Cliente HTTP para API REST      |
+| `xlsx`              | ^0.18.5 | Procesamiento de archivos Excel |
+| `winston`           | ^3.13.0 | Sistema de logging              |
+| `dotenv`            | ^16.4.5 | Variables de entorno            |
+| `class-transformer` | ^0.5.1  | Transformación de datos         |
+| `class-validator`   | ^0.14.1 | Validación de datos             |
 
 ### Scripts de Build
 
