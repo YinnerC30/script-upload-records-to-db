@@ -39,7 +39,7 @@ export class ApiService {
       timeout: this.timeout,
       headers: {
         'Content-Type': 'application/json',
-        ...(this.apiKey && { 'Authorization': `Bearer ${this.apiKey}` }),
+        ...(this.apiKey && { Authorization: `Bearer ${this.apiKey}` }),
       },
     });
 
@@ -101,7 +101,7 @@ export class ApiService {
       // Intentar hacer una petición POST vacía al endpoint para verificar conectividad
       const response = await this.client.post('/up_compra.php', {});
       const isHealthy = response.status === 200 || response.status === 400; // 400 es esperado para datos vacíos
-      
+
       this.logger.info('API Health Check', {
         status: response.status,
         healthy: isHealthy,
@@ -137,7 +137,7 @@ export class ApiService {
       for (let i = 0; i < licitaciones.length; i++) {
         const licitacion = licitaciones[i];
         if (!licitacion) continue;
-        
+
         try {
           const response: any = await this.client.post(
             '/up_compra.php',
@@ -153,7 +153,9 @@ export class ApiService {
             });
           } else {
             errorCount++;
-            errors.push(`Licitación ${licitacion.licitacion_id}: Status ${response.status}`);
+            errors.push(
+              `Licitación ${licitacion.licitacion_id}: Status ${response.status}`
+            );
           }
         } catch (error: any) {
           errorCount++;
@@ -169,7 +171,7 @@ export class ApiService {
 
         // Pequeña pausa entre envíos para no sobrecargar la API
         if (i < licitaciones.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
       }
 
@@ -189,9 +191,10 @@ export class ApiService {
           errorCount,
           errors: errors.length > 0 ? errors : undefined,
         },
-        message: errorCount === 0 
-          ? `Lote ${batchNumber} enviado exitosamente` 
-          : `Lote ${batchNumber} procesado con ${errorCount} errores`,
+        message:
+          errorCount === 0
+            ? `Lote ${batchNumber} enviado exitosamente`
+            : `Lote ${batchNumber} procesado con ${errorCount} errores`,
       };
     } catch (error: any) {
       this.logger.error('Error procesando lote', {
@@ -200,9 +203,7 @@ export class ApiService {
         recordsCount: licitaciones.length,
       });
 
-      throw new Error(
-        `Error procesando lote ${batchNumber}: ${error.message}`
-      );
+      throw new Error(`Error procesando lote ${batchNumber}: ${error.message}`);
     }
   }
 
@@ -230,7 +231,10 @@ export class ApiService {
       return {
         success: response.status === 200,
         data: response.data,
-        message: response.status === 200 ? 'Licitación enviada exitosamente' : 'Error enviando licitación',
+        message:
+          response.status === 200
+            ? 'Licitación enviada exitosamente'
+            : 'Error enviando licitación',
       };
     } catch (error: any) {
       this.logger.error('Error enviando licitación a la API', {
@@ -305,15 +309,18 @@ export class ApiService {
 
         // Esperar antes del siguiente intento con backoff exponencial
         const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
 
-    this.logger.error(`Falló ${operationName} después de ${maxRetries} intentos`, {
-      operationName,
-      maxRetries,
-      lastError: lastError?.message,
-    });
+    this.logger.error(
+      `Falló ${operationName} después de ${maxRetries} intentos`,
+      {
+        operationName,
+        maxRetries,
+        lastError: lastError?.message,
+      }
+    );
 
     throw new Error(
       `${operationName} falló después de ${maxRetries} intentos: ${lastError?.message}`
