@@ -105,8 +105,8 @@ npm run build:all
 # Instalar globalmente
 ./install.sh
 
-# Ver demostración
-./demo-executable.sh
+# Desinstalar
+./uninstall.sh
 ```
 
 ### Opción 3: Configuración desde Línea de Comandos
@@ -150,6 +150,49 @@ Para ejecutar el programa automáticamente en horarios específicos:
 ./setup-scheduler.sh -c          # Configurar programación personalizada
 ./setup-scheduler.sh -r          # Remover programación existente
 ./setup-scheduler.sh -s          # Ver programación actual
+```
+
+### 📜 Scripts Shell Disponibles
+
+El proyecto incluye los siguientes scripts shell para facilitar la instalación y configuración:
+
+#### `install.sh` - Script de Instalación
+
+```bash
+# Instalar el ejecutable globalmente
+./install.sh
+
+# Opciones disponibles:
+./install.sh --help              # Mostrar ayuda
+./install.sh --force             # Forzar instalación
+./install.sh --user              # Instalar solo para el usuario actual
+```
+
+#### `uninstall.sh` - Script de Desinstalación
+
+```bash
+# Desinstalar el ejecutable
+./uninstall.sh
+
+# Opciones disponibles:
+./uninstall.sh --help            # Mostrar ayuda
+./uninstall.sh --force           # Forzar desinstalación
+./uninstall.sh --user            # Desinstalar solo del usuario actual
+```
+
+#### `setup-scheduler.sh` - Script de Programación
+
+```bash
+# Configurar ejecución automática
+./setup-scheduler.sh
+
+# Opciones disponibles:
+./setup-scheduler.sh -d          # Programar ejecución diaria
+./setup-scheduler.sh -w          # Programar ejecución semanal
+./setup-scheduler.sh -c          # Configuración personalizada
+./setup-scheduler.sh -r          # Remover programación
+./setup-scheduler.sh -s          # Ver programación actual
+./setup-scheduler.sh --help      # Mostrar ayuda completa
 ```
 
 **Ejemplos de programación personalizada:**
@@ -571,6 +614,9 @@ script-upload-records-to-db/
 ├── excel-files/               # Archivos Excel a procesar
 ├── processed-files/           # Archivos procesados
 ├── error-files/               # Archivos con errores
+├── install.sh                 # Script de instalación
+├── uninstall.sh               # Script de desinstalación
+├── setup-scheduler.sh         # Script de programación automática
 ├── package.json
 ├── tsconfig.json
 ├── vitest.config.ts
@@ -594,7 +640,7 @@ El ejecutable es una versión compilada del proyecto que incluye todas las depen
 
 - `bin/script-upload-records-to-db`: Ejecutable principal
 - `install.sh`: Script de instalación
-- `demo-executable.sh`: Script de demostración
+- `uninstall.sh`: Script de desinstalación
 
 ### Comandos del Ejecutable
 
@@ -608,8 +654,8 @@ npm run build:all
 # Instalar
 ./install.sh
 
-# Demostración
-./demo-executable.sh
+# Desinstalar
+./uninstall.sh
 ```
 
 ## 🔄 Flujo de Procesamiento
