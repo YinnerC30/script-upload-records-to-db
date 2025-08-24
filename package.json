@@ -76,7 +76,6 @@
     "generate:excel:custom": "node scripts/tools/excel-generator.js --custom",
     "diagnose:api": "node scripts/tools/api-diagnostic.js",
     "configure:api": "node scripts/tools/api-configurator.js",
-    "demo:progress": "node scripts/examples/demo-progress.js",
     "release": "./scripts/dev-tools/create-release.sh",
     "release:patch": "./scripts/dev-tools/create-release.sh $(npm version patch --no-git-tag-version | sed 's/v//')",
     "release:minor": "./scripts/dev-tools/create-release.sh $(npm version minor --no-git-tag-version | sed 's/v//')",
