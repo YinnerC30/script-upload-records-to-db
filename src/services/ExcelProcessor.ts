@@ -11,7 +11,7 @@ import { DataTransformer } from './DataTransformer';
 import { ExcelRow, FailedRecord, LicitacionApiData } from '../types/excel';
 import logger, { StructuredLogger } from '../utils/logger';
 
-export class ExcelProcessorRefactored {
+export class ExcelProcessor {
   private readonly fileProcessor: FileProcessor;
   private readonly validator: ExcelValidator;
   private readonly transformer: DataTransformer;
@@ -36,7 +36,7 @@ export class ExcelProcessorRefactored {
     this.validator = new ExcelValidator();
     this.transformer = new DataTransformer();
     this.apiService = new ApiService();
-    this.logger = new StructuredLogger('ExcelProcessorRefactored');
+    this.logger = new StructuredLogger('ExcelProcessor');
 
     // Crear directorios si no existen
     this.fileProcessor.ensureDirectories();

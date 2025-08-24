@@ -590,7 +590,7 @@ script-upload-records-to-db/
 │   │   │   ├── ExcelProcessor.test.ts
 │   │   │   └── HeaderMapping.test.ts
 │   │   ├── ApiService.ts      # Servicio para API REST
-│   │   ├── ExcelProcessorRefactored.ts  # Lógica principal de procesamiento
+│   │   ├── ExcelProcessor.ts  # Lógica principal de procesamiento
 │   │   ├── ExcelValidator.ts  # Validación de datos
 │   │   ├── DataTransformer.ts # Transformación de datos
 │   │   └── FileProcessor.ts   # Manejo de archivos

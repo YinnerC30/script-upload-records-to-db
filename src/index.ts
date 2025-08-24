@@ -3,7 +3,7 @@ import {
   createRequiredDirectories,
   validateConfig,
 } from './config/config';
-import { ExcelProcessorRefactored } from './services/ExcelProcessor';
+import { ExcelProcessor } from './services/ExcelProcessor';
 import { ArgumentParser, ParsedArgs } from './cli/argumentParser';
 import { CommandHandler } from './cli/commandHandler';
 import { EnvironmentManager } from './cli/environmentManager';
@@ -89,7 +89,7 @@ async function main() {
     });
 
     // Crear procesador de Excel
-    const processor = new ExcelProcessorRefactored(dryRunMode);
+    const processor = new ExcelProcessor(dryRunMode);
 
     // Ejecutar procesamiento
     await processor.run();

@@ -1,7 +1,7 @@
 // Exportar servicios principales
 export { ApiService } from './ApiService';
 
-export { ExcelProcessorRefactored } from './ExcelProcessor';
+export { ExcelProcessor } from './ExcelProcessor';
 
 // Exportar servicios específicos
 export { FileProcessor } from './FileProcessor';
