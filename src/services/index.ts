@@ -1,7 +1,7 @@
 // Exportar servicios principales
 export { ApiService } from './ApiService';
-export { ExcelProcessor } from './ExcelProcessor';
-export { ExcelProcessorRefactored } from './ExcelProcessorRefactored';
+
+export { ExcelProcessorRefactored } from './ExcelProcessor';
 
 // Exportar servicios específicos
 export { FileProcessor } from './FileProcessor';
@@ -13,5 +13,5 @@ export {
 export { DataTransformer } from './DataTransformer';
 
 // Exportar tipos
-export type { ExcelRow, FailedRecord } from './ExcelProcessor';
+
 export type { LicitacionApiData, ApiResponse } from './ApiService';

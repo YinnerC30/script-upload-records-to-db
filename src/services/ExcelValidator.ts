@@ -1,4 +1,4 @@
-import { ExcelRow } from './ExcelProcessor';
+import { ExcelRow } from '../types/excel';
 
 export interface ValidationResult {
   isValid: boolean;

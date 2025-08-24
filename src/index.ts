@@ -3,7 +3,7 @@ import {
   createRequiredDirectories,
   validateConfig,
 } from './config/config';
-import { ExcelProcessorRefactored } from './services/ExcelProcessorRefactored';
+import { ExcelProcessorRefactored } from './services/ExcelProcessor';
 import { ArgumentParser, ParsedArgs } from './cli/argumentParser';
 import { CommandHandler } from './cli/commandHandler';
 import { EnvironmentManager } from './cli/environmentManager';

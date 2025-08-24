@@ -1,4 +1,5 @@
-import { ExcelRow } from './ExcelProcessor';
+
+import { ExcelRow } from '../types/excel';
 import { LicitacionApiData } from './ApiService';
 
 export class DataTransformer {
