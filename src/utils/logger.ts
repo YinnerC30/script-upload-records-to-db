@@ -1,9 +1,10 @@
 import winston from 'winston';
 import path from 'path';
 import fs from 'fs/promises';
+import { config } from '../config/config';
 
 // Crear directorio de logs si no existe
-const logDir = path.dirname(process.env.LOG_FILE || './logs/app.log');
+const logDir = path.dirname(config.logging.file);
 
 // Función async para crear directorio si no existe
 const ensureLogDirectory = async () => {
@@ -102,7 +103,7 @@ const consoleFormat = winston.format.combine(
 
 const logger = winston.createLogger({
   levels: customLevels,
-  level: process.env.LOG_LEVEL || 'info',
+  level: config.logging.level,
   defaultMeta: {
     service: 'excel-processor',
     version: process.env.npm_package_version || '1.0.0',
@@ -110,36 +111,32 @@ const logger = winston.createLogger({
   transports: [
     // Archivo de logs general
     new winston.transports.File({
-      filename: process.env.LOG_FILE || './logs/app.log',
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
+      filename: config.logging.file,
+      maxsize: config.logging.maxSize,
+      maxFiles: config.logging.maxFiles,
       format: fileFormat,
     }),
     // Archivo de errores
     new winston.transports.File({
-      filename:
-        process.env.LOG_FILE?.replace('.log', '.error.log') ||
-        './logs/app.error.log',
+      filename: config.logging.file.replace('.log', '.error.log'),
       level: 'error',
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
+      maxsize: config.logging.maxSize,
+      maxFiles: config.logging.maxFiles,
       format: fileFormat,
     }),
     // Archivo de logs de rendimiento
     new winston.transports.File({
-      filename:
-        process.env.LOG_FILE?.replace('.log', '.performance.log') ||
-        './logs/app.performance.log',
+      filename: config.logging.file.replace('.log', '.performance.log'),
       level: 'verbose',
-      maxsize: 5242880, // 5MB
-      maxFiles: 3,
+      maxsize: config.logging.maxSize,
+      maxFiles: Math.min(config.logging.maxFiles, 3),
       format: fileFormat,
     }),
   ],
 });
 
-// Agregar console transport en desarrollo
-if (process.env.NODE_ENV !== 'production') {
+// Agregar console transport si está habilitado
+if (config.logging.enableConsole) {
   logger.add(
     new winston.transports.Console({
       format: consoleFormat,

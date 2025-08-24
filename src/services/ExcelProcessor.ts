@@ -10,6 +10,7 @@ import {
 import { DataTransformer } from './DataTransformer';
 import { ExcelRow, FailedRecord, LicitacionApiData } from '../types/excel';
 import logger, { StructuredLogger } from '../utils/logger';
+import { config } from '../config/config';
 
 export class ExcelProcessor {
   private readonly fileProcessor: FileProcessor;
@@ -21,11 +22,10 @@ export class ExcelProcessor {
   private readonly logger: StructuredLogger;
 
   constructor(dryRun: boolean = false) {
-    const excelDirectory = process.env.EXCEL_DIRECTORY || './excel-files';
-    const processedDirectory =
-      process.env.PROCESSED_DIRECTORY || './processed-files';
-    const errorDirectory = process.env.ERROR_DIRECTORY || './error-files';
-    this.batchSize = parseInt(process.env.BATCH_SIZE || '100');
+    const excelDirectory = config.directories.excel;
+    const processedDirectory = config.directories.processed;
+    const errorDirectory = config.directories.error;
+    this.batchSize = config.processing.batchSize;
     this.dryRun = dryRun;
 
     this.fileProcessor = new FileProcessor(
@@ -48,14 +48,12 @@ export class ExcelProcessor {
   public async run(): Promise<void> {
     const startTime = Date.now();
     console.log('\n🚀 Iniciando procesamiento de archivos Excel...');
-    console.log(
-      `   📁 Directorio: ${process.env.EXCEL_DIRECTORY || './excel-files'}`
-    );
+    console.log(`   📁 Directorio: ${config.directories.excel}`);
     console.log(`   📦 Tamaño de lote: ${this.batchSize}`);
     console.log(`   ⏰ Inicio: ${new Date().toLocaleTimeString()}\n`);
 
     this.logger.info('🚀 Iniciando procesamiento de archivos Excel...', {
-      excelDirectory: process.env.EXCEL_DIRECTORY || './excel-files',
+      excelDirectory: config.directories.excel,
       batchSize: this.batchSize,
     });
 
@@ -65,14 +63,10 @@ export class ExcelProcessor {
 
       if (!latestFile) {
         console.log('⚠️  No se encontraron archivos Excel para procesar');
-        console.log(
-          `   📁 Directorio revisado: ${
-            process.env.EXCEL_DIRECTORY || './excel-files'
-          }\n`
-        );
+        console.log(`   📁 Directorio revisado: ${config.directories.excel}\n`);
 
         this.logger.warn('No se encontraron archivos Excel para procesar', {
-          directory: process.env.EXCEL_DIRECTORY || './excel-files',
+          directory: config.directories.excel,
         });
         return;
       }
@@ -331,10 +325,7 @@ export class ExcelProcessor {
       .slice(0, 19);
     const baseName = path.parse(originalFileName).name;
     const failedFileName = `${baseName}_failed_${timestamp}.xlsx`;
-    const failedFilePath = path.join(
-      process.env.ERROR_DIRECTORY || './error-files',
-      failedFileName
-    );
+    const failedFilePath = path.join(config.directories.error, failedFileName);
 
     // Preparar datos para el Excel
     const workbook = XLSX.utils.book_new();

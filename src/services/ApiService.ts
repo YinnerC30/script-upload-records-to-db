@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { StructuredLogger } from '../utils/logger';
+import { config } from '../config/config';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -28,9 +29,9 @@ export class ApiService {
   private readonly timeout: number;
 
   constructor() {
-    this.baseURL = process.env.API_BASE_URL || 'http://localhost:3000/api';
-    this.apiKey = process.env.API_KEY;
-    this.timeout = parseInt(process.env.API_TIMEOUT || '30000');
+    this.baseURL = config.api.baseURL;
+    this.apiKey = config.api.apiKey;
+    this.timeout = config.api.timeout;
     this.logger = new StructuredLogger('ApiService');
 
     this.client = axios.create({
