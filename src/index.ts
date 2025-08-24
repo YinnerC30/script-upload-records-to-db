@@ -13,7 +13,7 @@ import logger from './utils/logger';
 let isDryRun = false;
 
 // Función para procesar argumentos
-async function parseArguments(): Promise<{
+export async function parseArguments(): Promise<{
   isDryRun: boolean;
   envUpdates: Record<string, string>;
 }> {
@@ -61,7 +61,7 @@ async function parseArguments(): Promise<{
 }
 
 // Función principal
-async function main() {
+export async function main() {
   try {
     console.log('🚀 Iniciando Excel Processor...\n');
 
