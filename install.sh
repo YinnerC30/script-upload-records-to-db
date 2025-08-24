@@ -82,13 +82,22 @@ fi
 # Crear directorio de instalación si no existe
 if [ ! -d "$INSTALL_DIR" ]; then
     print_info "Creando directorio de instalación: $INSTALL_DIR"
-    sudo mkdir -p "$INSTALL_DIR"
+    if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+        sudo mkdir -p "$INSTALL_DIR"
+    else
+        mkdir -p "$INSTALL_DIR"
+    fi
 fi
 
 # Copiar ejecutable
 print_info "Copiando ejecutable a $INSTALL_DIR..."
-sudo cp "bin/script-upload-records-to-db" "$INSTALL_DIR/$EXECUTABLE_NAME"
-sudo chmod +x "$INSTALL_DIR/$EXECUTABLE_NAME"
+if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+    sudo cp "bin/script-upload-records-to-db" "$INSTALL_DIR/$EXECUTABLE_NAME"
+    sudo chmod +x "$INSTALL_DIR/$EXECUTABLE_NAME"
+else
+    cp "bin/script-upload-records-to-db" "$INSTALL_DIR/$EXECUTABLE_NAME"
+    chmod +x "$INSTALL_DIR/$EXECUTABLE_NAME"
+fi
 
 print_success "Ejecutable instalado en $INSTALL_DIR/$EXECUTABLE_NAME"
 
@@ -178,27 +187,56 @@ echo ""
 print_success "🎉 Instalación completada exitosamente!"
 echo ""
 print_info "📋 Próximo paso - Configurar el entorno:"
-echo "  1. Ver configuración actual: $EXECUTABLE_NAME --config"
-echo "  2. Configurar API: $EXECUTABLE_NAME --api-url <URL> --api-key <KEY>"
-echo "  3. Configurar directorios: $EXECUTABLE_NAME --excel-dir <PATH> --processed-dir <PATH>"
-echo "  4. Configurar procesamiento: $EXECUTABLE_NAME --batch-size <NUMBER> --log-level <LEVEL>"
+if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+    echo "  1. Ver configuración actual: sudo $EXECUTABLE_NAME --config"
+    echo "  2. Configurar API: sudo $EXECUTABLE_NAME --api-url <URL> --api-key <KEY>"
+    echo "  3. Configurar directorios: sudo $EXECUTABLE_NAME --excel-dir <PATH> --processed-dir <PATH>"
+    echo "  4. Configurar procesamiento: sudo $EXECUTABLE_NAME --batch-size <NUMBER> --log-level <LEVEL>"
+else
+    echo "  1. Ver configuración actual: $EXECUTABLE_NAME --config"
+    echo "  2. Configurar API: $EXECUTABLE_NAME --api-url <URL> --api-key <KEY>"
+    echo "  3. Configurar directorios: $EXECUTABLE_NAME --excel-dir <PATH> --processed-dir <PATH>"
+    echo "  4. Configurar procesamiento: $EXECUTABLE_NAME --batch-size <NUMBER> --log-level <LEVEL>"
+fi
 echo ""
 print_info "💡 Nota: Los comandos de configuración actualizan automáticamente el archivo .env"
-echo "   y no requieren permisos de administrador ni edición manual."
+echo "   ubicado en el directorio de instalación."
+echo ""
+print_warning "⚠️  IMPORTANTE: Si instalaste en /usr/local/bin (instalación por defecto),"
+echo "   los comandos de configuración SÍ requieren permisos de administrador (sudo)."
+echo "   Para evitar esto, puedes instalar en un directorio personal: ./install.sh -d ~/bin"
 
 
 echo ""
 print_info "🚀 Comandos útiles:"
-echo "  $EXECUTABLE_NAME                    # Ejecutar directamente"
-echo "  $EXECUTABLE_NAME --help             # Ver ayuda completa"
-echo "  $EXECUTABLE_NAME --version          # Ver versión"
-echo "  $EXECUTABLE_NAME --config           # Ver configuración actual"
-echo "  $EXECUTABLE_NAME --dry-run          # Ejecutar sin procesar (solo validar)"
+if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+    echo "  $EXECUTABLE_NAME                    # Ejecutar directamente"
+    echo "  $EXECUTABLE_NAME --help             # Ver ayuda completa"
+    echo "  $EXECUTABLE_NAME --version          # Ver versión"
+    echo "  sudo $EXECUTABLE_NAME --config      # Ver configuración actual"
+    echo "  $EXECUTABLE_NAME --dry-run          # Ejecutar sin procesar (solo validar)"
+else
+    echo "  $EXECUTABLE_NAME                    # Ejecutar directamente"
+    echo "  $EXECUTABLE_NAME --help             # Ver ayuda completa"
+    echo "  $EXECUTABLE_NAME --version          # Ver versión"
+    echo "  $EXECUTABLE_NAME --config           # Ver configuración actual"
+    echo "  $EXECUTABLE_NAME --dry-run          # Ejecutar sin procesar (solo validar)"
+fi
 echo ""
 print_info "🔧 Comandos de configuración:"
-echo "  $EXECUTABLE_NAME --api-url https://api.example.com --api-key my-key"
-echo "  $EXECUTABLE_NAME --excel-dir ./my-excel-files --processed-dir ./my-processed-files"
-echo "  $EXECUTABLE_NAME --batch-size 200 --log-level debug"
+if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+    echo "  sudo $EXECUTABLE_NAME --api-url https://api.example.com --api-key my-key"
+    echo "  sudo $EXECUTABLE_NAME --excel-dir ./my-excel-files --processed-dir ./my-processed-files"
+    echo "  sudo $EXECUTABLE_NAME --batch-size 200 --log-level debug"
+    echo ""
+    print_info "💡 Alternativa: Instalar en directorio personal para evitar sudo:"
+    echo "  ./install.sh -d ~/bin"
+    echo "  $EXECUTABLE_NAME --api-url https://api.example.com --api-key my-key"
+else
+    echo "  $EXECUTABLE_NAME --api-url https://api.example.com --api-key my-key"
+    echo "  $EXECUTABLE_NAME --excel-dir ./my-excel-files --processed-dir ./my-processed-files"
+    echo "  $EXECUTABLE_NAME --batch-size 200 --log-level debug"
+fi
 echo ""
 print_info "⏰ Para programar ejecución automática:"
 echo "  # Usar el script de programación incluido:"

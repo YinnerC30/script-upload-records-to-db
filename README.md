@@ -102,27 +102,51 @@ npm run build:all
 # Ejecutar directamente
 ./bin/script-upload-records-to-db
 
-# Instalar globalmente
-./install.sh
+# Instalar globalmente (requiere sudo)
+sudo ./install.sh
 
-# Desinstalar
-./uninstall.sh
+# Instalar en directorio personal (no requiere sudo)
+./install.sh -d ~/bin
+
+# Desinstalar (requiere sudo si instalado globalmente)
+sudo ./uninstall.sh
 ```
 
+#### 🔐 Permisos y Sudo
+
+**Instalación Global** (`/usr/local/bin`):
+
+- ✅ Requiere `sudo` para instalación/desinstalación
+- ✅ Requiere `sudo` para comandos de configuración
+- ✅ Accesible desde cualquier ubicación
+- 📁 Archivo `.env` ubicado en `/usr/local/bin/.env`
+
+**Instalación Personal** (`~/bin` o directorio personal):
+
+- ❌ No requiere `sudo` para instalación/desinstalación
+- ❌ No requiere `sudo` para comandos de configuración
+- ⚠️ Requiere agregar `~/bin` al PATH: `export PATH="$HOME/bin:$PATH"`
+- 📁 Archivo `.env` ubicado en `~/bin/.env`
+
 ### Opción 3: Configuración desde Línea de Comandos
+
+**⚠️ Importante**: Si instalaste el ejecutable globalmente (en `/usr/local/bin`), los comandos de configuración requieren permisos de administrador (`sudo`).
 
 ```bash
 # Mostrar ayuda
 ./bin/script-upload-records-to-db --help
 
 # Ver configuración actual
-./bin/script-upload-records-to-db --config
+./bin/script-upload-records-to-db --config                    # Si instalado localmente
+sudo ./bin/script-upload-records-to-db --config               # Si instalado globalmente
 
 # Configurar API
 ./bin/script-upload-records-to-db --api-url https://api.example.com --api-key my-key
+sudo ./bin/script-upload-records-to-db --api-url https://api.example.com --api-key my-key
 
 # Configurar directorios
 ./bin/script-upload-records-to-db --excel-dir ./my-excel-files --processed-dir ./my-processed-files
+sudo ./bin/script-upload-records-to-db --excel-dir ./my-excel-files --processed-dir ./my-processed-files
 
 # Modo dry-run (solo validación)
 ./bin/script-upload-records-to-db --dry-run
@@ -134,6 +158,10 @@ npm run build:all
   --excel-dir ./production/excel \
   --batch-size 1000 \
   --log-level info
+
+# Alternativa: Instalar en directorio personal para evitar sudo
+./install.sh -d ~/bin
+~/bin/excel-processor --api-url https://api.example.com --api-key my-key
 ```
 
 ### ⏰ Programación Automática
@@ -159,25 +187,30 @@ El proyecto incluye los siguientes scripts shell para facilitar la instalación 
 #### `install.sh` - Script de Instalación
 
 ```bash
-# Instalar el ejecutable globalmente
-./install.sh
+# Instalar el ejecutable globalmente (requiere sudo)
+sudo ./install.sh
+
+# Instalar en directorio personal (no requiere sudo)
+./install.sh -d ~/bin
 
 # Opciones disponibles:
 ./install.sh --help              # Mostrar ayuda
-./install.sh --force             # Forzar instalación
-./install.sh --user              # Instalar solo para el usuario actual
+./install.sh -d <directorio>     # Especificar directorio de instalación
 ```
 
 #### `uninstall.sh` - Script de Desinstalación
 
 ```bash
-# Desinstalar el ejecutable
-./uninstall.sh
+# Desinstalar el ejecutable (requiere sudo si instalado globalmente)
+sudo ./uninstall.sh
+
+# Desinstalar desde directorio personal
+./uninstall.sh -d ~/bin
 
 # Opciones disponibles:
 ./uninstall.sh --help            # Mostrar ayuda
-./uninstall.sh --force           # Forzar desinstalación
-./uninstall.sh --user            # Desinstalar solo del usuario actual
+./uninstall.sh -d <directorio>   # Especificar directorio de instalación
+./uninstall.sh --force           # Forzar desinstalación sin confirmación
 ```
 
 #### `setup-scheduler.sh` - Script de Programación
