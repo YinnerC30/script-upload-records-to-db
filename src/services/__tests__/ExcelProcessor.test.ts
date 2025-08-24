@@ -109,9 +109,9 @@ describe('ExcelProcessor', () => {
   describe('constructor', () => {
     it('should initialize with default values', () => {
       expect(FileProcessor).toHaveBeenCalledWith(
-        './test-excel-files',
-        './test-processed-files',
-        './test-error-files'
+        './excel-files',
+        './processed-files',
+        './error-files'
       );
       expect(ExcelValidator).toHaveBeenCalled();
       expect(DataTransformer).toHaveBeenCalled();

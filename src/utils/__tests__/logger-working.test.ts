@@ -1,5 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Mock del módulo de configuración ANTES de importar el logger
+vi.mock('../../config/config', () => ({
+  config: {
+    logging: {
+      level: 'info',
+      file: './logs/app.log',
+      enableConsole: true,
+      enablePerformance: true,
+      maxSize: 5242880,
+      maxFiles: 5,
+      retentionDays: 30,
+    },
+  },
+}));
+
 // Mock simple de winston
 vi.mock('winston', () => ({
   default: {
@@ -38,32 +53,31 @@ vi.mock('fs/promises', () => ({
 // Mock simple de path
 vi.mock('path', () => ({
   default: {
-    dirname: vi.fn(),
+    dirname: vi.fn(() => './logs'),
   },
 }));
 
+// Importar después de los mocks
+import { StructuredLogger } from '../logger';
+
 describe('StructuredLogger - Working Tests', () => {
-  let StructuredLogger: any;
+  let structuredLogger: any;
 
   beforeEach(() => {
     // Limpiar mocks
     vi.clearAllMocks();
-    
-    // Importar StructuredLogger
-    const loggerModule = require('../logger.ts');
-    StructuredLogger = loggerModule.StructuredLogger;
   });
 
   describe('Constructor', () => {
     it('should create StructuredLogger with provided category and sessionId', () => {
       const logger = new StructuredLogger('test-category', 'custom-session');
-      
+
       expect(logger.getSessionId()).toBe('custom-session');
     });
 
     it('should generate sessionId when not provided', () => {
       const logger = new StructuredLogger('test-category');
-      
+
       const sessionId = logger.getSessionId();
       expect(sessionId).toMatch(/^session_\d+_[a-z0-9]{9}$/);
     });
@@ -71,10 +85,10 @@ describe('StructuredLogger - Working Tests', () => {
     it('should generate unique sessionIds for different instances', () => {
       const logger1 = new StructuredLogger('test-category');
       const logger2 = new StructuredLogger('test-category');
-      
+
       const sessionId1 = logger1.getSessionId();
       const sessionId2 = logger2.getSessionId();
-      
+
       expect(sessionId1).not.toBe(sessionId2);
     });
   });
@@ -94,7 +108,7 @@ describe('StructuredLogger - Working Tests', () => {
     it('should return the same session ID on multiple calls', () => {
       const sessionId1 = structuredLogger.getSessionId();
       const sessionId2 = structuredLogger.getSessionId();
-      
+
       expect(sessionId1).toBe(sessionId2);
     });
   });
@@ -103,7 +117,7 @@ describe('StructuredLogger - Working Tests', () => {
     it('should generate session IDs with correct format', () => {
       const logger = new StructuredLogger('test-category');
       const sessionId = logger.getSessionId();
-      
+
       // Verificar formato: session_timestamp_randomstring
       expect(sessionId).toMatch(/^session_\d+_[a-z0-9]{9}$/);
     });
@@ -112,11 +126,11 @@ describe('StructuredLogger - Working Tests', () => {
       const logger1 = new StructuredLogger('test-category');
       const logger2 = new StructuredLogger('test-category');
       const logger3 = new StructuredLogger('test-category');
-      
+
       const sessionId1 = logger1.getSessionId();
       const sessionId2 = logger2.getSessionId();
       const sessionId3 = logger3.getSessionId();
-      
+
       expect(sessionId1).not.toBe(sessionId2);
       expect(sessionId1).not.toBe(sessionId3);
       expect(sessionId2).not.toBe(sessionId3);
@@ -124,11 +138,11 @@ describe('StructuredLogger - Working Tests', () => {
 
     it('should maintain same session ID for same instance', () => {
       const logger = new StructuredLogger('test-category');
-      
+
       const sessionId1 = logger.getSessionId();
       const sessionId2 = logger.getSessionId();
       const sessionId3 = logger.getSessionId();
-      
+
       expect(sessionId1).toBe(sessionId2);
       expect(sessionId1).toBe(sessionId3);
       expect(sessionId2).toBe(sessionId3);
