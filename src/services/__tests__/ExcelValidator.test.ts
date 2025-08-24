@@ -193,6 +193,28 @@ describe('ExcelValidator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
+    it('should handle edge cases for date validation', () => {
+      // Crear un mock del método parseDate para simular fechas inválidas
+      const originalParseDate = validator['parseDate'];
+      validator['parseDate'] = vi.fn().mockReturnValue(new Date('Invalid Date'));
+
+      const row: ExcelRow = {
+        idLicitacion: 'LIC-001',
+        nombre: 'Licitación de prueba',
+        fechaPublicacion: 'fecha inválida',
+        fechaCierre: 'otra fecha inválida'
+      };
+
+      const result = validator.validateRow(row, 0);
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Fila 1: Fecha de publicación inválida');
+      expect(result.errors).toContain('Fila 1: Fecha de cierre inválida');
+
+      // Restaurar el método original
+      validator['parseDate'] = originalParseDate;
+    });
+
     it('should handle string amounts correctly', () => {
       const row: ExcelRow = {
         idLicitacion: 'LIC-001',
