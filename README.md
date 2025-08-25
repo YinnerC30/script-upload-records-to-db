@@ -323,7 +323,7 @@ El script crea automáticamente:
 
 - `logs/app.log`: Logs generales con toda la información
 - `logs/app.error.log`: Solo errores para monitoreo rápido
-- `logs/app.performance.log`: Métricas de rendimiento detalladas
+- `logs/app.performance.log`: Métricas de rendimiento detalladas (si está habilitado)
 - `logs/report.md`: Reporte automático de análisis
 - `logs/report.json`: Datos estructurados para análisis
 
@@ -342,6 +342,30 @@ npm run logs:analyze    # Genera reporte completo
 npm run logs:report     # Genera reporte y muestra resumen
 npm run logs:clean      # Limpia logs antiguos (>30 días)
 npm run logs:test       # Prueba el sistema de logging
+```
+
+### Habilitar/Deshabilitar logs de rendimiento
+
+- **Bandera CLI**: `--log-performance <true|false>`
+- **Variable de entorno**: `LOG_ENABLE_PERFORMANCE=true|false`
+
+Comportamiento:
+
+- **true** (por defecto):
+  - Se crea el archivo `logs/app.performance.log`.
+  - Las llamadas a `StructuredLogger.performance(...)` registran eventos a nivel `verbose`.
+- **false**:
+  - No se agrega el transporte de archivo de rendimiento.
+  - `StructuredLogger.performance(...)` no registra nada (no-op).
+
+Ejemplos:
+
+```bash
+# Deshabilitar logs de rendimiento vía CLI
+./bin/script-upload-records-to-db --log-performance false
+
+# Habilitar explícitamente
+./bin/script-upload-records-to-db --log-performance true
 ```
 
 ### Ejemplo de Log Estructurado
@@ -597,7 +621,7 @@ tail -f logs/app.log
 # Ver solo errores
 tail -f logs/app.error.log
 
-# Ver métricas de rendimiento
+# Ver métricas de rendimiento (requiere LOG_ENABLE_PERFORMANCE=true o --log-performance true)
 tail -f logs/app.performance.log
 ```
 
