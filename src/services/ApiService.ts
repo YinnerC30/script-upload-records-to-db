@@ -345,7 +345,7 @@ export class ApiService {
           error: error.message,
           statusCode: error.response?.status,
         },
-        { ...error.response.data }
+        error.response?.data ? { ...error.response.data } : {}
       );
 
       throw error;

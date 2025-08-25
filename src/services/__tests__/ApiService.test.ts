@@ -14,17 +14,15 @@ vi.mock('../../utils/logger', () => ({
 }));
 
 // Mock del módulo de configuración
-const mockConfig = {
-  api: {
-    baseURL: 'http://localhost:3000/api',
-    apiKey: '',
-    timeout: 30000,
-    retryAttempts: 3,
+vi.mock('../../config/config', () => ({
+  config: {
+    api: {
+      baseURL: 'http://localhost:3000/api',
+      apiKey: 'test-key',
+      timeout: 60000,
+      retryAttempts: 3,
+    },
   },
-};
-
-vi.mock('../config/config', () => ({
-  config: mockConfig,
 }));
 
 import { ApiService, ApiResponse, LicitacionApiData } from '../ApiService';
@@ -93,7 +91,7 @@ describe('ApiService', () => {
 
       expect(MockedStructuredLogger).toHaveBeenCalledWith('ApiService');
       expect(mockedAxios.create).toHaveBeenCalledWith({
-        baseURL: 'http://localhost:3000',
+        baseURL: 'http://localhost:3000/api',
         timeout: 60000,
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +105,7 @@ describe('ApiService', () => {
       const service = new ApiService();
 
       expect(mockedAxios.create).toHaveBeenCalledWith({
-        baseURL: 'http://localhost:3000',
+        baseURL: 'http://localhost:3000/api',
         timeout: 60000,
         headers: {
           'Content-Type': 'application/json',
