@@ -210,7 +210,7 @@ echo "   Para evitar esto, puedes instalar en un directorio personal: ./install.
 echo ""
 print_info "🚀 Comandos útiles:"
 if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
-    echo "  $EXECUTABLE_NAME                    # Ejecutar directamente"
+    echo "  $EXECUTABLE_NAME run                   # Ejecutar directamente"
     echo "  $EXECUTABLE_NAME --help             # Ver ayuda completa"
     echo "  $EXECUTABLE_NAME --version          # Ver versión"
     echo "  sudo $EXECUTABLE_NAME --config      # Ver configuración actual"
