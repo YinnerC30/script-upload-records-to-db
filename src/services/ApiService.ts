@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { StructuredLogger } from '../utils/logger';
 import { config } from '../config/config';
+import { StructuredLogger } from '../utils/logger';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -338,11 +338,15 @@ export class ApiService {
 
       return response;
     } catch (error: any) {
-      this.logger.error('Error enviando licitación individual', {
-        licitacion_id: licitacion.licitacion_id,
-        error: error.message,
-        statusCode: error.response?.status,
-      });
+      this.logger.error(
+        'Error enviando licitación individual',
+        {
+          licitacion_id: licitacion.licitacion_id,
+          error: error.message,
+          statusCode: error.response?.status,
+        },
+        { ...error.response.data }
+      );
 
       throw error;
     }
