@@ -303,7 +303,7 @@ describe('ExcelProcessor', () => {
 
       await dryRunProcessor.run();
 
-      expect(mockFileProcessor.moveToProcessed).toHaveBeenCalledWith(
+      expect(mockFileProcessor.moveToProcessed).not.toHaveBeenCalledWith(
         mockFilePath,
         'test-file.xlsx'
       );
