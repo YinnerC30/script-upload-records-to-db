@@ -127,27 +127,23 @@ const logger = winston.createLogger({
   ],
 });
 
-// Agregar console transport si está habilitado
-if (config.logging.enableConsole) {
-  logger.add(
-    new winston.transports.Console({
-      format: consoleFormat,
-    })
-  );
-}
+// Agregar console transport siempre
+logger.add(
+  new winston.transports.Console({
+    format: consoleFormat,
+  })
+);
 
-// Agregar archivo de rendimiento sólo si está habilitado
-if (config.logging.enablePerformance) {
-  logger.add(
-    new winston.transports.File({
-      filename: config.logging.file.replace('.log', '.performance.log'),
-      level: 'verbose',
-      maxsize: config.logging.maxSize,
-      maxFiles: Math.min(config.logging.maxFiles, 3),
-      format: fileFormat,
-    })
-  );
-}
+// Agregar archivo de rendimiento siempre
+logger.add(
+  new winston.transports.File({
+    filename: config.logging.file.replace('.log', '.performance.log'),
+    level: 'verbose',
+    maxsize: config.logging.maxSize,
+    maxFiles: Math.min(config.logging.maxFiles, 3),
+    format: fileFormat,
+  })
+);
 
 // Clase para logging estructurado
 export class StructuredLogger {
@@ -207,9 +203,6 @@ export class StructuredLogger {
 
   // Método para logging de rendimiento
   performance(operation: string, duration: number, meta?: any) {
-    if (!config.logging.enablePerformance) {
-      return;
-    }
     logger.verbose(`Performance: ${operation}`, {
       category: this.category,
       sessionId: this.sessionId,

@@ -18,8 +18,6 @@ vi.mock('../../config/config', () => ({
     logging: {
       level: 'info',
       file: './logs/app.log',
-      enableConsole: true,
-      enablePerformance: false,
     },
   },
 }));
@@ -85,8 +83,7 @@ describe('CommandHandler', () => {
       expect(helpText).toContain('--batch-size');
       expect(helpText).toContain('--log-level');
       expect(helpText).toContain('--log-file');
-      expect(helpText).toContain('--log-console');
-      expect(helpText).toContain('--log-performance');
+
     });
 
     it('should include usage examples in help text', () => {
@@ -127,7 +124,7 @@ describe('CommandHandler', () => {
     it('should display current configuration when called', () => {
       commandHandler.showConfig();
 
-      expect(consoleSpy).toHaveBeenCalledTimes(10); // 10 líneas de configuración (incluyendo el título)
+      expect(consoleSpy).toHaveBeenCalledTimes(8); // 8 líneas de configuración (incluyendo el título)
 
       // Verificar que se muestran todas las secciones de configuración
       expect(consoleSpy).toHaveBeenCalledWith('📋 Configuración actual:');
@@ -148,10 +145,6 @@ describe('CommandHandler', () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         '  📄 Archivo de logs: ./logs/app.log'
       );
-      expect(consoleSpy).toHaveBeenCalledWith('  🖥️  Logs en consola: true');
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '  ⚡ Logs de rendimiento: false'
-      );
     });
 
     it('should display configuration in the correct order', () => {
@@ -167,8 +160,6 @@ describe('CommandHandler', () => {
       expect(calls[5]).toBe('  📦 Tamaño de lote: 100');
       expect(calls[6]).toBe('  📊 Nivel de logs: info');
       expect(calls[7]).toBe('  📄 Archivo de logs: ./logs/app.log');
-      expect(calls[8]).toBe('  🖥️  Logs en consola: true');
-      expect(calls[9]).toBe('  ⚡ Logs de rendimiento: false');
     });
 
     it('should handle different configuration values correctly', () => {
@@ -193,10 +184,6 @@ describe('CommandHandler', () => {
       expect(consoleSpy).toHaveBeenCalledWith('  📊 Nivel de logs: info');
       expect(consoleSpy).toHaveBeenCalledWith(
         '  📄 Archivo de logs: ./logs/app.log'
-      );
-      expect(consoleSpy).toHaveBeenCalledWith('  🖥️  Logs en consola: true');
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '  ⚡ Logs de rendimiento: false'
       );
     });
   });

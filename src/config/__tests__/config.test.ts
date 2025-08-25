@@ -41,8 +41,6 @@ describe('Config Module', () => {
     it('should have correct structure for logging section', () => {
       expect(config.logging).toHaveProperty('level');
       expect(config.logging).toHaveProperty('file');
-      expect(config.logging).toHaveProperty('enableConsole');
-      expect(config.logging).toHaveProperty('enablePerformance');
       expect(config.logging).toHaveProperty('maxSize');
       expect(config.logging).toHaveProperty('maxFiles');
       expect(config.logging).toHaveProperty('retentionDays');
@@ -121,8 +119,6 @@ describe('Config Module', () => {
     it('should have valid logging configuration', () => {
       expect(typeof config.logging.level).toBe('string');
       expect(['error', 'warn', 'info', 'debug', 'trace']).toContain(config.logging.level);
-      expect(typeof config.logging.enableConsole).toBe('boolean');
-      expect(typeof config.logging.enablePerformance).toBe('boolean');
     });
   });
 
@@ -187,11 +183,7 @@ describe('Config Module', () => {
       expect(typeof config.logging.retentionDays).toBe('number');
     });
 
-    it('should handle boolean environment variables correctly', () => {
-      // Verificar que los valores booleanos son válidos
-      expect(typeof config.logging.enableConsole).toBe('boolean');
-      expect(typeof config.logging.enablePerformance).toBe('boolean');
-    });
+
   });
 
   describe('Edge Cases', () => {
@@ -213,8 +205,7 @@ describe('Config Module', () => {
       
       expect(typeof config.logging.level).toBe('string');
       expect(typeof config.logging.file).toBe('string');
-      expect(typeof config.logging.enableConsole).toBe('boolean');
-      expect(typeof config.logging.enablePerformance).toBe('boolean');
+
       expect(typeof config.logging.maxSize).toBe('number');
       expect(typeof config.logging.maxFiles).toBe('number');
       expect(typeof config.logging.retentionDays).toBe('number');

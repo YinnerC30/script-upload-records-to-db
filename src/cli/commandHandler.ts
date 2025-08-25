@@ -33,8 +33,6 @@ Opciones de configuración de procesamiento:
 
 Opciones de configuración de logs:
   --log-file <path>             Configurar archivo de logs
-  --log-console <true|false>    Habilitar/deshabilitar logs en consola
-  --log-performance <true|false> Habilitar/deshabilitar logs de rendimiento
 
 Ejemplos:
   excel-processor run                                # Procesamiento normal
@@ -73,9 +71,5 @@ Nota: Las opciones de configuración modifican el archivo .env permanentemente.
     console.log(`  📦 Tamaño de lote: ${config.processing.batchSize}`);
     console.log(`  📊 Nivel de logs: ${config.logging.level}`);
     console.log(`  📄 Archivo de logs: ${config.logging.file}`);
-    console.log(`  🖥️  Logs en consola: ${config.logging.enableConsole}`);
-    console.log(
-      `  ⚡ Logs de rendimiento: ${config.logging.enablePerformance}`
-    );
   }
 }

@@ -6,8 +6,6 @@ vi.mock('../../config/config', () => ({
     logging: {
       level: 'info',
       file: './logs/app.log',
-      enableConsole: true,
-      enablePerformance: true,
       maxSize: 5242880,
       maxFiles: 5,
       retentionDays: 30,

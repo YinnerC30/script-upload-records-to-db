@@ -172,32 +172,6 @@ export class ArgumentParser {
           }
           break;
 
-        case '--log-console':
-          if (i + 1 < args.length) {
-            const value = args[++i];
-            if (value && ['true', 'false'].includes(value)) {
-              result.envUpdates['LOG_ENABLE_CONSOLE'] = value;
-            } else {
-              this.handleError('--log-console debe ser: true o false');
-            }
-          } else {
-            this.handleError('--log-console requiere un valor');
-          }
-          break;
-
-        case '--log-performance':
-          if (i + 1 < args.length) {
-            const value = args[++i];
-            if (value && ['true', 'false'].includes(value)) {
-              result.envUpdates['LOG_ENABLE_PERFORMANCE'] = value;
-            } else {
-              this.handleError('--log-performance debe ser: true o false');
-            }
-          } else {
-            this.handleError('--log-performance requiere un valor');
-          }
-          break;
-
         default:
           console.error(`❌ Error: Opción desconocida: ${arg}`);
           console.error('💡 Usa --help para ver las opciones disponibles');

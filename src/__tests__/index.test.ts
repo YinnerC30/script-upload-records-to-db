@@ -41,8 +41,6 @@ vi.mock('../config/config', () => ({
     logging: {
       level: 'info',
       file: './logs/app.log',
-      enableConsole: true,
-      enablePerformance: false,
     },
   },
   createRequiredDirectories: vi.fn(),

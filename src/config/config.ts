@@ -56,8 +56,6 @@ export const config = {
   logging: {
     level: getEnvVar('LOG_LEVEL', 'info'),
     file: getEnvVar('LOG_FILE', './logs/app.log'),
-    enableConsole: getEnvVarBoolean('LOG_ENABLE_CONSOLE', true),
-    enablePerformance: getEnvVarBoolean('LOG_ENABLE_PERFORMANCE', true),
     maxSize: getEnvVarNumber('LOG_MAX_SIZE', 5242880), // 5MB
     maxFiles: getEnvVarNumber('LOG_MAX_FILES', 5),
     retentionDays: getEnvVarNumber('LOG_RETENTION_DAYS', 30),

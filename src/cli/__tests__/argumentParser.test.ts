@@ -297,47 +297,7 @@ describe('ArgumentParser', () => {
         expect(result.envUpdates['LOG_FILE']).toBe('/path/to/logs/app.log');
       });
 
-      it('should parse --log-console with valid boolean values', () => {
-        process.argv = ['node', 'script.js', '--log-console', 'true'];
 
-        let result = parser.parseArguments();
-        expect(result.envUpdates['LOG_ENABLE_CONSOLE']).toBe('true');
-
-        process.argv = ['node', 'script.js', '--log-console', 'false'];
-
-        result = parser.parseArguments();
-        expect(result.envUpdates['LOG_ENABLE_CONSOLE']).toBe('false');
-      });
-
-      it('should handle --log-console with invalid value', () => {
-        process.argv = ['node', 'script.js', '--log-console', 'invalid'];
-
-        expect(() => parser.parseArguments()).toThrow('process.exit called');
-        expect(mockConsoleError).toHaveBeenCalledWith(
-          '❌ Error: --log-console debe ser: true o false'
-        );
-      });
-
-      it('should parse --log-performance with valid boolean values', () => {
-        process.argv = ['node', 'script.js', '--log-performance', 'true'];
-
-        let result = parser.parseArguments();
-        expect(result.envUpdates['LOG_ENABLE_PERFORMANCE']).toBe('true');
-
-        process.argv = ['node', 'script.js', '--log-performance', 'false'];
-
-        result = parser.parseArguments();
-        expect(result.envUpdates['LOG_ENABLE_PERFORMANCE']).toBe('false');
-      });
-
-      it('should handle --log-performance with invalid value', () => {
-        process.argv = ['node', 'script.js', '--log-performance', 'invalid'];
-
-        expect(() => parser.parseArguments()).toThrow('process.exit called');
-        expect(mockConsoleError).toHaveBeenCalledWith(
-          '❌ Error: --log-performance debe ser: true o false'
-        );
-      });
 
       it('should handle --batch-size without value', () => {
         process.argv = ['node', 'script.js', '--batch-size'];
@@ -366,23 +326,7 @@ describe('ArgumentParser', () => {
         );
       });
 
-      it('should handle --log-console without value', () => {
-        process.argv = ['node', 'script.js', '--log-console'];
 
-        expect(() => parser.parseArguments()).toThrow('process.exit called');
-        expect(mockConsoleError).toHaveBeenCalledWith(
-          '❌ Error: --log-console requiere un valor'
-        );
-      });
-
-      it('should handle --log-performance without value', () => {
-        process.argv = ['node', 'script.js', '--log-performance'];
-
-        expect(() => parser.parseArguments()).toThrow('process.exit called');
-        expect(mockConsoleError).toHaveBeenCalledWith(
-          '❌ Error: --log-performance requiere un valor'
-        );
-      });
     });
 
     describe('Unknown options', () => {
