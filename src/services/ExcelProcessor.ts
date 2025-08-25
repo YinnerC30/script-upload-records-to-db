@@ -172,7 +172,7 @@ export class ExcelProcessor {
       if (this.dryRun) {
         console.log('🔍 Modo dry-run: Solo validación, no se enviarán datos');
         console.log(`📊 Registros válidos: ${transformedData.length}`);
-        await this.fileProcessor.moveToProcessed(filePath, fileName);
+        // await this.fileProcessor.moveToProcessed(filePath, fileName);
       } else {
         await this.processData(transformedData, fileName, filePath);
       }
@@ -206,14 +206,14 @@ export class ExcelProcessor {
     console.log(`   📄 Total procesados: ${data.length}`);
 
     // Crear archivo de registros fallidos si es necesario
-    if (result.failedRecords.length > 0) {
+    if (result.failedRecords.length > 0 && result.successCount > 0) {
       await this.createFailedRecordsFile(result.failedRecords, fileName);
     }
 
     // Mover archivo original
     if (result.successCount > 0) {
       await this.fileProcessor.moveToProcessed(filePath, fileName);
-    } else {
+    } else if (result.successCount === 0 && result.failedRecords.length > 0) {
       await this.fileProcessor.moveToError(filePath, fileName);
     }
   }
