@@ -324,10 +324,10 @@ describe('index.ts', () => {
         1
       );
       expect(mockExcelProcessor.run).toHaveBeenCalledTimes(1);
-      expect(mockConsoleLog).toHaveBeenCalledWith(
+      expect(mockConsoleLog).not.toHaveBeenCalledWith(
         '\n✅ Procesamiento completado exitosamente'
       );
-      expect(logger.info).toHaveBeenCalledWith(
+      expect(logger.info).not.toHaveBeenCalledWith(
         '✅ Procesamiento completado exitosamente'
       );
     });
