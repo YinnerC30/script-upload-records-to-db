@@ -117,10 +117,26 @@ export async function main() {
     const processor = new ExcelProcessor(dryRunMode);
 
     // Ejecutar procesamiento
-    await processor.run();
+    const result = await processor.run();
 
-    console.log('\n✅ Procesamiento completado exitosamente');
-    logger.info('✅ Procesamiento completado exitosamente');
+    if (!result.hadFile) {
+      console.log('\nℹ️  No se encontraron archivos para procesar');
+      logger.info('ℹ️  No se encontraron archivos para procesar');
+    } else if (result.failedCount === 0 && result.total > 0) {
+      console.log('\n✅ Procesamiento completado exitosamente');
+      logger.info('✅ Procesamiento completado exitosamente');
+    } else if (result.total === 0) {
+      console.log('\nℹ️  No hubo registros válidos para procesar');
+      logger.warn('ℹ️  No hubo registros válidos para procesar');
+    } else {
+      console.log(
+        `\n⚠️  Procesamiento completado con errores (${result.failedCount} fallidos de ${result.total})`
+      );
+      logger.warn('⚠️  Procesamiento completado con errores', {
+        failed: result.failedCount,
+        total: result.total,
+      });
+    }
   } catch (error) {
     console.error('\n❌ Error durante el procesamiento:', error);
     logger.error('❌ Error durante el procesamiento', {

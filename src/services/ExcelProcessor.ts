@@ -45,7 +45,12 @@ export class ExcelProcessor {
   /**
    * Ejecuta el procesamiento completo
    */
-  public async run(): Promise<void> {
+  public async run(): Promise<{
+    total: number;
+    successCount: number;
+    failedCount: number;
+    hadFile: boolean;
+  }> {
     const startTime = Date.now();
     console.log('\n🚀 Iniciando procesamiento de archivos Excel...');
     console.log(`   📁 Directorio: ${config.directories.excel}`);
@@ -68,19 +73,28 @@ export class ExcelProcessor {
         this.logger.warn('No se encontraron archivos Excel para procesar', {
           directory: config.directories.excel,
         });
-        return;
+        return { total: 0, successCount: 0, failedCount: 0, hadFile: false };
       }
 
       const fileName = path.basename(latestFile);
       console.log(`📄 Archivo encontrado: ${fileName}`);
 
       // Procesar el archivo
-      await this.processFile(latestFile, fileName);
+      const result = await this.processFile(latestFile, fileName);
 
       const endTime = Date.now();
       const duration = ((endTime - startTime) / 1000).toFixed(2);
       console.log(`\n⏱️  Tiempo total de procesamiento: ${duration} segundos`);
-      console.log(`✅ Procesamiento completado exitosamente`);
+      if (result.failedCount === 0 && result.total > 0) {
+        console.log(`✅ Procesamiento completado exitosamente`);
+      } else if (result.total === 0) {
+        console.log(`ℹ️  No hubo registros válidos para procesar`);
+      } else {
+        console.log(
+          `⚠️  Procesamiento completado con errores (${result.failedCount} fallidos)`
+        );
+      }
+      return { ...result, hadFile: true };
     } catch (error) {
       console.error('\n❌ Error durante el procesamiento:', error);
       this.logger.error('❌ Error durante el procesamiento', {
@@ -94,7 +108,10 @@ export class ExcelProcessor {
   /**
    * Procesa un archivo Excel específico
    */
-  private async processFile(filePath: string, fileName: string): Promise<void> {
+  private async processFile(
+    filePath: string,
+    fileName: string
+  ): Promise<{ total: number; successCount: number; failedCount: number }> {
     try {
       console.log(`📖 Leyendo archivo: ${fileName}`);
 
@@ -117,7 +134,7 @@ export class ExcelProcessor {
       if (rawData.length === 0) {
         console.log('⚠️  El archivo no contiene datos válidos');
         await this.fileProcessor.moveToError(filePath, fileName);
-        return;
+        return { total: 0, successCount: 0, failedCount: 0 };
       }
 
       // Obtener encabezados
@@ -132,7 +149,7 @@ export class ExcelProcessor {
           console.log(`   - Falta: ${header}`)
         );
         await this.fileProcessor.moveToError(filePath, fileName);
-        return;
+        return { total: 0, successCount: 0, failedCount: 0 };
       }
 
       // Mapear encabezados y transformar datos
@@ -172,9 +189,22 @@ export class ExcelProcessor {
       if (this.dryRun) {
         console.log('🔍 Modo dry-run: Solo validación, no se enviarán datos');
         console.log(`📊 Registros válidos: ${transformedData.length}`);
-        // await this.fileProcessor.moveToProcessed(filePath, fileName);
+        return {
+          total: transformedData.length,
+          successCount: transformedData.length,
+          failedCount: 0,
+        };
       } else {
-        await this.processData(transformedData, fileName, filePath);
+        const dataResult = await this.processData(
+          transformedData,
+          fileName,
+          filePath
+        );
+        return {
+          total: transformedData.length,
+          successCount: dataResult.successCount,
+          failedCount: dataResult.failedRecords.length,
+        };
       }
     } catch (error) {
       console.error(`❌ Error procesando archivo ${fileName}:`, error);
@@ -194,7 +224,7 @@ export class ExcelProcessor {
     data: ExcelRow[],
     fileName: string,
     filePath: string
-  ): Promise<void> {
+  ): Promise<{ successCount: number; failedRecords: FailedRecord[] }> {
     console.log(`🚀 Procesando ${data.length} registros...`);
 
     // Procesar registros individualmente
@@ -216,6 +246,7 @@ export class ExcelProcessor {
     } else if (result.successCount === 0 && result.failedRecords.length > 0) {
       await this.fileProcessor.moveToError(filePath, fileName);
     }
+    return result;
   }
 
   /**
