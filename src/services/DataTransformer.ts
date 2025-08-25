@@ -1,4 +1,3 @@
-
 import { ExcelRow } from '../types/excel';
 import { LicitacionApiData } from './ApiService';
 
@@ -7,13 +6,16 @@ export class DataTransformer {
    * Mapea una fila del Excel a LicitacionApiData
    */
   mapToLicitacionApiData(row: ExcelRow, fileName: string): LicitacionApiData {
+    const fechaPublicacion = this.parseDate(row.fechaPublicacion);
+    const fechaCierre = this.parseDate(row.fechaCierre);
+
     return {
       licitacion_id: row.idLicitacion || '',
       nombre: row.nombre || '',
-      fecha_publicacion: this.formatDateForApi(
-        this.parseDate(row.fechaPublicacion)
-      ),
-      fecha_cierre: this.formatDateForApi(this.parseDate(row.fechaCierre)),
+      fecha_publicacion: fechaPublicacion
+        ? this.formatDateForApi(fechaPublicacion)
+        : '',
+      fecha_cierre: fechaCierre ? this.formatDateForApi(fechaCierre) : '',
       organismo: row.organismo || '',
       unidad: row.unidad || '',
       monto_disponible: this.parseNumber(row.montoDisponible),
@@ -59,6 +61,8 @@ export class DataTransformer {
       fechacierre: 'fechaCierre',
       monto_disponible: 'montoDisponible',
       montodisponible: 'montoDisponible',
+      // Variaciones sin acentos (resultado de la normalización)
+      'fecha de publicacin': 'fechaPublicacion',
     };
 
     const mappedHeaders: { [key: string]: string } = {};
@@ -117,15 +121,70 @@ export class DataTransformer {
   /**
    * Parsea una fecha desde string o Date
    */
-  parseDate(dateValue: string | Date | undefined): Date {
-    if (!dateValue) return new Date();
+  parseDate(dateValue: string | Date | undefined): Date | null {
+    if (!dateValue) return null;
 
     if (dateValue instanceof Date) {
       return dateValue;
     }
 
-    const parsed = new Date(dateValue);
-    return isNaN(parsed.getTime()) ? new Date() : parsed;
+    // Intentar parsear la fecha con diferentes formatos
+    const dateString = dateValue.toString().trim();
+
+    // Formato ISO: YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const parts = dateString.split('-').map(Number);
+      if (parts.length === 3 && parts.every((p) => !isNaN(p))) {
+        const year = parts[0]!;
+        const month = parts[1]!;
+        const day = parts[2]!;
+        const date = new Date(year, month - 1, day, 0, 0, 0, 0);
+        return isNaN(date.getTime()) ? null : date;
+      }
+      return null;
+    }
+
+    // Formato con hora: YYYY-MM-DD HH:mm:ss o YYYY-MM-DD HH:mm
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(dateString)) {
+      const parsed = new Date(dateString);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    // Formato ISO con T: YYYY-MM-DDTHH:mm:ss
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(dateString)) {
+      const parsed = new Date(dateString);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    // Formato DD/MM/YYYY
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+      const parts = dateString.split('/').map(Number);
+      if (parts.length === 3 && parts.every((p) => !isNaN(p))) {
+        const day = parts[0]!;
+        const month = parts[1]!;
+        const year = parts[2]!;
+        const date = new Date(year, month - 1, day, 0, 0, 0, 0);
+        return isNaN(date.getTime()) ? null : date;
+      }
+      return null;
+    }
+
+    // Formato YYYY/MM/DD
+    if (/^\d{4}\/\d{2}\/\d{2}$/.test(dateString)) {
+      const parts = dateString.split('/').map(Number);
+      if (parts.length === 3 && parts.every((p) => !isNaN(p))) {
+        const year = parts[0]!;
+        const month = parts[1]!;
+        const day = parts[2]!;
+        const date = new Date(year, month - 1, day, 0, 0, 0, 0);
+        return isNaN(date.getTime()) ? null : date;
+      }
+      return null;
+    }
+
+    // Intentar parseo general como último recurso
+    const parsed = new Date(dateString);
+    return isNaN(parsed.getTime()) ? null : parsed;
   }
 
   /**

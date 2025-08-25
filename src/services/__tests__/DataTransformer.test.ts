@@ -48,10 +48,8 @@ describe('DataTransformer', () => {
       expect(result).toEqual({
         licitacion_id: '',
         nombre: '',
-        fecha_publicacion: expect.stringMatching(
-          /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/
-        ),
-        fecha_cierre: expect.stringMatching(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/),
+        fecha_publicacion: '',
+        fecha_cierre: '',
         organismo: '',
         unidad: '',
         monto_disponible: 0,
@@ -134,6 +132,7 @@ describe('DataTransformer', () => {
 
       expect(result).toEqual({
         Nombre: 'nombre',
+        'Fecha de Publicación': 'fechaPublicacion',
         'Fecha de Cierre': 'fechaCierre',
         Organismo: 'organismo',
         Unidad: 'unidad',
@@ -294,7 +293,7 @@ describe('DataTransformer', () => {
       expect(result).toBeInstanceOf(Date);
       expect(result.getFullYear()).toBe(2023);
       expect(result.getMonth()).toBe(0); // Enero es 0
-      expect(result.getDate()).toBe(14); // Timezone adjustment
+      expect(result.getDate()).toBe(15); // Ahora debería ser 15, no 14
     });
 
     it('should return Date object as is', () => {
@@ -305,24 +304,14 @@ describe('DataTransformer', () => {
       expect(result).toBe(date);
     });
 
-    it('should return current date for undefined input', () => {
-      const before = new Date();
+    it('should return null for undefined input', () => {
       const result = transformer.parseDate(undefined);
-      const after = new Date();
-
-      expect(result).toBeInstanceOf(Date);
-      expect(result.getTime()).toBeGreaterThanOrEqual(before.getTime());
-      expect(result.getTime()).toBeLessThanOrEqual(after.getTime());
+      expect(result).toBeNull();
     });
 
-    it('should return current date for invalid date string', () => {
-      const before = new Date();
+    it('should return null for invalid date string', () => {
       const result = transformer.parseDate('invalid-date');
-      const after = new Date();
-
-      expect(result).toBeInstanceOf(Date);
-      expect(result.getTime()).toBeGreaterThanOrEqual(before.getTime());
-      expect(result.getTime()).toBeLessThanOrEqual(after.getTime());
+      expect(result).toBeNull();
     });
 
     it('should handle various date formats', () => {
@@ -336,7 +325,6 @@ describe('DataTransformer', () => {
       formats.forEach((format) => {
         const result = transformer.parseDate(format);
         expect(result).toBeInstanceOf(Date);
-        // Don't check specific year due to timezone and format variations
         expect(result.getTime()).toBeGreaterThan(0);
       });
     });
@@ -472,6 +460,71 @@ describe('DataTransformer', () => {
     });
   });
 
+  describe('Date parsing issues', () => {
+    it('should handle date parsing correctly and not return current date for invalid dates', () => {
+      // Simular el problema real: fecha de inicio 2024-01-15 que se convierte en fecha actual
+      const row: ExcelRow = {
+        idLicitacion: 'LIC175614',
+        nombre: 'Licitación de Servicios de Mantenimiento',
+        fechaPublicacion: '2024-01-15', // Esta es la fecha correcta del registro
+        fechaCierre: '2024-02-15',
+        organismo: 'Ministerio',
+        unidad: 'Dirección',
+        montoDisponible: 50000000,
+        moneda: 'CLP',
+        estado: 'Activa',
+      };
+
+      const result = transformer.mapToLicitacionApiData(row, 'test.xlsx');
+
+      // Verificar que la fecha de publicación sea la correcta, no la fecha actual
+      expect(result.fecha_publicacion).toBe('2024-01-15 00:00');
+      expect(result.fecha_cierre).toBe('2024-02-15 00:00');
+
+      // Verificar que no sea la fecha actual (que sería algo como 2025-08-25)
+      const currentDate = new Date();
+      const currentDateString = currentDate.toISOString().slice(0, 10);
+      expect(result.fecha_publicacion).not.toContain(currentDateString);
+    });
+
+    it('should handle various date formats correctly', () => {
+      const testCases = [
+        { input: '2024-01-15', expected: '2024-01-15 00:00' },
+        { input: '2024/01/15', expected: '2024-01-15 00:00' },
+        { input: '15/01/2024', expected: '2024-01-15 00:00' },
+        { input: '2024-01-15T00:00:00', expected: '2024-01-15 00:00' },
+        { input: '2024-01-15 10:30:00', expected: '2024-01-15 10:30' },
+      ];
+
+      testCases.forEach(({ input, expected }) => {
+        const row: ExcelRow = {
+          idLicitacion: 'TEST-001',
+          nombre: 'Test Licitación',
+          fechaPublicacion: input,
+          fechaCierre: '2024-02-15',
+        };
+
+        const result = transformer.mapToLicitacionApiData(row, 'test.xlsx');
+        expect(result.fecha_publicacion).toBe(expected);
+      });
+    });
+
+    it('should handle invalid dates gracefully', () => {
+      const row: ExcelRow = {
+        idLicitacion: 'TEST-001',
+        nombre: 'Test Licitación',
+        fechaPublicacion: 'fecha-invalida',
+        fechaCierre: 'otra-fecha-invalida',
+      };
+
+      const result = transformer.mapToLicitacionApiData(row, 'test.xlsx');
+
+      // Ahora debería manejar fechas inválidas retornando strings vacíos
+      expect(result.fecha_publicacion).toBe('');
+      expect(result.fecha_cierre).toBe('');
+    });
+  });
+
   describe('Integration tests', () => {
     it('should process complete workflow correctly', () => {
       const rawHeaders = [
@@ -507,21 +560,21 @@ describe('DataTransformer', () => {
 
       expect(headerMapping).toEqual({
         Nombre: 'nombre',
+        'Fecha de Publicación': 'fechaPublicacion',
         'Monto Disponible': 'montoDisponible',
       });
 
       expect(transformedData[0]).toEqual({
         nombre: 'Licitación de Prueba',
+        fechaPublicacion: '2023-01-15',
         montoDisponible: '1,000,000',
       });
 
       expect(apiData).toEqual({
         licitacion_id: '',
         nombre: 'Licitación de Prueba',
-        fecha_publicacion: expect.stringMatching(
-          /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/
-        ),
-        fecha_cierre: expect.stringMatching(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/),
+        fecha_publicacion: '2023-01-15 00:00',
+        fecha_cierre: '',
         organismo: '',
         unidad: '',
         monto_disponible: 1000000,
