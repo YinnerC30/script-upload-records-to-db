@@ -25,9 +25,6 @@ Opciones de configuración de directorios:
   --processed-dir <path>        Configurar directorio de archivos procesados
   --error-dir <path>            Configurar directorio de archivos con errores
 
-Opciones de configuración de procesamiento:
-  --batch-size <number>         Configurar tamaño de lote para procesamiento
-
 Opciones de configuración de logs:
   --log-file <path>             Configurar archivo de logs
 
