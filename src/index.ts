@@ -80,7 +80,7 @@ export async function main() {
     // Si hubo cambios de configuración y no se indicó ejecutar, salir
     if (Object.keys(envUpdates).length > 0 && !shouldRun) {
       console.log(
-        '⚙️  Configuración aplicada. Usa "run" para ejecutar o "--dry-run" para validar.'
+        '⚙️  Configuración aplicada. Usa "run" para ejecutar o "run --dry-run" para validar.'
       );
       return;
     }

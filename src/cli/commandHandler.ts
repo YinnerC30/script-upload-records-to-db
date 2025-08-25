@@ -40,7 +40,7 @@ Ejemplos:
   excel-processor run                                # Procesamiento normal
   excel-processor --help                             # Mostrar ayuda
   excel-processor --config                           # Ver configuración
-  excel-processor --dry-run                          # Solo validar archivos
+  excel-processor run --dry-run                      # Solo validar archivos
   excel-processor --api-url https://api.example.com  # Configurar URL de API
   excel-processor --api-key my-api-key               # Configurar API key
   excel-processor --excel-dir ./my-excel-files       # Configurar directorio Excel
@@ -48,7 +48,7 @@ Ejemplos:
   excel-processor --log-level debug                  # Cambiar nivel de logs
 
 Nota: Las opciones de configuración modifican el archivo .env permanentemente.
-      Si se proporcionan opciones de configuración sin 'run' ni '--dry-run',
+      Si se proporcionan opciones de configuración sin 'run' ni 'run --dry-run',
       se aplican los cambios y el programa no se ejecuta automáticamente.
 `);
   }

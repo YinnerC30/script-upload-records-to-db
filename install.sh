@@ -214,13 +214,13 @@ if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; the
     echo "  $EXECUTABLE_NAME --help             # Ver ayuda completa"
     echo "  $EXECUTABLE_NAME --version          # Ver versión"
     echo "  sudo $EXECUTABLE_NAME --config      # Ver configuración actual"
-    echo "  $EXECUTABLE_NAME --dry-run          # Ejecutar sin procesar (solo validar)"
+    echo "  $EXECUTABLE_NAME run --dry-run          # Ejecutar sin procesar (solo validar)"
 else
     echo "  $EXECUTABLE_NAME                    # Ejecutar directamente"
     echo "  $EXECUTABLE_NAME --help             # Ver ayuda completa"
     echo "  $EXECUTABLE_NAME --version          # Ver versión"
     echo "  $EXECUTABLE_NAME --config           # Ver configuración actual"
-    echo "  $EXECUTABLE_NAME --dry-run          # Ejecutar sin procesar (solo validar)"
+    echo "  $EXECUTABLE_NAME run --dry-run          # Ejecutar sin procesar (solo validar)"
 fi
 echo ""
 print_info "🔧 Comandos de configuración:"

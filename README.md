@@ -99,7 +99,7 @@ npm start
 # Construir el ejecutable
 npm run build:all
 
-# Ejecutar directamente (requiere 'run' o '--dry-run')
+# Ejecutar directamente (requiere 'run' o 'run --dry-run')
 ./bin/script-upload-records-to-db run
 
 # Instalar globalmente (requiere sudo)
@@ -150,7 +150,7 @@ sudo ./bin/script-upload-records-to-db --config               # Si instalado glo
 ./bin/script-upload-records-to-db --excel-dir ./my-excel-files --processed-dir ./my-processed-files
 
 # Validar sin enviar datos (ejecuta en modo validación)
-./bin/script-upload-records-to-db --dry-run
+./bin/script-upload-records-to-db run --dry-run
 
 # Configuración completa (aplica cambios) y luego ejecución
 ./bin/script-upload-records-to-db \
@@ -543,7 +543,7 @@ curl -X GET http://localhost:3000/api
 ./bin/script-upload-records-to-db --config
 
 # Probar con modo dry-run
-./bin/script-upload-records-to-db --dry-run
+./bin/script-upload-records-to-db run --dry-run
 ```
 
 #### 3. Error: "Encabezado no mapeado"
@@ -605,7 +605,7 @@ tail -f logs/app.performance.log
 
 ```bash
 # Probar ejecutable
-./bin/script-upload-records-to-db --dry-run
+./bin/script-upload-records-to-db run --dry-run
 
 # Verificar conectividad con API
 npm run test:api
@@ -684,7 +684,7 @@ El ejecutable es una versión compilada del proyecto que incluye todas las depen
 # Construir
 npm run build:all
 
-# Ejecutar (requiere 'run' o '--dry-run')
+# Ejecutar (requiere 'run' o 'run --dry-run')
 ./bin/script-upload-records-to-db run
 
 # Instalar
@@ -696,7 +696,7 @@ npm run build:all
 
 ## 🔄 Flujo de Procesamiento
 
-1. **Configuración (opcional)**: Puedes cambiar variables vía CLI; no ejecuta hasta usar `run` o `--dry-run`
+1. **Configuración (opcional)**: Puedes cambiar variables vía CLI; no ejecuta hasta usar `run` o `run --dry-run`
 2. **Detección**: Busca el archivo Excel más reciente
 3. **Lectura**: Lee y parsea el archivo Excel
 4. **Validación**: Valida la estructura de datos

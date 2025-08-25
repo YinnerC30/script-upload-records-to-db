@@ -565,7 +565,7 @@ describe('index.ts', () => {
       );
       expect(mockExcelProcessor.run).not.toHaveBeenCalled();
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        '⚙️  Configuración aplicada. Usa "run" para ejecutar o "--dry-run" para validar.'
+        '⚙️  Configuración aplicada. Usa "run" para ejecutar o "run --dry-run" para validar.'
       );
     });
 
