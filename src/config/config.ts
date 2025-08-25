@@ -58,7 +58,6 @@ export const config = {
     file: getEnvVar('LOG_FILE', './logs/app.log'),
     maxSize: getEnvVarNumber('LOG_MAX_SIZE', 5242880), // 5MB
     maxFiles: getEnvVarNumber('LOG_MAX_FILES', 5),
-    retentionDays: getEnvVarNumber('LOG_RETENTION_DAYS', 30),
   },
 
   // Configuración del Procesamiento
@@ -71,7 +70,6 @@ export const config = {
     baseURL: getEnvVar('API_BASE_URL', 'http://localhost:3000/api'),
     apiKey: getEnvVar('API_KEY', ''),
     timeout: getEnvVarNumber('API_TIMEOUT', 30000),
-    retryAttempts: getEnvVarNumber('API_RETRY_ATTEMPTS', 3),
   },
 
   // Configuración del ejecutable

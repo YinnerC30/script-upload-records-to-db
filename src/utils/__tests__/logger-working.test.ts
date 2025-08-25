@@ -8,7 +8,6 @@ vi.mock('../../config/config', () => ({
       file: './logs/app.log',
       maxSize: 5242880,
       maxFiles: 5,
-      retentionDays: 30,
     },
   },
 }));

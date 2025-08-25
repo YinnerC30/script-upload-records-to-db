@@ -50,7 +50,6 @@ function updateEnvFile(updates) {
 API_BASE_URL=http://localhost:3000/api
 API_KEY=your-api-key-here
 API_TIMEOUT=30000
-API_RETRY_ATTEMPTS=3
 
 # Configuración del Directorio de Archivos
 EXCEL_DIRECTORY=./excel-files
@@ -61,7 +60,6 @@ ERROR_DIRECTORY=./error-files
 LOG_FILE=./logs/app.log
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
-LOG_RETENTION_DAYS=30
 
 # Configuración del Procesamiento
 BATCH_SIZE=100
@@ -180,27 +178,7 @@ async function configureAPI() {
 
     console.log(`✅ Timeout configurado: ${timeout}ms\n`);
 
-    // 4. Configurar intentos de reintento
-    console.log('4️⃣ CONFIGURACIÓN DE REINTENTOS');
-    console.log('='.repeat(40));
-
-    let retryAttempts = await askQuestion(
-      'Ingresa el número de intentos de reintento',
-      '3'
-    );
-
-    // Validar que sea un número
-    while (isNaN(parseInt(retryAttempts))) {
-      console.log('❌ Número de intentos inválido. Debe ser un número.');
-      retryAttempts = await askQuestion(
-        'Ingresa el número de intentos de reintento',
-        '3'
-      );
-    }
-
-    console.log(`✅ Intentos de reintento configurados: ${retryAttempts}\n`);
-
-    // 5. Guardar configuración
+    // 4. Guardar configuración
     console.log('5️⃣ GUARDANDO CONFIGURACIÓN');
     console.log('='.repeat(40));
 
@@ -208,7 +186,6 @@ async function configureAPI() {
       API_BASE_URL: apiBaseURL,
       API_KEY: apiKey,
       API_TIMEOUT: timeout,
-      API_RETRY_ATTEMPTS: retryAttempts,
     };
 
     const envPath = updateEnvFile(updates);
@@ -218,7 +195,6 @@ async function configureAPI() {
     console.log(`   🌐 Base URL: ${apiBaseURL}`);
     console.log(`   🔑 API Key: ${apiKey ? 'Configurada' : 'No configurada'}`);
     console.log(`   ⏱️  Timeout: ${timeout}ms`);
-    console.log(`   🔄 Reintentos: ${retryAttempts}`);
 
     // 6. Preguntar si quiere probar la conexión
     console.log('\n6️⃣ PRUEBA DE CONEXIÓN');

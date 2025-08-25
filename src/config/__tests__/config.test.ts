@@ -43,7 +43,6 @@ describe('Config Module', () => {
       expect(config.logging).toHaveProperty('file');
       expect(config.logging).toHaveProperty('maxSize');
       expect(config.logging).toHaveProperty('maxFiles');
-      expect(config.logging).toHaveProperty('retentionDays');
     });
 
     it('should have correct structure for processing section', () => {
@@ -54,7 +53,6 @@ describe('Config Module', () => {
       expect(config.api).toHaveProperty('baseURL');
       expect(config.api).toHaveProperty('apiKey');
       expect(config.api).toHaveProperty('timeout');
-      expect(config.api).toHaveProperty('retryAttempts');
     });
 
     it('should have correct structure for executable section', () => {
@@ -79,11 +77,11 @@ describe('Config Module', () => {
       // Simular que estamos ejecutando como binario
       const originalPkg = (process as any).pkg;
       (process as any).pkg = { someProperty: true };
-      
+
       // Necesitamos re-ejecutar la función para ver el cambio
       const workingDir = config.executable.getWorkingDir();
       expect(typeof workingDir).toBe('string');
-      
+
       // Restaurar
       (process as any).pkg = originalPkg;
     });
@@ -93,14 +91,11 @@ describe('Config Module', () => {
     it('should have reasonable default values', () => {
       expect(config.processing.batchSize).toBeGreaterThan(0);
       expect(config.processing.batchSize).toBeLessThanOrEqual(10000);
-      
+
       expect(config.api.timeout).toBeGreaterThan(0);
-      expect(config.api.retryAttempts).toBeGreaterThan(0);
-      expect(config.api.retryAttempts).toBeLessThanOrEqual(10);
-      
+
       expect(config.logging.maxSize).toBeGreaterThan(0);
       expect(config.logging.maxFiles).toBeGreaterThan(0);
-      expect(config.logging.retentionDays).toBeGreaterThan(0);
     });
 
     it('should have valid directory paths', () => {
@@ -118,21 +113,29 @@ describe('Config Module', () => {
 
     it('should have valid logging configuration', () => {
       expect(typeof config.logging.level).toBe('string');
-      expect(['error', 'warn', 'info', 'debug', 'trace']).toContain(config.logging.level);
+      expect(['error', 'warn', 'info', 'debug', 'trace']).toContain(
+        config.logging.level
+      );
     });
   });
 
   describe('validateConfig', () => {
     it('should log configuration information', () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      
+
       validateConfig();
-      
+
       expect(consoleSpy).toHaveBeenCalledWith('🔧 Configuración cargada:');
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('📁 Directorio de trabajo:'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('🌐 API REST:'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('📊 Tamaño de lote:'));
-      
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('📁 Directorio de trabajo:')
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('🌐 API REST:')
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('📊 Tamaño de lote:')
+      );
+
       consoleSpy.mockRestore();
     });
 
@@ -163,11 +166,11 @@ describe('Config Module', () => {
         // Simular que no hay API_KEY
         const originalApiKey = process.env.API_KEY;
         delete process.env.API_KEY;
-        
+
         // Como ya está cargado el módulo, no debería afectar la configuración actual
         // Solo verificamos que no se lance un error
         expect(typeof config.api.apiKey).toBe('string');
-        
+
         // Restaurar
         process.env.API_KEY = originalApiKey;
       }).not.toThrow();
@@ -177,20 +180,16 @@ describe('Config Module', () => {
       // Verificar que los valores numéricos son válidos
       expect(typeof config.processing.batchSize).toBe('number');
       expect(typeof config.api.timeout).toBe('number');
-      expect(typeof config.api.retryAttempts).toBe('number');
       expect(typeof config.logging.maxSize).toBe('number');
       expect(typeof config.logging.maxFiles).toBe('number');
-      expect(typeof config.logging.retentionDays).toBe('number');
     });
-
-
   });
 
   describe('Edge Cases', () => {
     it('should have consistent configuration across multiple calls', () => {
       const config1 = config;
       const config2 = config;
-      
+
       expect(config1).toBe(config2);
       expect(config1.directories.excel).toBe(config2.directories.excel);
       expect(config1.api.baseURL).toBe(config2.api.baseURL);
@@ -202,21 +201,19 @@ describe('Config Module', () => {
       expect(typeof config.directories.processed).toBe('string');
       expect(typeof config.directories.error).toBe('string');
       expect(typeof config.directories.logs).toBe('string');
-      
+
       expect(typeof config.logging.level).toBe('string');
       expect(typeof config.logging.file).toBe('string');
 
       expect(typeof config.logging.maxSize).toBe('number');
       expect(typeof config.logging.maxFiles).toBe('number');
-      expect(typeof config.logging.retentionDays).toBe('number');
-      
+
       expect(typeof config.processing.batchSize).toBe('number');
-      
+
       expect(typeof config.api.baseURL).toBe('string');
       expect(typeof config.api.apiKey).toBe('string');
       expect(typeof config.api.timeout).toBe('number');
-      expect(typeof config.api.retryAttempts).toBe('number');
-      
+
       expect(typeof config.executable.isExecutable).toBe('boolean');
       expect(typeof config.executable.getWorkingDir).toBe('function');
     });
@@ -225,19 +222,13 @@ describe('Config Module', () => {
       // Verificar que los valores están en rangos razonables
       expect(config.processing.batchSize).toBeGreaterThan(0);
       expect(config.processing.batchSize).toBeLessThanOrEqual(10000);
-      
+
       expect(config.api.timeout).toBeGreaterThan(0);
       expect(config.api.timeout).toBeLessThanOrEqual(300000); // 5 minutos máximo
-      
-      expect(config.api.retryAttempts).toBeGreaterThan(0);
-      expect(config.api.retryAttempts).toBeLessThanOrEqual(10);
-      
+
       expect(config.logging.maxSize).toBeGreaterThan(0);
       expect(config.logging.maxFiles).toBeGreaterThan(0);
       expect(config.logging.maxFiles).toBeLessThanOrEqual(100);
-      
-      expect(config.logging.retentionDays).toBeGreaterThan(0);
-      expect(config.logging.retentionDays).toBeLessThanOrEqual(365);
     });
   });
 

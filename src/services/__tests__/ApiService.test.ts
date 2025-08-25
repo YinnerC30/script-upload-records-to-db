@@ -20,7 +20,6 @@ vi.mock('../../config/config', () => ({
       baseURL: 'http://localhost:3000/api',
       apiKey: 'test-key',
       timeout: 60000,
-      retryAttempts: 3,
     },
   },
 }));

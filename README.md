@@ -60,7 +60,6 @@ cp env.example .env
 API_BASE_URL=http://localhost:3000/api
 API_KEY=your-api-key-here
 API_TIMEOUT=30000
-API_RETRY_ATTEMPTS=3
 
 # Configuración del Directorio de Archivos
 EXCEL_DIRECTORY=./excel-files
@@ -72,7 +71,6 @@ LOG_FILE=./logs/app.log
 
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
-LOG_RETENTION_DAYS=30
 
 # Configuración del Procesamiento
 BATCH_SIZE=100
@@ -290,13 +288,12 @@ El sistema mapea automáticamente los siguientes encabezados del Excel:
 | `API_BASE_URL`        | URL base de la API REST              | `http://localhost:3000/api` | string |
 | `API_KEY`             | Clave de autenticación para la API   | `''`                        | string |
 | `API_TIMEOUT`         | Timeout para llamadas API en ms      | `30000`                     | number |
-| `API_RETRY_ATTEMPTS`  | Número de reintentos para API        | `3`                         | number |
 | `EXCEL_DIRECTORY`     | Directorio a monitorear              | `./excel-files`             | string |
 | `PROCESSED_DIRECTORY` | Directorio para archivos procesados  | `./processed-files`         | string |
 | `ERROR_DIRECTORY`     | Directorio para archivos con errores | `./error-files`             | string |
 
-| `LOG_FILE`            | Archivo de logs                      | `./logs/app.log`            | string |
-| `BATCH_SIZE`          | Tamaño del lote para envío           | `100`                       | number |
+| `LOG_FILE` | Archivo de logs | `./logs/app.log` | string |
+| `BATCH_SIZE` | Tamaño del lote para envío | `100` | number |
 
 ### Directorios Automáticos
 
@@ -341,8 +338,6 @@ npm run logs:report     # Genera reporte y muestra resumen
 npm run logs:clean      # Limpia logs antiguos (>30 días)
 npm run logs:test       # Prueba el sistema de logging
 ```
-
-
 
 ### Ejemplo de Log Estructurado
 
@@ -406,7 +401,6 @@ npm run logs:test       # Prueba el sistema de logging
 #### Configuración de Retry
 
 ```env
-API_RETRY_ATTEMPTS=3              # Número máximo de intentos
 API_TIMEOUT=30000                 # Timeout en ms
 ```
 
@@ -717,7 +711,6 @@ npm run build:all
 - Ajusta `BATCH_SIZE` según la capacidad de la API
 - Usa `API_TIMEOUT` para controlar timeouts de red
 - Monitorea los logs para detectar problemas de rendimiento
-- Configura `API_RETRY_ATTEMPTS` según la estabilidad de la API
 
 ## 🤝 Contribución
 

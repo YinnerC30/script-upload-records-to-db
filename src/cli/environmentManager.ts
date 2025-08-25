@@ -89,7 +89,6 @@ export class EnvironmentManager {
 API_BASE_URL=http://localhost:3000/api
 API_KEY=your-api-key-here
 API_TIMEOUT=30000
-API_RETRY_ATTEMPTS=3
 
 # Configuración del Directorio de Archivos
 EXCEL_DIRECTORY=./excel-files
@@ -100,7 +99,6 @@ ERROR_DIRECTORY=./error-files
 LOG_FILE=./logs/app.log
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
-LOG_RETENTION_DAYS=30
 
 # Configuración del Procesamiento
 BATCH_SIZE=100
