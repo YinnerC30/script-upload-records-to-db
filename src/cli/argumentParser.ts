@@ -131,21 +131,6 @@ export class ArgumentParser {
           break;
 
         // Opciones de procesamiento
-        case '--batch-size':
-          if (i + 1 < args.length) {
-            const size = args[++i];
-            if (size && /^\d+$/.test(size)) {
-              result.envUpdates['BATCH_SIZE'] = size;
-            } else {
-              this.handleError('--batch-size debe ser un número válido');
-            }
-          } else {
-            this.handleError('--batch-size requiere un valor');
-          }
-          break;
-
-
-
         case '--log-file':
           if (i + 1 < args.length) {
             const value = args[++i];

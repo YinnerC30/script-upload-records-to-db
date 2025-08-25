@@ -213,12 +213,13 @@ describe('EnvironmentManager', () => {
       expect(content).toContain('# Configuración de API REST');
       expect(content).toContain('API_BASE_URL=http://localhost:3000/api');
       expect(content).toContain('API_KEY=your-api-key-here');
-      expect(content).toContain('# Configuración del Directorio de Archivos');
+      expect(content).toContain('API_TIMEOUT=30000');
       expect(content).toContain('EXCEL_DIRECTORY=./excel-files');
-      expect(content).toContain('# Configuración de Logs Mejorada');
-
-      expect(content).toContain('# Configuración del Procesamiento');
-      expect(content).toContain('BATCH_SIZE=100');
+      expect(content).toContain('PROCESSED_DIRECTORY=./processed-files');
+      expect(content).toContain('ERROR_DIRECTORY=./error-files');
+      expect(content).toContain('LOG_FILE=./logs/app.log');
+      expect(content).toContain('LOG_MAX_SIZE=5242880');
+      expect(content).toContain('LOG_MAX_FILES=5');
     });
 
     it('should throw error when creating example file fails', async () => {

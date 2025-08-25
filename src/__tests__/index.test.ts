@@ -37,7 +37,7 @@ vi.mock('../config/config', () => ({
       processed: './processed-files',
       error: './error-files',
     },
-    processing: { batchSize: 100 },
+
     logging: {
       level: 'info',
       file: './logs/app.log',
@@ -296,6 +296,14 @@ describe('index.ts', () => {
 
   describe('main function', () => {
     beforeEach(() => {
+      // Configurar variables de entorno para las pruebas
+      process.env.API_BASE_URL = 'http://localhost:3000/api';
+      process.env.API_KEY = 'test-api-key';
+      process.env.EXCEL_DIRECTORY = './test-excel-files';
+      process.env.PROCESSED_DIRECTORY = './test-processed-files';
+      process.env.ERROR_DIRECTORY = './test-error-files';
+      process.env.LOG_FILE = './test-logs/app.log';
+
       // Mock por defecto para argumentos normales
       mockArgumentParser.parseArguments.mockReturnValue({
         help: false,
@@ -352,7 +360,6 @@ describe('index.ts', () => {
         config: {
           apiUrl: 'http://localhost:3000/api',
           excelDir: './excel-files',
-          batchSize: 100,
         },
       });
     });
@@ -426,7 +433,6 @@ describe('index.ts', () => {
         config: {
           apiUrl: 'http://localhost:3000/api',
           excelDir: './excel-files',
-          batchSize: 100,
         },
       });
     });
@@ -514,7 +520,6 @@ describe('index.ts', () => {
       const envUpdates = {
         API_BASE_URL: 'https://new-api.com',
         API_KEY: 'new-key',
-        BATCH_SIZE: '200',
       };
       mockArgumentParser.parseArguments.mockReturnValue({
         help: false,
@@ -542,8 +547,6 @@ describe('index.ts', () => {
         API_KEY: 'prod-key-123',
         API_TIMEOUT: '60000',
         EXCEL_DIRECTORY: '/custom/excel/path',
-        BATCH_SIZE: '500',
-
       };
       mockArgumentParser.parseArguments.mockReturnValue({
         help: false,

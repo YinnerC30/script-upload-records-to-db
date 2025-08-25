@@ -109,7 +109,6 @@ export async function main() {
       config: {
         apiUrl: config.api.baseURL,
         excelDir: config.directories.excel,
-        batchSize: config.processing.batchSize,
       },
     });
 

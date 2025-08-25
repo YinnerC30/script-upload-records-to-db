@@ -66,14 +66,10 @@ EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
-# Configuración de Logs
+# Configuración de Logs Mejorada
 LOG_FILE=./logs/app.log
-
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
-
-# Configuración del Procesamiento
-BATCH_SIZE=100
 ```
 
 ## 🏃‍♂️ Uso del Aplicativo
@@ -153,7 +149,6 @@ sudo ./bin/script-upload-records-to-db --config               # Si instalado glo
   --api-url https://api.example.com \
   --api-key secret123 \
   --excel-dir ./production/excel \
-  --batch-size 1000 \
   --log-level info
 ./bin/script-upload-records-to-db run
 
@@ -293,7 +288,6 @@ El sistema mapea automáticamente los siguientes encabezados del Excel:
 | `ERROR_DIRECTORY`     | Directorio para archivos con errores | `./error-files`             | string |
 
 | `LOG_FILE` | Archivo de logs | `./logs/app.log` | string |
-| `BATCH_SIZE` | Tamaño del lote para envío | `100` | number |
 
 ### Directorios Automáticos
 
@@ -700,7 +694,6 @@ npm run build:all
 
 ### Optimizaciones
 
-- **Procesamiento por lotes**: Configurable con `BATCH_SIZE`
 - **Validación eficiente**: Solo valida campos requeridos
 - **Logging asíncrono**: No bloquea el procesamiento
 - **Manejo de memoria**: Libera recursos después de cada archivo
@@ -708,7 +701,6 @@ npm run build:all
 
 ### Recomendaciones
 
-- Ajusta `BATCH_SIZE` según la capacidad de la API
 - Usa `API_TIMEOUT` para controlar timeouts de red
 - Monitorea los logs para detectar problemas de rendimiento
 

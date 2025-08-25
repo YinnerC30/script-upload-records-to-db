@@ -32,6 +32,27 @@ describe('CommandHandler', () => {
   let consoleSpy: any;
 
   beforeEach(() => {
+    // Mock de la configuración
+    vi.mock('../../config/config', () => ({
+      config: {
+        directories: {
+          excel: './excel-files',
+          processed: './processed-files',
+          error: './error-files',
+        },
+        api: {
+          baseURL: 'https://api.example.com',
+          apiKey: 'test-key',
+          timeout: 30000,
+        },
+        logging: {
+          file: './logs/app.log',
+          level: 'debug',
+        },
+      },
+      validateConfig: vi.fn(),
+      createRequiredDirectories: vi.fn(),
+    }));
     commandHandler = new CommandHandler();
     consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
   });
@@ -54,7 +75,7 @@ describe('CommandHandler', () => {
         expect.stringContaining('Uso: excel-processor [OPCIONES] [run]')
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('-h, --help')
+        expect.stringContaining('--help')
       );
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('--api-url <url>')
@@ -72,7 +93,6 @@ describe('CommandHandler', () => {
       // Verificar que contiene todas las opciones principales
       expect(helpText).toContain('--help');
       expect(helpText).toContain('--version');
-      expect(helpText).toContain('--config');
       expect(helpText).toContain('--dry-run');
       expect(helpText).toContain('--api-url');
       expect(helpText).toContain('--api-key');
@@ -80,10 +100,7 @@ describe('CommandHandler', () => {
       expect(helpText).toContain('--excel-dir');
       expect(helpText).toContain('--processed-dir');
       expect(helpText).toContain('--error-dir');
-      expect(helpText).toContain('--batch-size');
-
       expect(helpText).toContain('--log-file');
-
     });
 
     it('should include usage examples in help text', () => {
@@ -93,13 +110,9 @@ describe('CommandHandler', () => {
 
       expect(helpText).toContain('excel-processor');
       expect(helpText).toContain('--help');
-      expect(helpText).toContain('--config');
       expect(helpText).toContain('--dry-run');
       expect(helpText).toContain('--api-url https://api.example.com');
-      expect(helpText).toContain('--api-key my-api-key');
-      expect(helpText).toContain('--excel-dir ./my-excel-files');
-      expect(helpText).toContain('--batch-size 200');
-
+      expect(helpText).toContain('--api-key new-api-key');
     });
   });
 
@@ -124,7 +137,7 @@ describe('CommandHandler', () => {
     it('should display current configuration when called', () => {
       commandHandler.showConfig();
 
-      expect(consoleSpy).toHaveBeenCalledTimes(8); // 8 líneas de configuración (incluyendo el título)
+      expect(consoleSpy).toHaveBeenCalledTimes(7); // 7 líneas de configuración (incluyendo el título)
 
       // Verificar que se muestran todas las secciones de configuración
       expect(consoleSpy).toHaveBeenCalledWith('📋 Configuración actual:');
@@ -140,9 +153,13 @@ describe('CommandHandler', () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         '  📁 Directorio errores: ./error-files'
       );
-      expect(consoleSpy).toHaveBeenCalledWith('  📦 Tamaño de lote: 100');
-      expect(consoleSpy).toHaveBeenCalledWith('  📄 Archivo de logs: ./logs/app.log');
-      expect(consoleSpy).toHaveBeenCalledWith('  📊 Nivel de logs: debug (siempre máximo detalle)');
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '  📄 Archivo de logs: ./logs/app.log'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '  📊 Nivel de logs: debug (siempre máximo detalle)'
+      );
     });
 
     it('should display configuration in the correct order', () => {
@@ -155,9 +172,11 @@ describe('CommandHandler', () => {
       expect(calls[2]).toBe('  📁 Directorio Excel: ./excel-files');
       expect(calls[3]).toBe('  📁 Directorio procesados: ./processed-files');
       expect(calls[4]).toBe('  📁 Directorio errores: ./error-files');
-      expect(calls[5]).toBe('  📦 Tamaño de lote: 100');
-      expect(calls[6]).toBe('  📄 Archivo de logs: ./logs/app.log');
-      expect(calls[7]).toBe('  📊 Nivel de logs: debug (siempre máximo detalle)');
+
+      expect(calls[5]).toBe('  📄 Archivo de logs: ./logs/app.log');
+      expect(calls[6]).toBe(
+        '  📊 Nivel de logs: debug (siempre máximo detalle)'
+      );
     });
 
     it('should handle different configuration values correctly', () => {
@@ -178,9 +197,13 @@ describe('CommandHandler', () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         '  📁 Directorio errores: ./error-files'
       );
-      expect(consoleSpy).toHaveBeenCalledWith('  📦 Tamaño de lote: 100');
-      expect(consoleSpy).toHaveBeenCalledWith('  📄 Archivo de logs: ./logs/app.log');
-      expect(consoleSpy).toHaveBeenCalledWith('  📊 Nivel de logs: debug (siempre máximo detalle)');
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '  📄 Archivo de logs: ./logs/app.log'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '  📊 Nivel de logs: debug (siempre máximo detalle)'
+      );
     });
   });
 

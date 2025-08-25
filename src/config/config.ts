@@ -60,11 +60,6 @@ export const config = {
     maxFiles: getEnvVarNumber('LOG_MAX_FILES', 5),
   },
 
-  // Configuración del Procesamiento
-  processing: {
-    batchSize: getEnvVarNumber('BATCH_SIZE', 100),
-  },
-
   // Configuración de la API REST
   api: {
     baseURL: getEnvVar('API_BASE_URL', 'http://localhost:3000/api'),
@@ -101,7 +96,6 @@ export function validateConfig(): void {
   console.log(`📁 Directorio de trabajo: ${config.executable.getWorkingDir()}`);
 
   console.log(`🌐 API REST: ${config.api.baseURL}`);
-  console.log(`📊 Tamaño de lote: ${config.processing.batchSize}`);
 }
 
 // Función para crear directorios necesarios

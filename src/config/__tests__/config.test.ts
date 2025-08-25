@@ -26,7 +26,6 @@ describe('Config Module', () => {
     it('should have all required configuration sections', () => {
       expect(config).toHaveProperty('directories');
       expect(config).toHaveProperty('logging');
-      expect(config).toHaveProperty('processing');
       expect(config).toHaveProperty('api');
       expect(config).toHaveProperty('executable');
     });
@@ -43,10 +42,6 @@ describe('Config Module', () => {
       expect(config.logging).toHaveProperty('file');
       expect(config.logging).toHaveProperty('maxSize');
       expect(config.logging).toHaveProperty('maxFiles');
-    });
-
-    it('should have correct structure for processing section', () => {
-      expect(config.processing).toHaveProperty('batchSize');
     });
 
     it('should have correct structure for api section', () => {
@@ -89,9 +84,6 @@ describe('Config Module', () => {
 
   describe('Configuration Values', () => {
     it('should have reasonable default values', () => {
-      expect(config.processing.batchSize).toBeGreaterThan(0);
-      expect(config.processing.batchSize).toBeLessThanOrEqual(10000);
-
       expect(config.api.timeout).toBeGreaterThan(0);
 
       expect(config.logging.maxSize).toBeGreaterThan(0);
@@ -131,9 +123,6 @@ describe('Config Module', () => {
       );
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('🌐 API REST:')
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('📊 Tamaño de lote:')
       );
 
       consoleSpy.mockRestore();
@@ -178,7 +167,6 @@ describe('Config Module', () => {
 
     it('should handle numeric environment variables correctly', () => {
       // Verificar que los valores numéricos son válidos
-      expect(typeof config.processing.batchSize).toBe('number');
       expect(typeof config.api.timeout).toBe('number');
       expect(typeof config.logging.maxSize).toBe('number');
       expect(typeof config.logging.maxFiles).toBe('number');
@@ -208,8 +196,6 @@ describe('Config Module', () => {
       expect(typeof config.logging.maxSize).toBe('number');
       expect(typeof config.logging.maxFiles).toBe('number');
 
-      expect(typeof config.processing.batchSize).toBe('number');
-
       expect(typeof config.api.baseURL).toBe('string');
       expect(typeof config.api.apiKey).toBe('string');
       expect(typeof config.api.timeout).toBe('number');
@@ -220,9 +206,6 @@ describe('Config Module', () => {
 
     it('should have reasonable value ranges', () => {
       // Verificar que los valores están en rangos razonables
-      expect(config.processing.batchSize).toBeGreaterThan(0);
-      expect(config.processing.batchSize).toBeLessThanOrEqual(10000);
-
       expect(config.api.timeout).toBeGreaterThan(0);
       expect(config.api.timeout).toBeLessThanOrEqual(300000); // 5 minutos máximo
 

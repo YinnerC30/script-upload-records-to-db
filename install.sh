@@ -132,10 +132,6 @@ ERROR_DIRECTORY=./error-files
 LOG_FILE=./logs/app.log
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
-
-# Configuración del Procesamiento
-BATCH_SIZE=100
-PROCESSING_INTERVAL=30000
 EOF
 else
     cat > "$CONFIG_FILE" << EOF
@@ -163,10 +159,6 @@ ERROR_DIRECTORY=./error-files
 LOG_FILE=./logs/app.log
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
-
-# Configuración del Procesamiento
-BATCH_SIZE=100
-PROCESSING_INTERVAL=30000
 EOF
 fi
 
@@ -183,12 +175,12 @@ if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; the
     echo "  1. Ver configuración actual: sudo $EXECUTABLE_NAME --config"
     echo "  2. Configurar API: sudo $EXECUTABLE_NAME --api-url <URL> --api-key <KEY>"
     echo "  3. Configurar directorios: sudo $EXECUTABLE_NAME --excel-dir <PATH> --processed-dir <PATH>"
-    echo "  4. Configurar procesamiento: sudo $EXECUTABLE_NAME --batch-size <NUMBER>"
+    echo "  4. Configurar directorios: sudo $EXECUTABLE_NAME --excel-dir <PATH>"
 else
     echo "  1. Ver configuración actual: $EXECUTABLE_NAME --config"
     echo "  2. Configurar API: $EXECUTABLE_NAME --api-url <URL> --api-key <KEY>"
     echo "  3. Configurar directorios: $EXECUTABLE_NAME --excel-dir <PATH> --processed-dir <PATH>"
-    echo "  4. Configurar procesamiento: $EXECUTABLE_NAME --batch-size <NUMBER>"
+    echo "  4. Configurar directorios: $EXECUTABLE_NAME --excel-dir <PATH>"
 fi
 echo ""
 print_info "💡 Nota: Los comandos de configuración actualizan automáticamente el archivo .env"
@@ -219,7 +211,7 @@ print_info "🔧 Comandos de configuración:"
 if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
     echo "  sudo $EXECUTABLE_NAME --api-url https://api.example.com --api-key my-key"
     echo "  sudo $EXECUTABLE_NAME --excel-dir ./my-excel-files --processed-dir ./my-processed-files"
-    echo "  sudo $EXECUTABLE_NAME --batch-size 200"
+    echo "  sudo $EXECUTABLE_NAME --excel-dir /path/to/excel/files"
     echo ""
     print_info "💡 Alternativa: Instalar en directorio personal para evitar sudo:"
     echo "  ./install.sh -d ~/bin"
@@ -227,7 +219,7 @@ if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; the
 else
     echo "  $EXECUTABLE_NAME --api-url https://api.example.com --api-key my-key"
     echo "  $EXECUTABLE_NAME --excel-dir ./my-excel-files --processed-dir ./my-processed-files"
-    echo "  $EXECUTABLE_NAME --batch-size 200"
+    echo "  $EXECUTABLE_NAME --excel-dir /path/to/excel/files"
 fi
 echo ""
 print_info "⏰ Para programar ejecución automática:"

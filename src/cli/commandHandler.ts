@@ -11,11 +11,9 @@ export class CommandHandler {
 Uso: excel-processor [OPCIONES] [run]
 
 Opciones generales:
-  -h, --help                    Mostrar esta ayuda
-  -v, --version                 Mostrar versión
-  -c, --config                  Mostrar configuración actual
-  -d, --dry-run                 Ejecutar sin procesar archivos (solo validar)
-  run                           Ejecutar procesamiento tras aplicar configuración
+  --dry-run                    Ejecutar en modo validación (no envía datos)
+  --help                       Mostrar esta ayuda
+  --version                    Mostrar versión
 
 Opciones de configuración de API REST:
   --api-url <url>               Configurar URL base de la API
@@ -34,14 +32,10 @@ Opciones de configuración de logs:
   --log-file <path>             Configurar archivo de logs
 
 Ejemplos:
-  excel-processor run                                # Procesamiento normal
-  excel-processor --help                             # Mostrar ayuda
-  excel-processor --config                           # Ver configuración
-  excel-processor run --dry-run                      # Solo validar archivos
-  excel-processor --api-url https://api.example.com  # Configurar URL de API
-  excel-processor --api-key my-api-key               # Configurar API key
-  excel-processor --excel-dir ./my-excel-files       # Configurar directorio Excel
-  excel-processor --batch-size 200                   # Cambiar tamaño de lote
+  excel-processor run                                    # Ejecutar procesamiento
+  excel-processor run --dry-run                          # Validar sin enviar
+  excel-processor --api-url https://api.example.com     # Cambiar URL de API
+  excel-processor --api-key new-api-key                 # Cambiar API key
 
 Nota: Las opciones de configuración modifican el archivo .env permanentemente.
       Si se proporcionan opciones de configuración sin 'run' ni 'run --dry-run',
@@ -66,7 +60,6 @@ Nota: Las opciones de configuración modifican el archivo .env permanentemente.
     console.log(`  📁 Directorio Excel: ${config.directories.excel}`);
     console.log(`  📁 Directorio procesados: ${config.directories.processed}`);
     console.log(`  📁 Directorio errores: ${config.directories.error}`);
-    console.log(`  📦 Tamaño de lote: ${config.processing.batchSize}`);
     console.log(`  📄 Archivo de logs: ${config.logging.file}`);
     console.log(`  📊 Nivel de logs: debug (siempre máximo detalle)`);
   }

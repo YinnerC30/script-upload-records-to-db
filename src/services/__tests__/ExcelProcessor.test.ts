@@ -37,11 +37,13 @@ describe('ExcelProcessor', () => {
     // Mock de Date.now para evitar problemas con timestamps
     vi.spyOn(Date, 'now').mockReturnValue(1640995200000); // 2022-01-01 00:00:00
 
-    // Configurar variables de entorno para pruebas
+    // Configurar variables de entorno para las pruebas
+    process.env.API_BASE_URL = 'http://localhost:3000/api';
+    process.env.API_KEY = 'test-api-key';
     process.env.EXCEL_DIRECTORY = './test-excel-files';
     process.env.PROCESSED_DIRECTORY = './test-processed-files';
     process.env.ERROR_DIRECTORY = './test-error-files';
-    process.env.BATCH_SIZE = '50';
+    process.env.LOG_FILE = './test-logs/app.log';
 
     // Mock de FileProcessor
     mockFileProcessor = {

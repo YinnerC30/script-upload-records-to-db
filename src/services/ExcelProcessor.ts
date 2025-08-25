@@ -17,7 +17,6 @@ export class ExcelProcessor {
   private readonly validator: ExcelValidator;
   private readonly transformer: DataTransformer;
   private readonly apiService: ApiService;
-  private readonly batchSize: number;
   private readonly dryRun: boolean;
   private readonly logger: StructuredLogger;
 
@@ -25,7 +24,6 @@ export class ExcelProcessor {
     const excelDirectory = config.directories.excel;
     const processedDirectory = config.directories.processed;
     const errorDirectory = config.directories.error;
-    this.batchSize = config.processing.batchSize;
     this.dryRun = dryRun;
 
     this.fileProcessor = new FileProcessor(
@@ -54,12 +52,10 @@ export class ExcelProcessor {
     const startTime = Date.now();
     console.log('\n🚀 Iniciando procesamiento de archivos Excel...');
     console.log(`   📁 Directorio: ${config.directories.excel}`);
-    console.log(`   📦 Tamaño de lote: ${this.batchSize}`);
     console.log(`   ⏰ Inicio: ${new Date().toLocaleTimeString()}\n`);
 
     this.logger.info('🚀 Iniciando procesamiento de archivos Excel...', {
       excelDirectory: config.directories.excel,
-      batchSize: this.batchSize,
     });
 
     try {

@@ -100,39 +100,16 @@ class ApiTester {
     }
   }
 
-  async testBatchOperations() {
-    console.log('4️⃣ Probando operaciones en lote...');
+  async testIndividualOperations() {
+    console.log('  🔄 Probando operaciones individuales...');
     try {
-      const response = await this.apiService.sendLicitacionesBatch(
-        TEST_DATA,
-        1
-      );
-      console.log(`✅ Lote enviado: ${response.success}`);
-      console.log(
-        `📊 Éxitos: ${response.data.successCount}, Errores: ${response.data.errorCount}`
-      );
+      const licitacion = this.createTestLicitacion();
+      const response = await this.apiService.sendLicitacion(licitacion);
       return response.success;
     } catch (error) {
-      console.log(`❌ Error en lote: ${error.message}`);
+      console.error('    ❌ Error en operaciones individuales:', error.message);
       return false;
     }
-  }
-
-  async testIndividualOperations() {
-    console.log('5️⃣ Probando operaciones individuales...');
-    let successCount = 0;
-
-    for (const data of TEST_DATA) {
-      try {
-        const response = await this.apiService.sendLicitacion(data);
-        console.log(`✅ Licitación ${data.licitacion_id}: ${response.success}`);
-        successCount++;
-      } catch (error) {
-        console.log(`❌ Error en ${data.licitacion_id}: ${error.message}`);
-      }
-    }
-
-    return successCount === TEST_DATA.length;
   }
 
   async runAllTests() {
@@ -143,7 +120,6 @@ class ApiTester {
       connectivity: await this.testBasicConnectivity(),
       simple: await this.testSimpleEndpoint(),
       service: await this.testApiService(),
-      batch: await this.testBatchOperations(),
       individual: await this.testIndividualOperations(),
     };
 
@@ -154,9 +130,6 @@ class ApiTester {
     );
     console.log(`🎯 Endpoint simple: ${results.simple ? '✅ OK' : '❌ FALLA'}`);
     console.log(`🔧 ApiService: ${results.service ? '✅ OK' : '❌ FALLA'}`);
-    console.log(
-      `📦 Operaciones en lote: ${results.batch ? '✅ OK' : '❌ FALLA'}`
-    );
     console.log(
       `📋 Operaciones individuales: ${
         results.individual ? '✅ OK' : '❌ FALLA'

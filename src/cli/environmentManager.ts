@@ -99,9 +99,6 @@ ERROR_DIRECTORY=./error-files
 LOG_FILE=./logs/app.log
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
-
-# Configuración del Procesamiento
-BATCH_SIZE=100
 `;
 
     try {

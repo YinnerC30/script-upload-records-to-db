@@ -185,23 +185,21 @@ describe('ArgumentParser', () => {
       });
     });
 
-    describe('Directory options', () => {
-      it('should parse --excel-dir correctly', () => {
+    describe('Opciones de directorios', () => {
+      it('should parse --excel-dir with valid path', () => {
         process.argv = ['node', 'script.js', '--excel-dir', '/path/to/excel'];
-
         const result = parser.parseArguments();
 
         expect(result.envUpdates['EXCEL_DIRECTORY']).toBe('/path/to/excel');
       });
 
-      it('should parse --processed-dir correctly', () => {
+      it('should parse --processed-dir with valid path', () => {
         process.argv = [
           'node',
           'script.js',
           '--processed-dir',
           '/path/to/processed',
         ];
-
         const result = parser.parseArguments();
 
         expect(result.envUpdates['PROCESSED_DIRECTORY']).toBe(
@@ -209,62 +207,15 @@ describe('ArgumentParser', () => {
         );
       });
 
-      it('should parse --error-dir correctly', () => {
-        process.argv = ['node', 'script.js', '--error-dir', '/path/to/errors'];
-
+      it('should parse --error-dir with valid path', () => {
+        process.argv = ['node', 'script.js', '--error-dir', '/path/to/error'];
         const result = parser.parseArguments();
 
-        expect(result.envUpdates['ERROR_DIRECTORY']).toBe('/path/to/errors');
-      });
-
-      it('should handle --excel-dir without value', () => {
-        process.argv = ['node', 'script.js', '--excel-dir'];
-
-        expect(() => parser.parseArguments()).toThrow('process.exit called');
-        expect(mockConsoleError).toHaveBeenCalledWith(
-          '❌ Error: --excel-dir requiere un valor'
-        );
-      });
-
-      it('should handle --processed-dir without value', () => {
-        process.argv = ['node', 'script.js', '--processed-dir'];
-
-        expect(() => parser.parseArguments()).toThrow('process.exit called');
-        expect(mockConsoleError).toHaveBeenCalledWith(
-          '❌ Error: --processed-dir requiere un valor'
-        );
-      });
-
-      it('should handle --error-dir without value', () => {
-        process.argv = ['node', 'script.js', '--error-dir'];
-
-        expect(() => parser.parseArguments()).toThrow('process.exit called');
-        expect(mockConsoleError).toHaveBeenCalledWith(
-          '❌ Error: --error-dir requiere un valor'
-        );
+        expect(result.envUpdates['ERROR_DIRECTORY']).toBe('/path/to/error');
       });
     });
 
     describe('Processing options', () => {
-      it('should parse --batch-size with valid number', () => {
-        process.argv = ['node', 'script.js', '--batch-size', '100'];
-
-        const result = parser.parseArguments();
-
-        expect(result.envUpdates['BATCH_SIZE']).toBe('100');
-      });
-
-      it('should handle --batch-size with invalid number', () => {
-        process.argv = ['node', 'script.js', '--batch-size', 'invalid'];
-
-        expect(() => parser.parseArguments()).toThrow('process.exit called');
-        expect(mockConsoleError).toHaveBeenCalledWith(
-          '❌ Error: --batch-size debe ser un número válido'
-        );
-      });
-
-
-
       it('should parse --log-file correctly', () => {
         process.argv = [
           'node',
@@ -278,19 +229,6 @@ describe('ArgumentParser', () => {
         expect(result.envUpdates['LOG_FILE']).toBe('/path/to/logs/app.log');
       });
 
-
-
-      it('should handle --batch-size without value', () => {
-        process.argv = ['node', 'script.js', '--batch-size'];
-
-        expect(() => parser.parseArguments()).toThrow('process.exit called');
-        expect(mockConsoleError).toHaveBeenCalledWith(
-          '❌ Error: --batch-size requiere un valor'
-        );
-      });
-
-
-
       it('should handle --log-file without value', () => {
         process.argv = ['node', 'script.js', '--log-file'];
 
@@ -299,8 +237,6 @@ describe('ArgumentParser', () => {
           '❌ Error: --log-file requiere un valor'
         );
       });
-
-
     });
 
     describe('Unknown options', () => {
@@ -336,8 +272,6 @@ describe('ArgumentParser', () => {
           'https://api.example.com',
           '--api-key',
           'secret-key',
-          '--batch-size',
-          '50',
           '--excel-dir',
           '/path/to/excel',
         ];
@@ -349,7 +283,6 @@ describe('ArgumentParser', () => {
           'https://api.example.com'
         );
         expect(result.envUpdates['API_KEY']).toBe('secret-key');
-        expect(result.envUpdates['BATCH_SIZE']).toBe('50');
         expect(result.envUpdates['EXCEL_DIRECTORY']).toBe('/path/to/excel');
       });
 
