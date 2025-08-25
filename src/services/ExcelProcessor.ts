@@ -121,6 +121,7 @@ export class ExcelProcessor {
 
       // Convertir a JSON
       const rawData = XLSX.utils.sheet_to_json(worksheet);
+
       console.log(`📊 Registros encontrados: ${rawData.length}`);
 
       if (rawData.length === 0) {
@@ -153,6 +154,7 @@ export class ExcelProcessor {
 
       // Validar datos
       const dataValidation = this.validator.validateData(transformedData);
+
       if (!dataValidation.isValid) {
         console.log('❌ Errores de validación encontrados:');
         dataValidation.errors

@@ -81,7 +81,6 @@ export class ExcelValidator {
    * Valida una fila de datos
    */
   validateRow(row: ExcelRow, rowIndex: number): ValidationResult {
-    console.log('🚀 ~ ExcelValidator ~ validateRow ~ row:Original', row)
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -194,8 +193,6 @@ export class ExcelValidator {
    * Parsea una fecha desde string o Date
    */
   private parseDate(dateValue: string | Date | undefined): Date {
-    console.log('🚀 ~ ExcelValidator ~ parseDate ~ dateValue:', dateValue);
-
     if (!dateValue) return new Date();
 
     if (dateValue instanceof Date) {
@@ -203,7 +200,7 @@ export class ExcelValidator {
     }
 
     const parsed = new Date(dateValue);
-    console.log('🚀 ~ ExcelValidator ~ parseDate ~ parsed:', parsed);
+
     return isNaN(parsed.getTime()) ? new Date() : parsed;
   }
 

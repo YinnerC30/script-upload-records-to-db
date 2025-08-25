@@ -230,7 +230,7 @@ export class ApiService {
   async sendLicitacionWithResponse(
     licitacion: LicitacionApiData
   ): Promise<any> {
-    console.log('🚀 ~ ApiService ~ sendLicitacionWithResponse ~ licitacion:', licitacion)
+    
     try {
       this.logger.debug('Enviando licitación individual a la API', {
         licitacion_id: licitacion.licitacion_id,
