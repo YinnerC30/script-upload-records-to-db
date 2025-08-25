@@ -144,20 +144,7 @@ export class ArgumentParser {
           }
           break;
 
-        case '--log-level':
-          if (i + 1 < args.length) {
-            const level = args[++i];
-            if (level && ['debug', 'info', 'warn', 'error'].includes(level)) {
-              result.envUpdates['LOG_LEVEL'] = level;
-            } else {
-              this.handleError(
-                '--log-level debe ser: debug, info, warn, error'
-              );
-            }
-          } else {
-            this.handleError('--log-level requiere un valor');
-          }
-          break;
+
 
         case '--log-file':
           if (i + 1 < args.length) {

@@ -58,7 +58,6 @@ PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
 # Configuración de Logs Mejorada
-LOG_LEVEL=info
 LOG_FILE=./logs/app.log
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5

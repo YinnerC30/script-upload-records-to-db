@@ -543,7 +543,7 @@ describe('index.ts', () => {
         API_TIMEOUT: '60000',
         EXCEL_DIRECTORY: '/custom/excel/path',
         BATCH_SIZE: '500',
-        LOG_LEVEL: 'debug',
+
       };
       mockArgumentParser.parseArguments.mockReturnValue({
         help: false,

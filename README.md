@@ -68,7 +68,6 @@ PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
 # Configuración de Logs
-LOG_LEVEL=info
 LOG_FILE=./logs/app.log
 
 LOG_MAX_SIZE=5242880
@@ -295,7 +294,7 @@ El sistema mapea automáticamente los siguientes encabezados del Excel:
 | `EXCEL_DIRECTORY`     | Directorio a monitorear              | `./excel-files`             | string |
 | `PROCESSED_DIRECTORY` | Directorio para archivos procesados  | `./processed-files`         | string |
 | `ERROR_DIRECTORY`     | Directorio para archivos con errores | `./error-files`             | string |
-| `LOG_LEVEL`           | Nivel de logging                     | `info`                      | string |
+
 | `LOG_FILE`            | Archivo de logs                      | `./logs/app.log`            | string |
 | `BATCH_SIZE`          | Tamaño del lote para envío           | `100`                       | number |
 
@@ -589,10 +588,7 @@ nano .env
 ### Logs de Debug
 
 ```bash
-# Ejecutar con nivel de log debug
-LOG_LEVEL=debug npm run dev
-
-# Ver logs en tiempo real
+# Ver logs en tiempo real (siempre con máximo detalle)
 tail -f logs/app.log
 
 # Ver solo errores

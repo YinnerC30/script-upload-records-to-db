@@ -29,7 +29,6 @@ Opciones de configuración de directorios:
 
 Opciones de configuración de procesamiento:
   --batch-size <number>         Configurar tamaño de lote para procesamiento
-  --log-level <level>           Configurar nivel de logs (debug, info, warn, error)
 
 Opciones de configuración de logs:
   --log-file <path>             Configurar archivo de logs
@@ -43,7 +42,6 @@ Ejemplos:
   excel-processor --api-key my-api-key               # Configurar API key
   excel-processor --excel-dir ./my-excel-files       # Configurar directorio Excel
   excel-processor --batch-size 200                   # Cambiar tamaño de lote
-  excel-processor --log-level debug                  # Cambiar nivel de logs
 
 Nota: Las opciones de configuración modifican el archivo .env permanentemente.
       Si se proporcionan opciones de configuración sin 'run' ni 'run --dry-run',
@@ -69,7 +67,7 @@ Nota: Las opciones de configuración modifican el archivo .env permanentemente.
     console.log(`  📁 Directorio procesados: ${config.directories.processed}`);
     console.log(`  📁 Directorio errores: ${config.directories.error}`);
     console.log(`  📦 Tamaño de lote: ${config.processing.batchSize}`);
-    console.log(`  📊 Nivel de logs: ${config.logging.level}`);
     console.log(`  📄 Archivo de logs: ${config.logging.file}`);
+    console.log(`  📊 Nivel de logs: debug (siempre máximo detalle)`);
   }
 }

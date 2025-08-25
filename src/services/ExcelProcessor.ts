@@ -89,10 +89,6 @@ export class ExcelProcessor {
         console.log(`✅ Procesamiento completado exitosamente`);
       } else if (result.total === 0) {
         console.log(`ℹ️  No hubo registros válidos para procesar`);
-      } else {
-        console.log(
-          `⚠️  Procesamiento completado con errores (${result.failedCount} fallidos)`
-        );
       }
       return { ...result, hadFile: true };
     } catch (error) {

@@ -263,26 +263,7 @@ describe('ArgumentParser', () => {
         );
       });
 
-      it('should parse --log-level with valid values', () => {
-        const validLevels = ['debug', 'info', 'warn', 'error'];
 
-        validLevels.forEach((level) => {
-          process.argv = ['node', 'script.js', '--log-level', level];
-
-          const result = parser.parseArguments();
-
-          expect(result.envUpdates['LOG_LEVEL']).toBe(level);
-        });
-      });
-
-      it('should handle --log-level with invalid value', () => {
-        process.argv = ['node', 'script.js', '--log-level', 'invalid'];
-
-        expect(() => parser.parseArguments()).toThrow('process.exit called');
-        expect(mockConsoleError).toHaveBeenCalledWith(
-          '❌ Error: --log-level debe ser: debug, info, warn, error'
-        );
-      });
 
       it('should parse --log-file correctly', () => {
         process.argv = [
@@ -308,14 +289,7 @@ describe('ArgumentParser', () => {
         );
       });
 
-      it('should handle --log-level without value', () => {
-        process.argv = ['node', 'script.js', '--log-level'];
 
-        expect(() => parser.parseArguments()).toThrow('process.exit called');
-        expect(mockConsoleError).toHaveBeenCalledWith(
-          '❌ Error: --log-level requiere un valor'
-        );
-      });
 
       it('should handle --log-file without value', () => {
         process.argv = ['node', 'script.js', '--log-file'];
@@ -364,8 +338,6 @@ describe('ArgumentParser', () => {
           'secret-key',
           '--batch-size',
           '50',
-          '--log-level',
-          'debug',
           '--excel-dir',
           '/path/to/excel',
         ];
@@ -378,7 +350,6 @@ describe('ArgumentParser', () => {
         );
         expect(result.envUpdates['API_KEY']).toBe('secret-key');
         expect(result.envUpdates['BATCH_SIZE']).toBe('50');
-        expect(result.envUpdates['LOG_LEVEL']).toBe('debug');
         expect(result.envUpdates['EXCEL_DIRECTORY']).toBe('/path/to/excel');
       });
 

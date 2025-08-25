@@ -216,7 +216,7 @@ describe('EnvironmentManager', () => {
       expect(content).toContain('# Configuración del Directorio de Archivos');
       expect(content).toContain('EXCEL_DIRECTORY=./excel-files');
       expect(content).toContain('# Configuración de Logs Mejorada');
-      expect(content).toContain('LOG_LEVEL=info');
+
       expect(content).toContain('# Configuración del Procesamiento');
       expect(content).toContain('BATCH_SIZE=100');
     });

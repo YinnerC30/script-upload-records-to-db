@@ -81,7 +81,7 @@ describe('CommandHandler', () => {
       expect(helpText).toContain('--processed-dir');
       expect(helpText).toContain('--error-dir');
       expect(helpText).toContain('--batch-size');
-      expect(helpText).toContain('--log-level');
+
       expect(helpText).toContain('--log-file');
 
     });
@@ -99,7 +99,7 @@ describe('CommandHandler', () => {
       expect(helpText).toContain('--api-key my-api-key');
       expect(helpText).toContain('--excel-dir ./my-excel-files');
       expect(helpText).toContain('--batch-size 200');
-      expect(helpText).toContain('--log-level debug');
+
     });
   });
 
@@ -141,10 +141,8 @@ describe('CommandHandler', () => {
         '  📁 Directorio errores: ./error-files'
       );
       expect(consoleSpy).toHaveBeenCalledWith('  📦 Tamaño de lote: 100');
-      expect(consoleSpy).toHaveBeenCalledWith('  📊 Nivel de logs: info');
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '  📄 Archivo de logs: ./logs/app.log'
-      );
+      expect(consoleSpy).toHaveBeenCalledWith('  📄 Archivo de logs: ./logs/app.log');
+      expect(consoleSpy).toHaveBeenCalledWith('  📊 Nivel de logs: debug (siempre máximo detalle)');
     });
 
     it('should display configuration in the correct order', () => {
@@ -158,8 +156,8 @@ describe('CommandHandler', () => {
       expect(calls[3]).toBe('  📁 Directorio procesados: ./processed-files');
       expect(calls[4]).toBe('  📁 Directorio errores: ./error-files');
       expect(calls[5]).toBe('  📦 Tamaño de lote: 100');
-      expect(calls[6]).toBe('  📊 Nivel de logs: info');
-      expect(calls[7]).toBe('  📄 Archivo de logs: ./logs/app.log');
+      expect(calls[6]).toBe('  📄 Archivo de logs: ./logs/app.log');
+      expect(calls[7]).toBe('  📊 Nivel de logs: debug (siempre máximo detalle)');
     });
 
     it('should handle different configuration values correctly', () => {
@@ -181,10 +179,8 @@ describe('CommandHandler', () => {
         '  📁 Directorio errores: ./error-files'
       );
       expect(consoleSpy).toHaveBeenCalledWith('  📦 Tamaño de lote: 100');
-      expect(consoleSpy).toHaveBeenCalledWith('  📊 Nivel de logs: info');
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '  📄 Archivo de logs: ./logs/app.log'
-      );
+      expect(consoleSpy).toHaveBeenCalledWith('  📄 Archivo de logs: ./logs/app.log');
+      expect(consoleSpy).toHaveBeenCalledWith('  📊 Nivel de logs: debug (siempre máximo detalle)');
     });
   });
 
