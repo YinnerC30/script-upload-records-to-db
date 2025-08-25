@@ -59,8 +59,8 @@ class ExcelGenerator {
     const baseData = [
       {
         Nombre: 'Licitación de Servicios de Mantenimiento',
-        'Fecha de Publicación': '2024-01-15',
-        'Fecha de cierre': '2024-02-15',
+        'Fecha de Publicación': '2024-01-15T09:00:00.000Z',
+        'Fecha de cierre': '2024-02-15T18:00:00.000Z',
         Organismo: 'Ministerio de Hacienda',
         Unidad: 'Dirección de Presupuestos',
         'Monto Disponible': '50000000',
@@ -69,8 +69,8 @@ class ExcelGenerator {
       },
       {
         Nombre: 'Adquisición de Equipos Informáticos',
-        'Fecha de Publicación': '2024-01-20',
-        'Fecha de cierre': '2024-02-20',
+        'Fecha de Publicación': '2024-01-20T10:30:00.000Z',
+        'Fecha de cierre': '2024-02-20T17:30:00.000Z',
         Organismo: 'Ministerio de Educación',
         Unidad: 'División de Administración General',
         'Monto Disponible': '75000000',
@@ -79,8 +79,8 @@ class ExcelGenerator {
       },
       {
         Nombre: 'Servicios de Consultoría IT',
-        'Fecha de Publicación': '2024-01-25',
-        'Fecha de cierre': '2024-03-25',
+        'Fecha de Publicación': '2024-01-25T14:15:00.000Z',
+        'Fecha de cierre': '2024-03-25T16:45:00.000Z',
         Organismo: 'Ministerio de Transportes',
         Unidad: 'Departamento de Tecnología',
         'Monto Disponible': '120000000',
@@ -110,22 +110,31 @@ class ExcelGenerator {
         ];
       const monto = Math.floor(Math.random() * 100000000) + 1000000; // Entre 1M y 100M
 
-      // Generar fechas aleatorias en 2024
+      // Generar fechas aleatorias en 2024 con hora
       const fechaPub = new Date(
         2024,
         Math.floor(Math.random() * 12),
-        Math.floor(Math.random() * 28) + 1
+        Math.floor(Math.random() * 28) + 1,
+        Math.floor(Math.random() * 24), // Hora (0-23)
+        Math.floor(Math.random() * 60), // Minutos (0-59)
+        Math.floor(Math.random() * 60) // Segundos (0-59)
       );
       const fechaCierre = new Date(fechaPub);
       fechaCierre.setDate(
         fechaCierre.getDate() + Math.floor(Math.random() * 60) + 30
       ); // 30-90 días después
+      // Agregar hora aleatoria para la fecha de cierre
+      fechaCierre.setHours(
+        Math.floor(Math.random() * 24),
+        Math.floor(Math.random() * 60),
+        Math.floor(Math.random() * 60)
+      );
 
       data.push({
         ID: id,
         Nombre: `Licitación de ${tipo} - ${id}`,
-        'Fecha de Publicación': fechaPub.toISOString().split('T')[0],
-        'Fecha de cierre': fechaCierre.toISOString().split('T')[0],
+        'Fecha de Publicación': fechaPub.toISOString(),
+        'Fecha de cierre': fechaCierre.toISOString(),
         Organismo: organismo,
         Unidad: unidad,
         'Monto Disponible': monto.toString(),

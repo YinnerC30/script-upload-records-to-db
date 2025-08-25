@@ -121,6 +121,7 @@ export class ExcelProcessor {
 
       // Convertir a JSON
       const rawData = XLSX.utils.sheet_to_json(worksheet);
+      console.log('🚀 ~ ExcelProcessor ~ processFile ~ rawData:', rawData)
 
       console.log(`📊 Registros encontrados: ${rawData.length}`);
 
@@ -219,6 +220,7 @@ export class ExcelProcessor {
     fileName: string,
     filePath: string
   ): Promise<{ successCount: number; failedRecords: FailedRecord[] }> {
+    console.log('🚀 ~ ExcelProcessor ~ processData ~ data:', data)
     console.log(`🚀 Procesando ${data.length} registros...`);
 
     // Procesar registros individualmente
