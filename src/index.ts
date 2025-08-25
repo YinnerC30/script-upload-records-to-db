@@ -16,6 +16,7 @@ let isDryRun = false;
 export async function parseArguments(): Promise<{
   isDryRun: boolean;
   envUpdates: Record<string, string>;
+  shouldRun: boolean;
 }> {
   const parser = new ArgumentParser();
   const args = parser.parseArguments();
@@ -57,7 +58,11 @@ export async function parseArguments(): Promise<{
     }
   }
 
-  return { isDryRun, envUpdates: args.envUpdates };
+  return {
+    isDryRun,
+    envUpdates: args.envUpdates,
+    shouldRun: args.run || args.dryRun,
+  };
 }
 
 // Función principal
@@ -66,7 +71,27 @@ export async function main() {
     console.log('🚀 Iniciando Excel Processor...\n');
 
     // Procesar argumentos de línea de comandos
-    const { isDryRun: dryRunMode } = await parseArguments();
+    const {
+      isDryRun: dryRunMode,
+      envUpdates,
+      shouldRun,
+    } = await parseArguments();
+
+    // Si hubo cambios de configuración y no se indicó ejecutar, salir
+    if (Object.keys(envUpdates).length > 0 && !shouldRun) {
+      console.log(
+        '⚙️  Configuración aplicada. Usa "run" para ejecutar o "--dry-run" para validar.'
+      );
+      return;
+    }
+
+    // Si no se indicó ejecutar, salir con mensaje informativo
+    if (!shouldRun) {
+      console.log(
+        'ℹ️  Nada que ejecutar. Usa "run" para ejecutar o " run --dry-run" para validar.'
+      );
+      return;
+    }
 
     // Validar configuración
     validateConfig();

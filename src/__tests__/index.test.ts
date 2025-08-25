@@ -16,7 +16,7 @@ vi.mock('../utils/logger', () => ({
     error: vi.fn(),
     warn: vi.fn(),
     verbose: vi.fn(),
-    debug: vi.fn()
+    debug: vi.fn(),
   },
   StructuredLogger: vi.fn().mockImplementation(() => ({
     info: vi.fn(),
@@ -26,8 +26,8 @@ vi.mock('../utils/logger', () => ({
     debug: vi.fn(),
     performance: vi.fn(),
     metrics: vi.fn(),
-    getSessionId: vi.fn().mockReturnValue('test-session-id')
-  }))
+    getSessionId: vi.fn().mockReturnValue('test-session-id'),
+  })),
 }));
 vi.mock('../config/config', () => ({
   config: {
@@ -35,18 +35,18 @@ vi.mock('../config/config', () => ({
     directories: {
       excel: './excel-files',
       processed: './processed-files',
-      error: './error-files'
+      error: './error-files',
     },
     processing: { batchSize: 100 },
     logging: {
       level: 'info',
       file: './logs/app.log',
       enableConsole: true,
-      enablePerformance: false
-    }
+      enablePerformance: false,
+    },
   },
   createRequiredDirectories: vi.fn(),
-  validateConfig: vi.fn()
+  validateConfig: vi.fn(),
 }));
 
 // Mock de process.argv y process.exit
@@ -67,7 +67,7 @@ describe('index.ts', () => {
 
     // Mock de process.exit
     vi.spyOn(process, 'exit').mockImplementation(mockExit as any);
-    
+
     // Mock de console
     vi.spyOn(console, 'log').mockImplementation(mockConsoleLog);
     vi.spyOn(console, 'error').mockImplementation(mockConsoleError);
@@ -75,7 +75,7 @@ describe('index.ts', () => {
     // Mock de require.main
     Object.defineProperty(require, 'main', {
       value: module,
-      configurable: true
+      configurable: true,
     });
 
     // Resetear el módulo para limpiar el estado global
@@ -83,25 +83,27 @@ describe('index.ts', () => {
 
     // Configurar mocks de las clases
     mockArgumentParser = {
-      parseArguments: vi.fn()
+      parseArguments: vi.fn(),
     };
     (ArgumentParser as any).mockImplementation(() => mockArgumentParser);
 
     mockCommandHandler = {
       showHelp: vi.fn(),
       showVersion: vi.fn(),
-      showConfig: vi.fn()
+      showConfig: vi.fn(),
     };
     (CommandHandler as any).mockImplementation(() => mockCommandHandler);
 
     mockEnvironmentManager = {
       updateEnvFile: vi.fn(),
-      createExampleEnvFile: vi.fn()
+      createExampleEnvFile: vi.fn(),
     };
-    (EnvironmentManager as any).mockImplementation(() => mockEnvironmentManager);
+    (EnvironmentManager as any).mockImplementation(
+      () => mockEnvironmentManager
+    );
 
     mockExcelProcessor = {
-      run: vi.fn()
+      run: vi.fn(),
     };
     (ExcelProcessor as any).mockImplementation(() => mockExcelProcessor);
 
@@ -110,7 +112,7 @@ describe('index.ts', () => {
       error: vi.fn(),
       warn: vi.fn(),
       verbose: vi.fn(),
-      debug: vi.fn()
+      debug: vi.fn(),
     };
   });
 
@@ -126,7 +128,7 @@ describe('index.ts', () => {
         version: false,
         config: false,
         dryRun: false,
-        envUpdates: {}
+        envUpdates: {},
       });
 
       // Act
@@ -146,7 +148,7 @@ describe('index.ts', () => {
         version: true,
         config: false,
         dryRun: false,
-        envUpdates: {}
+        envUpdates: {},
       });
 
       // Act
@@ -166,7 +168,7 @@ describe('index.ts', () => {
         version: false,
         config: true,
         dryRun: false,
-        envUpdates: {}
+        envUpdates: {},
       });
 
       // Act
@@ -186,7 +188,7 @@ describe('index.ts', () => {
         version: false,
         config: false,
         dryRun: true,
-        envUpdates: {}
+        envUpdates: {},
       });
 
       // Act
@@ -194,7 +196,9 @@ describe('index.ts', () => {
       const result = await parseArguments();
 
       // Assert
-      expect(mockConsoleLog).toHaveBeenCalledWith('🔍 Modo dry-run activado (solo validación)');
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        '🔍 Modo dry-run activado (solo validación)'
+      );
       expect(result.isDryRun).toBe(true);
     });
 
@@ -206,7 +210,7 @@ describe('index.ts', () => {
         version: false,
         config: false,
         dryRun: false,
-        envUpdates
+        envUpdates,
       });
 
       // Act
@@ -214,9 +218,15 @@ describe('index.ts', () => {
       const result = await parseArguments();
 
       // Assert
-      expect(mockEnvironmentManager.updateEnvFile).toHaveBeenCalledWith(envUpdates);
-      expect(mockConsoleLog).toHaveBeenCalledWith('✅ Configuración actualizada exitosamente');
-      expect(mockConsoleLog).toHaveBeenCalledWith('🔄 Reinicia la aplicación para aplicar los cambios\n');
+      expect(mockEnvironmentManager.updateEnvFile).toHaveBeenCalledWith(
+        envUpdates
+      );
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        '✅ Configuración actualizada exitosamente'
+      );
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        '🔄 Reinicia la aplicación para aplicar los cambios\n'
+      );
       expect(result.envUpdates).toEqual(envUpdates);
     });
 
@@ -229,18 +239,21 @@ describe('index.ts', () => {
         version: false,
         config: false,
         dryRun: false,
-        envUpdates
+        envUpdates,
       });
       mockEnvironmentManager.updateEnvFile.mockRejectedValue(error);
 
       // Act
       const { parseArguments } = await import('../index');
-      
+
       // La función debería llamar process.exit(1) en lugar de lanzar el error
       await parseArguments();
-      
+
       // Assert
-      expect(mockConsoleError).toHaveBeenCalledWith('❌ Error actualizando configuración:', error);
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        '❌ Error actualizando configuración:',
+        error
+      );
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
@@ -251,7 +264,7 @@ describe('index.ts', () => {
         version: false,
         config: false,
         dryRun: false,
-        envUpdates: {}
+        envUpdates: {},
       });
 
       // Act
@@ -270,7 +283,7 @@ describe('index.ts', () => {
         version: false,
         config: false,
         dryRun: false,
-        envUpdates: {}
+        envUpdates: {},
       });
 
       // Act
@@ -291,7 +304,8 @@ describe('index.ts', () => {
         version: false,
         config: false,
         dryRun: false,
-        envUpdates: {}
+        run: true,
+        envUpdates: {},
       });
     });
 
@@ -303,11 +317,19 @@ describe('index.ts', () => {
       await main();
 
       // Assert
-      expect(mockConsoleLog).toHaveBeenCalledWith('🚀 Iniciando Excel Processor...\n');
-      expect(mockEnvironmentManager.createExampleEnvFile).toHaveBeenCalledTimes(1);
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        '🚀 Iniciando Excel Processor...\n'
+      );
+      expect(mockEnvironmentManager.createExampleEnvFile).toHaveBeenCalledTimes(
+        1
+      );
       expect(mockExcelProcessor.run).toHaveBeenCalledTimes(1);
-      expect(mockConsoleLog).toHaveBeenCalledWith('\n✅ Procesamiento completado exitosamente');
-      expect(logger.info).toHaveBeenCalledWith('✅ Procesamiento completado exitosamente');
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        '\n✅ Procesamiento completado exitosamente'
+      );
+      expect(logger.info).toHaveBeenCalledWith(
+        '✅ Procesamiento completado exitosamente'
+      );
     });
 
     it('should execute successfully in dry-run mode', async () => {
@@ -317,7 +339,8 @@ describe('index.ts', () => {
         version: false,
         config: false,
         dryRun: true,
-        envUpdates: {}
+        run: false,
+        envUpdates: {},
       });
       const { main } = await import('../index');
 
@@ -346,11 +369,17 @@ describe('index.ts', () => {
       await main();
 
       // Assert
-      expect(mockConsoleError).toHaveBeenCalledWith('\n❌ Error durante el procesamiento:', error);
-      expect(logger.error).toHaveBeenCalledWith('❌ Error durante el procesamiento', {
-        error: 'Processing failed',
-        stack: error.stack,
-      });
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        '\n❌ Error durante el procesamiento:',
+        error
+      );
+      expect(logger.error).toHaveBeenCalledWith(
+        '❌ Error durante el procesamiento',
+        {
+          error: 'Processing failed',
+          stack: error.stack,
+        }
+      );
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
@@ -364,16 +393,30 @@ describe('index.ts', () => {
       await main();
 
       // Assert
-      expect(mockConsoleError).toHaveBeenCalledWith('\n❌ Error durante el procesamiento:', error);
-      expect(logger.error).toHaveBeenCalledWith('❌ Error durante el procesamiento', {
-        error: 'String error',
-        stack: undefined,
-      });
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        '\n❌ Error durante el procesamiento:',
+        error
+      );
+      expect(logger.error).toHaveBeenCalledWith(
+        '❌ Error durante el procesamiento',
+        {
+          error: 'String error',
+          stack: undefined,
+        }
+      );
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
     it('should log startup information correctly', async () => {
       // Arrange
+      mockArgumentParser.parseArguments.mockReturnValue({
+        help: false,
+        version: false,
+        config: false,
+        dryRun: false,
+        run: true,
+        envUpdates: {},
+      });
       const { main } = await import('../index');
 
       // Act
@@ -400,11 +443,17 @@ describe('index.ts', () => {
       await main();
 
       // Assert
-      expect(mockConsoleError).toHaveBeenCalledWith('\n❌ Error durante el procesamiento:', error);
-      expect(logger.error).toHaveBeenCalledWith('❌ Error durante el procesamiento', {
-        error: 'null',
-        stack: undefined,
-      });
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        '\n❌ Error durante el procesamiento:',
+        error
+      );
+      expect(logger.error).toHaveBeenCalledWith(
+        '❌ Error durante el procesamiento',
+        {
+          error: 'null',
+          stack: undefined,
+        }
+      );
       expect(mockExit).toHaveBeenCalledWith(1);
     });
   });
@@ -418,7 +467,8 @@ describe('index.ts', () => {
         version: false,
         config: false,
         dryRun: false,
-        envUpdates: {}
+        run: true,
+        envUpdates: {},
       });
       mockExcelProcessor.run.mockRejectedValue(error);
       const { main } = await import('../index');
@@ -427,7 +477,10 @@ describe('index.ts', () => {
       await main();
 
       // Assert
-      expect(mockConsoleError).toHaveBeenCalledWith('\n❌ Error durante el procesamiento:', error);
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        '\n❌ Error durante el procesamiento:',
+        error
+      );
       expect(mockExit).toHaveBeenCalledWith(1);
     });
   });
@@ -441,7 +494,7 @@ describe('index.ts', () => {
         version: false,
         config: false,
         dryRun: true,
-        envUpdates
+        envUpdates,
       });
       const { main } = await import('../index');
 
@@ -449,8 +502,12 @@ describe('index.ts', () => {
       await main();
 
       // Assert
-      expect(mockEnvironmentManager.updateEnvFile).toHaveBeenCalledWith(envUpdates);
-      expect(mockConsoleLog).toHaveBeenCalledWith('🔍 Modo dry-run activado (solo validación)');
+      expect(mockEnvironmentManager.updateEnvFile).toHaveBeenCalledWith(
+        envUpdates
+      );
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        '🔍 Modo dry-run activado (solo validación)'
+      );
       expect(ExcelProcessor).toHaveBeenCalledWith(true);
     });
 
@@ -459,14 +516,14 @@ describe('index.ts', () => {
       const envUpdates = {
         API_BASE_URL: 'https://new-api.com',
         API_KEY: 'new-key',
-        BATCH_SIZE: '200'
+        BATCH_SIZE: '200',
       };
       mockArgumentParser.parseArguments.mockReturnValue({
         help: false,
         version: false,
         config: false,
         dryRun: false,
-        envUpdates
+        envUpdates,
       });
       const { parseArguments } = await import('../index');
 
@@ -474,11 +531,13 @@ describe('index.ts', () => {
       const result = await parseArguments();
 
       // Assert
-      expect(mockEnvironmentManager.updateEnvFile).toHaveBeenCalledWith(envUpdates);
+      expect(mockEnvironmentManager.updateEnvFile).toHaveBeenCalledWith(
+        envUpdates
+      );
       expect(result.envUpdates).toEqual(envUpdates);
     });
 
-    it('should handle complex configuration scenario', async () => {
+    it('should apply configuration but skip execution when not using run or dry-run', async () => {
       // Arrange
       const envUpdates = {
         API_BASE_URL: 'https://production-api.com',
@@ -486,14 +545,14 @@ describe('index.ts', () => {
         API_TIMEOUT: '60000',
         EXCEL_DIRECTORY: '/custom/excel/path',
         BATCH_SIZE: '500',
-        LOG_LEVEL: 'debug'
+        LOG_LEVEL: 'debug',
       };
       mockArgumentParser.parseArguments.mockReturnValue({
         help: false,
         version: false,
         config: false,
         dryRun: false,
-        envUpdates
+        envUpdates,
       });
       const { main } = await import('../index');
 
@@ -501,8 +560,35 @@ describe('index.ts', () => {
       await main();
 
       // Assert
-      expect(mockEnvironmentManager.updateEnvFile).toHaveBeenCalledWith(envUpdates);
-      expect(mockEnvironmentManager.createExampleEnvFile).toHaveBeenCalledTimes(1);
+      expect(mockEnvironmentManager.updateEnvFile).toHaveBeenCalledWith(
+        envUpdates
+      );
+      expect(mockExcelProcessor.run).not.toHaveBeenCalled();
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        '⚙️  Configuración aplicada. Usa "run" para ejecutar o "--dry-run" para validar.'
+      );
+    });
+
+    it('should execute when using run with configuration changes', async () => {
+      // Arrange
+      const envUpdates = { EXCEL_DIRECTORY: '/new/path' };
+      mockArgumentParser.parseArguments.mockReturnValue({
+        help: false,
+        version: false,
+        config: false,
+        dryRun: false,
+        run: true,
+        envUpdates,
+      });
+      const { main } = await import('../index');
+
+      // Act
+      await main();
+
+      // Assert
+      expect(mockEnvironmentManager.updateEnvFile).toHaveBeenCalledWith(
+        envUpdates
+      );
       expect(mockExcelProcessor.run).toHaveBeenCalledTimes(1);
     });
   });
@@ -516,7 +602,8 @@ describe('index.ts', () => {
         version: false,
         config: false,
         dryRun: false,
-        envUpdates: {}
+        run: true,
+        envUpdates: {},
       });
       mockExcelProcessor.run.mockRejectedValue(error);
       const { main } = await import('../index');
@@ -525,11 +612,17 @@ describe('index.ts', () => {
       await main();
 
       // Assert
-      expect(mockConsoleError).toHaveBeenCalledWith('\n❌ Error durante el procesamiento:', error);
-      expect(logger.error).toHaveBeenCalledWith('❌ Error durante el procesamiento', {
-        error: 'undefined',
-        stack: undefined,
-      });
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        '\n❌ Error durante el procesamiento:',
+        error
+      );
+      expect(logger.error).toHaveBeenCalledWith(
+        '❌ Error durante el procesamiento',
+        {
+          error: 'undefined',
+          stack: undefined,
+        }
+      );
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
@@ -541,7 +634,8 @@ describe('index.ts', () => {
         version: false,
         config: false,
         dryRun: false,
-        envUpdates: {}
+        run: true,
+        envUpdates: {},
       });
       mockExcelProcessor.run.mockRejectedValue(error);
       const { main } = await import('../index');
@@ -550,11 +644,17 @@ describe('index.ts', () => {
       await main();
 
       // Assert
-      expect(mockConsoleError).toHaveBeenCalledWith('\n❌ Error durante el procesamiento:', error);
-      expect(logger.error).toHaveBeenCalledWith('❌ Error durante el procesamiento', {
-        error: '[object Object]',
-        stack: undefined,
-      });
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        '\n❌ Error durante el procesamiento:',
+        error
+      );
+      expect(logger.error).toHaveBeenCalledWith(
+        '❌ Error durante el procesamiento',
+        {
+          error: '[object Object]',
+          stack: undefined,
+        }
+      );
       expect(mockExit).toHaveBeenCalledWith(1);
     });
   });

@@ -32,6 +32,7 @@ describe('ArgumentParser', () => {
         version: false,
         config: false,
         dryRun: false,
+        run: false,
         envUpdates: {},
       });
     });

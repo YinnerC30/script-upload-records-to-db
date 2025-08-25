@@ -99,8 +99,8 @@ npm start
 # Construir el ejecutable
 npm run build:all
 
-# Ejecutar directamente
-./bin/script-upload-records-to-db
+# Ejecutar directamente (requiere 'run' o '--dry-run')
+./bin/script-upload-records-to-db run
 
 # Instalar globalmente (requiere sudo)
 sudo ./install.sh
@@ -140,28 +140,31 @@ sudo ./uninstall.sh
 ./bin/script-upload-records-to-db --config                    # Si instalado localmente
 sudo ./bin/script-upload-records-to-db --config               # Si instalado globalmente
 
-# Configurar API
+# Configurar API (solo aplica cambios, no ejecuta)
 ./bin/script-upload-records-to-db --api-url https://api.example.com --api-key my-key
-sudo ./bin/script-upload-records-to-db --api-url https://api.example.com --api-key my-key
 
-# Configurar directorios
+# Ejecutar después de configurar
+./bin/script-upload-records-to-db run
+
+# Configurar directorios (solo aplica cambios)
 ./bin/script-upload-records-to-db --excel-dir ./my-excel-files --processed-dir ./my-processed-files
-sudo ./bin/script-upload-records-to-db --excel-dir ./my-excel-files --processed-dir ./my-processed-files
 
-# Modo dry-run (solo validación)
+# Validar sin enviar datos (ejecuta en modo validación)
 ./bin/script-upload-records-to-db --dry-run
 
-# Configuración completa
+# Configuración completa (aplica cambios) y luego ejecución
 ./bin/script-upload-records-to-db \
   --api-url https://api.example.com \
   --api-key secret123 \
   --excel-dir ./production/excel \
   --batch-size 1000 \
   --log-level info
+./bin/script-upload-records-to-db run
 
 # Alternativa: Instalar en directorio personal para evitar sudo
 ./install.sh -d ~/bin
 ~/bin/excel-processor --api-url https://api.example.com --api-key my-key
+~/bin/excel-processor run
 ```
 
 ### ⏰ Programación Automática
@@ -681,8 +684,8 @@ El ejecutable es una versión compilada del proyecto que incluye todas las depen
 # Construir
 npm run build:all
 
-# Ejecutar
-./bin/script-upload-records-to-db
+# Ejecutar (requiere 'run' o '--dry-run')
+./bin/script-upload-records-to-db run
 
 # Instalar
 ./install.sh
@@ -693,13 +696,14 @@ npm run build:all
 
 ## 🔄 Flujo de Procesamiento
 
-1. **Detección**: Busca el archivo Excel más reciente
-2. **Lectura**: Lee y parsea el archivo Excel
-3. **Validación**: Valida la estructura de datos
-4. **Transformación**: Convierte datos al formato esperado por la API
-5. **Envío**: Envía registros a la API REST por lotes
-6. **Movimiento**: Mueve archivo a directorio procesado
-7. **Logging**: Registra todo el proceso
+1. **Configuración (opcional)**: Puedes cambiar variables vía CLI; no ejecuta hasta usar `run` o `--dry-run`
+2. **Detección**: Busca el archivo Excel más reciente
+3. **Lectura**: Lee y parsea el archivo Excel
+4. **Validación**: Valida la estructura de datos
+5. **Transformación**: Convierte datos al formato esperado por la API
+6. **Envío**: Envía registros a la API REST por lotes
+7. **Movimiento**: Mueve archivo a directorio procesado
+8. **Logging**: Registra todo el proceso
 
 ## 📈 Rendimiento
 

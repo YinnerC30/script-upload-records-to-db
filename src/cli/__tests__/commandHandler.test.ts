@@ -53,7 +53,7 @@ describe('CommandHandler', () => {
         )
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Uso: excel-processor [OPCIONES]')
+        expect.stringContaining('Uso: excel-processor [OPCIONES] [run]')
       );
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('-h, --help')

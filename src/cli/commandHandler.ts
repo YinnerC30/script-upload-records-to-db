@@ -8,13 +8,14 @@ export class CommandHandler {
     console.log(`
 🚀 Excel Processor - Procesador de Archivos Excel
 
-Uso: excel-processor [OPCIONES]
+Uso: excel-processor [OPCIONES] [run]
 
 Opciones generales:
   -h, --help                    Mostrar esta ayuda
   -v, --version                 Mostrar versión
   -c, --config                  Mostrar configuración actual
   -d, --dry-run                 Ejecutar sin procesar archivos (solo validar)
+  run                           Ejecutar procesamiento tras aplicar configuración
 
 Opciones de configuración de API REST:
   --api-url <url>               Configurar URL base de la API
@@ -36,17 +37,19 @@ Opciones de configuración de logs:
   --log-performance <true|false> Habilitar/deshabilitar logs de rendimiento
 
 Ejemplos:
-  excel-processor                                    # Procesamiento normal
+  excel-processor run                                # Procesamiento normal
   excel-processor --help                             # Mostrar ayuda
   excel-processor --config                           # Ver configuración
   excel-processor --dry-run                          # Solo validar archivos
-  excel-processor --api-url https://api.example.com  # Cambiar URL de API
+  excel-processor --api-url https://api.example.com  # Configurar URL de API
   excel-processor --api-key my-api-key               # Configurar API key
-  excel-processor --excel-dir ./my-excel-files       # Cambiar directorio Excel
+  excel-processor --excel-dir ./my-excel-files       # Configurar directorio Excel
   excel-processor --batch-size 200                   # Cambiar tamaño de lote
   excel-processor --log-level debug                  # Cambiar nivel de logs
 
-Nota: Las opciones de configuración modifican el archivo .env permanentemente
+Nota: Las opciones de configuración modifican el archivo .env permanentemente.
+      Si se proporcionan opciones de configuración sin 'run' ni '--dry-run',
+      se aplican los cambios y el programa no se ejecuta automáticamente.
 `);
   }
 

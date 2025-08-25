@@ -3,6 +3,7 @@ export interface ParsedArgs {
   version: boolean;
   config: boolean;
   dryRun: boolean;
+  run: boolean;
   envUpdates: Record<string, string>;
 }
 
@@ -17,6 +18,7 @@ export class ArgumentParser {
       version: false,
       config: false,
       dryRun: false,
+      run: false,
       envUpdates: {},
     };
 
@@ -24,6 +26,10 @@ export class ArgumentParser {
       const arg = args[i];
 
       switch (arg) {
+        case 'run':
+          result.run = true;
+          break;
+
         case '-h':
         case '--help':
           result.help = true;
