@@ -108,54 +108,38 @@ CONFIG_FILE="$INSTALL_DIR/.env"
 # Usar sudo si el directorio requiere permisos de administrador
 if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
     sudo tee "$CONFIG_FILE" > /dev/null << EOF
-# Configuración de Base de Datos
-DB_HOST=localhost
-DB_PORT=3306
-DB_USERNAME=root
-DB_PASSWORD=password
-DB_DATABASE=excel_data
+# Configuración de API REST
+API_BASE_URL=http://localhost:3000
+API_KEY=test-key
+API_TIMEOUT=60000
 
-# Configuración de Retry y Pool de Conexiones
-DB_RETRY_MAX_ATTEMPTS=5
-DB_RETRY_INITIAL_DELAY=1000
-DB_RETRY_MAX_DELAY=30000
-DB_RETRY_BACKOFF_MULTIPLIER=2
-DB_CONNECTION_LIMIT=10
-DB_CONNECT_TIMEOUT_MS=30000
 
 # Configuración del Directorio de Archivos
 EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
-# Configuración de Logs Mejorada
+# Configuración de Logs
+
 LOG_FILE=./logs/app.log
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
 EOF
 else
     cat > "$CONFIG_FILE" << EOF
-# Configuración de Base de Datos
-DB_HOST=localhost
-DB_PORT=3306
-DB_USERNAME=root
-DB_PASSWORD=password
-DB_DATABASE=excel_data
+# Configuración de API REST
+API_BASE_URL=http://localhost:3000
+API_KEY=test-key
+API_TIMEOUT=60000
 
-# Configuración de Retry y Pool de Conexiones
-DB_RETRY_MAX_ATTEMPTS=5
-DB_RETRY_INITIAL_DELAY=1000
-DB_RETRY_MAX_DELAY=30000
-DB_RETRY_BACKOFF_MULTIPLIER=2
-DB_CONNECTION_LIMIT=10
-DB_CONNECT_TIMEOUT_MS=30000
 
 # Configuración del Directorio de Archivos
 EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
-# Configuración de Logs Mejorada
+# Configuración de Logs
+
 LOG_FILE=./logs/app.log
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
