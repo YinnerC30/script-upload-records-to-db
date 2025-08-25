@@ -9,6 +9,10 @@ vi.mock('../../config/config', () => ({
       maxSize: 5242880,
       maxFiles: 5,
     },
+    console: {
+      maxLogsBeforeClean: 100,
+      cleanInterval: 30000,
+    },
   },
 }));
 

@@ -70,6 +70,10 @@ ERROR_DIRECTORY=./error-files
 LOG_FILE=./logs/app.log
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
+
+# Configuración de Limpieza Automática de Consola
+CONSOLE_CLEAN_MAX_LOGS=100
+CONSOLE_CLEAN_INTERVAL=30000
 ```
 
 ## 🏃‍♂️ Uso del Aplicativo
@@ -172,6 +176,53 @@ Para ejecutar el programa automáticamente en horarios específicos:
 ./setup-scheduler.sh -c          # Configurar programación personalizada
 ./setup-scheduler.sh -r          # Remover programación existente
 ./setup-scheduler.sh -s          # Ver programación actual
+```
+
+### 🧹 Limpieza Automática de Consola
+
+La aplicación incluye un sistema de limpieza automática de terminal que mantiene la consola limpia sin afectar los logs guardados en archivos.
+
+#### Características
+
+- **Limpieza automática**: La terminal se limpia automáticamente cada cierto número de logs o tiempo
+- **Preservación de logs**: Todos los logs se siguen guardando en archivos normalmente
+- **Configuración flexible**: Ajustable mediante variables de entorno
+- **Controles manuales**: API para controlar la limpieza programáticamente
+
+#### Configuración
+
+```env
+# Número máximo de logs antes de limpiar la terminal
+CONSOLE_CLEAN_MAX_LOGS=100
+
+# Intervalo en milisegundos para limpieza automática por tiempo
+CONSOLE_CLEAN_INTERVAL=30000
+```
+
+#### Uso Programático
+
+```javascript
+const { consoleCleaner } = require('./dist/utils/logger');
+
+// Limpiar terminal manualmente
+consoleCleaner.cleanNow();
+
+// Obtener estadísticas de limpieza
+const stats = consoleCleaner.getStats();
+console.log('Logs procesados:', stats.logCount);
+
+// Configurar parámetros de limpieza
+consoleCleaner.configure(50, 15000); // 50 logs o 15 segundos
+
+// Detener limpieza automática
+consoleCleaner.stop();
+```
+
+#### Ejemplo de Uso
+
+```bash
+# Ejecutar ejemplo de limpieza automática
+node scripts/examples/console-cleaner-example.js
 ```
 
 ### 📜 Scripts Shell Disponibles

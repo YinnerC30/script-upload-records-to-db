@@ -60,6 +60,12 @@ export const config = {
     maxFiles: getEnvVarNumber('LOG_MAX_FILES', 5),
   },
 
+  // Configuración de limpieza de consola
+  console: {
+    maxLogsBeforeClean: getEnvVarNumber('CONSOLE_CLEAN_MAX_LOGS', 100),
+    cleanInterval: getEnvVarNumber('CONSOLE_CLEAN_INTERVAL', 30000), // 30 segundos
+  },
+
   // Configuración de la API REST
   api: {
     baseURL: getEnvVar('API_BASE_URL', 'http://localhost:3000/api'),

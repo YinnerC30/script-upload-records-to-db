@@ -101,6 +101,116 @@ const consoleFormat = winston.format.combine(
   )
 );
 
+// Clase para manejar la limpieza automática de consola
+class ConsoleCleaner {
+  private logCount: number = 0;
+  private maxLogsBeforeClean: number;
+  private cleanInterval: number; // en milisegundos
+  private lastCleanTime: number = Date.now();
+  private isCleaning: boolean = false;
+  private intervalId?: NodeJS.Timeout;
+
+  constructor(maxLogsBeforeClean: number = 100, cleanInterval: number = 30000) {
+    this.maxLogsBeforeClean = maxLogsBeforeClean;
+    this.cleanInterval = cleanInterval;
+    this.startCleanupInterval();
+  }
+
+  // Incrementar contador de logs
+  incrementLogCount(): void {
+    this.logCount++;
+
+    // Verificar si es momento de limpiar
+    if (this.shouldCleanConsole() && !this.isCleaning) {
+      this.cleanConsole();
+    }
+  }
+
+  private shouldCleanConsole(): boolean {
+    const now = Date.now();
+    const timeSinceLastClean = now - this.lastCleanTime;
+
+    // Limpiar si han pasado muchos logs o mucho tiempo
+    return (
+      this.logCount >= this.maxLogsBeforeClean ||
+      timeSinceLastClean >= this.cleanInterval
+    );
+  }
+
+  private cleanConsole(): void {
+    this.isCleaning = true;
+
+    try {
+      // Limpiar la terminal
+      if (process.stdout.isTTY) {
+        // Usar códigos ANSI para limpiar la terminal
+        process.stdout.write('\x1B[2J\x1B[0f');
+      } else {
+        // Fallback: imprimir líneas en blanco
+        console.log('\n'.repeat(50));
+      }
+
+      // Imprimir mensaje de limpieza
+      const timestamp = new Date().toLocaleTimeString();
+      console.log(`\n🧹 Terminal limpiada automáticamente - ${timestamp}`);
+      console.log(
+        `📊 Logs procesados: ${this.logCount} | Archivos de log preservados\n`
+      );
+
+      // Resetear contadores
+      this.logCount = 0;
+      this.lastCleanTime = Date.now();
+    } catch (error) {
+      console.error('Error al limpiar terminal:', error);
+    } finally {
+      this.isCleaning = false;
+    }
+  }
+
+  private startCleanupInterval(): void {
+    // Limpiar por tiempo cada cierto intervalo
+    this.intervalId = setInterval(() => {
+      if (this.logCount > 0 && !this.isCleaning) {
+        this.cleanConsole();
+      }
+    }, this.cleanInterval);
+  }
+
+  // Método público para limpiar manualmente
+  public manualClean(): void {
+    this.cleanConsole();
+  }
+
+  // Método para obtener estadísticas
+  public getStats(): { logCount: number; lastCleanTime: number } {
+    return {
+      logCount: this.logCount,
+      lastCleanTime: this.lastCleanTime,
+    };
+  }
+
+  // Método para detener la limpieza automática
+  public stop(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = undefined;
+    }
+  }
+
+  // Método para configurar parámetros
+  public configure(maxLogs?: number, interval?: number): void {
+    if (maxLogs !== undefined) {
+      this.maxLogsBeforeClean = maxLogs;
+    }
+    if (interval !== undefined) {
+      this.cleanInterval = interval;
+      // Reiniciar el intervalo con la nueva configuración
+      this.stop();
+      this.startCleanupInterval();
+    }
+  }
+}
+
 const logger = winston.createLogger({
   levels: customLevels,
   level: config.logging.level,
@@ -127,12 +237,21 @@ const logger = winston.createLogger({
   ],
 });
 
-// Agregar console transport siempre
+// Agregar console transport normal
 logger.add(
   new winston.transports.Console({
     format: consoleFormat,
   })
 );
+
+// Crear instancia del limpiador de consola
+const consoleCleanerInstance = new ConsoleCleaner(
+  config.console.maxLogsBeforeClean,
+  config.console.cleanInterval
+);
+
+// Configurar el limpiador de consola para que funcione con el transport normal
+// El limpiador se ejecutará automáticamente basado en el tiempo y contador
 
 // Agregar archivo de rendimiento siempre
 logger.add(
@@ -228,5 +347,28 @@ export class StructuredLogger {
     return this.sessionId;
   }
 }
+
+// Exportar funciones para control manual de la limpieza
+export const consoleCleaner = {
+  // Limpiar terminal manualmente
+  cleanNow: () => {
+    consoleCleanerInstance.manualClean();
+  },
+
+  // Obtener estadísticas de limpieza
+  getStats: () => {
+    return consoleCleanerInstance.getStats();
+  },
+
+  // Configurar parámetros de limpieza
+  configure: (maxLogs?: number, interval?: number) => {
+    consoleCleanerInstance.configure(maxLogs, interval);
+  },
+
+  // Detener la limpieza automática
+  stop: () => {
+    consoleCleanerInstance.stop();
+  },
+};
 
 export default logger;
