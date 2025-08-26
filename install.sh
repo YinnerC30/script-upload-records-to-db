@@ -119,6 +119,9 @@ EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
+# Configuración de Base de Datos SQLite
+SQLITE_DB_PATH=./processed-db/processed_ids.db
+
 # Configuración de Logs
 
 LOG_FILE=./logs/app.log
@@ -144,6 +147,9 @@ API_TIMEOUT=60000
 EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
+
+# Configuración de Base de Datos SQLite
+SQLITE_DB_PATH=./processed-db/processed_ids.db
 
 # Configuración de Logs
 

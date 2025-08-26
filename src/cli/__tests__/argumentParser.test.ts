@@ -239,6 +239,47 @@ describe('ArgumentParser', () => {
       });
     });
 
+    describe('SQLite database options', () => {
+      it('should parse --sqlite-db-path correctly', () => {
+        process.argv = [
+          'node',
+          'script.js',
+          '--sqlite-db-path',
+          '/path/to/custom/database.db',
+        ];
+
+        const result = parser.parseArguments();
+
+        expect(result.envUpdates['SQLITE_DB_PATH']).toBe(
+          '/path/to/custom/database.db'
+        );
+      });
+
+      it('should handle --sqlite-db-path without value', () => {
+        process.argv = ['node', 'script.js', '--sqlite-db-path'];
+
+        expect(() => parser.parseArguments()).toThrow('process.exit called');
+        expect(mockConsoleError).toHaveBeenCalledWith(
+          '❌ Error: --sqlite-db-path requiere un valor'
+        );
+      });
+
+      it('should handle --sqlite-db-path with relative path', () => {
+        process.argv = [
+          'node',
+          'script.js',
+          '--sqlite-db-path',
+          './custom-db/tracking.db',
+        ];
+
+        const result = parser.parseArguments();
+
+        expect(result.envUpdates['SQLITE_DB_PATH']).toBe(
+          './custom-db/tracking.db'
+        );
+      });
+    });
+
     describe('Unknown options', () => {
       it('should handle unknown option', () => {
         process.argv = ['node', 'script.js', '--unknown-option'];
@@ -274,6 +315,8 @@ describe('ArgumentParser', () => {
           'secret-key',
           '--excel-dir',
           '/path/to/excel',
+          '--sqlite-db-path',
+          '/path/to/custom/db.db',
         ];
 
         const result = parser.parseArguments();
@@ -284,6 +327,7 @@ describe('ArgumentParser', () => {
         );
         expect(result.envUpdates['API_KEY']).toBe('secret-key');
         expect(result.envUpdates['EXCEL_DIRECTORY']).toBe('/path/to/excel');
+        expect(result.envUpdates['SQLITE_DB_PATH']).toBe('/path/to/custom/db.db');
       });
 
       it('should handle empty string values as invalid', () => {

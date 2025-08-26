@@ -144,6 +144,20 @@ export class ArgumentParser {
           }
           break;
 
+        // Opciones de base de datos SQLite
+        case '--sqlite-db-path':
+          if (i + 1 < args.length) {
+            const value = args[++i];
+            if (value) {
+              result.envUpdates['SQLITE_DB_PATH'] = value;
+            } else {
+              this.handleError('--sqlite-db-path requiere un valor');
+            }
+          } else {
+            this.handleError('--sqlite-db-path requiere un valor');
+          }
+          break;
+
         default:
           console.error(`❌ Error: Opción desconocida: ${arg}`);
           console.error('💡 Usa --help para ver las opciones disponibles');

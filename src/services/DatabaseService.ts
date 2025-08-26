@@ -3,7 +3,7 @@ import * as path from 'path';
 import sqlite3 from 'sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config/config';
-import logger, { StructuredLogger } from '../utils/logger';
+import { StructuredLogger } from '../utils/logger';
 
 export class DatabaseService {
   private static instance: DatabaseService | null = null;
