@@ -252,6 +252,12 @@ logger.add(
   })
 );
 
+// Agregar método close para compatibilidad con tests
+(logger as any).close = () => {
+  // Winston logger se cierra automáticamente, pero podemos forzar el cierre
+  logger.end();
+};
+
 // Crear instancia del limpiador de consola
 let consoleCleanerInstance: ConsoleCleaner | null = null;
 
@@ -393,18 +399,18 @@ export const consoleCleaner = {
 // Configurar limpieza automática cuando el proceso termine
 process.on('exit', () => {
   consoleCleanerInstance?.stop();
-  logger.close();
+  // Winston logger se cierra automáticamente en exit
 });
 
 process.on('SIGINT', () => {
   consoleCleanerInstance?.stop();
-  logger.close();
+  // Winston logger se cierra automáticamente en SIGINT
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
   consoleCleanerInstance?.stop();
-  logger.close();
+  // Winston logger se cierra automáticamente en SIGTERM
   process.exit(0);
 });
 

@@ -86,7 +86,7 @@ export class EnvironmentManager {
     }
 
     const exampleContent = `# Configuración de API REST
-API_BASE_URL=http://localhost:3000/api
+API_BASE_URL=http://localhost:3000/api/up_compra.php
 API_KEY=your-api-key-here
 API_TIMEOUT=30000
 

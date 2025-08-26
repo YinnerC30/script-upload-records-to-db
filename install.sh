@@ -109,7 +109,7 @@ CONFIG_FILE="$INSTALL_DIR/.env"
 if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
     sudo tee "$CONFIG_FILE" > /dev/null << EOF
 # Configuración de API REST
-API_BASE_URL=http://localhost:3000
+API_BASE_URL=http://localhost:3000/api/up_compra.php
 API_KEY=test-key
 API_TIMEOUT=60000
 
@@ -128,7 +128,7 @@ EOF
 else
     cat > "$CONFIG_FILE" << EOF
 # Configuración de API REST
-API_BASE_URL=http://localhost:3000
+API_BASE_URL=http://localhost:3000/api/up_compra.php
 API_KEY=test-key
 API_TIMEOUT=60000
 

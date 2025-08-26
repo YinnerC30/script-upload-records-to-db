@@ -147,7 +147,8 @@ async function diagnoseAPI() {
 
   // Cargar variables de entorno
   const envVars = loadEnvVars();
-  const baseURL = envVars.API_BASE_URL || 'http://localhost:3000/api';
+  const baseURL =
+    envVars.API_BASE_URL || 'http://localhost:3000/api/up_compra.php';
   const apiKey = envVars.API_KEY;
   const timeout = parseInt(envVars.API_TIMEOUT || '30000');
 
@@ -178,11 +179,11 @@ async function diagnoseAPI() {
   // 2. Probar endpoint específico
   console.log('\n2️⃣ PRUEBA DE ENDPOINT ESPECÍFICO');
   console.log('='.repeat(50));
-  const endpointTest = await testEndpoint(baseURL, '/up_compra.php');
+  const endpointTest = await testEndpoint(baseURL, '');
 
   if (!endpointTest) {
     console.log('\n💡 RECOMENDACIONES:');
-    console.log('   • Verifica que el endpoint /up_compra.php exista');
+    console.log('   • Verifica que el endpoint esté disponible');
     console.log('   • Confirma la ruta correcta del endpoint');
     console.log('   • Revisa la configuración del servidor web');
   }
@@ -190,7 +191,7 @@ async function diagnoseAPI() {
   // 3. Probar con datos reales
   console.log('\n3️⃣ PRUEBA CON DATOS REALES');
   console.log('='.repeat(50));
-  const dataTest = await testWithRealData(baseURL, '/up_compra.php');
+  const dataTest = await testWithRealData(baseURL, '');
 
   if (!dataTest) {
     console.log('\n💡 RECOMENDACIONES:');

@@ -211,7 +211,9 @@ describe('EnvironmentManager', () => {
       const content = writeCall[1] as string;
 
       expect(content).toContain('# Configuración de API REST');
-      expect(content).toContain('API_BASE_URL=http://localhost:3000/api');
+      expect(content).toContain(
+        'API_BASE_URL=http://localhost:3000/api/up_compra.php'
+      );
       expect(content).toContain('API_KEY=your-api-key-here');
       expect(content).toContain('API_TIMEOUT=30000');
       expect(content).toContain('EXCEL_DIRECTORY=./excel-files');

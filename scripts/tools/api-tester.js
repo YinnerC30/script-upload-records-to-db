@@ -8,7 +8,8 @@
 const axios = require('axios');
 const { ApiService } = require('../../dist/services/ApiService');
 
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
+const API_BASE_URL =
+  process.env.API_BASE_URL || 'http://localhost:3000/api/up_compra.php';
 
 // Datos de prueba
 const TEST_DATA = [
@@ -69,14 +70,10 @@ class ApiTester {
     };
 
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/up_compra.php`,
-        testData,
-        {
-          timeout: 15000,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      const response = await axios.post(`${API_BASE_URL}`, testData, {
+        timeout: 15000,
+        headers: { 'Content-Type': 'application/json' },
+      });
       console.log(
         `✅ Datos enviados exitosamente - Status: ${response.status}`
       );

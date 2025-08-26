@@ -68,7 +68,10 @@ export const config = {
 
   // Configuración de la API REST
   api: {
-    baseURL: getEnvVar('API_BASE_URL', 'http://localhost:3000/api'),
+    baseURL: getEnvVar(
+      'API_BASE_URL',
+      'http://localhost:3000/api/up_compra.php'
+    ),
     apiKey: getEnvVar('API_KEY', ''),
     timeout: getEnvVarNumber('API_TIMEOUT', 30000),
   },

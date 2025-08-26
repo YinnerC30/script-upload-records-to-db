@@ -57,7 +57,7 @@ cp env.example .env
 
 ```env
 # Configuración de API REST
-API_BASE_URL=http://localhost:3000/api
+API_BASE_URL=http://localhost:3000/api/up_compra.php
 API_KEY=your-api-key-here
 API_TIMEOUT=30000
 
@@ -329,14 +329,14 @@ El sistema mapea automáticamente los siguientes encabezados del Excel:
 
 ### Variables de Entorno Detalladas
 
-| Variable              | Descripción                          | Valor por Defecto           | Tipo   |
-| --------------------- | ------------------------------------ | --------------------------- | ------ |
-| `API_BASE_URL`        | URL base de la API REST              | `http://localhost:3000/api` | string |
-| `API_KEY`             | Clave de autenticación para la API   | `''`                        | string |
-| `API_TIMEOUT`         | Timeout para llamadas API en ms      | `30000`                     | number |
-| `EXCEL_DIRECTORY`     | Directorio a monitorear              | `./excel-files`             | string |
-| `PROCESSED_DIRECTORY` | Directorio para archivos procesados  | `./processed-files`         | string |
-| `ERROR_DIRECTORY`     | Directorio para archivos con errores | `./error-files`             | string |
+| Variable              | Descripción                          | Valor por Defecto                         | Tipo   |
+| --------------------- | ------------------------------------ | ----------------------------------------- | ------ |
+| `API_BASE_URL`        | URL completa del endpoint de la API  | `http://localhost:3000/api/up_compra.php` | string |
+| `API_KEY`             | Clave de autenticación para la API   | `''`                                      | string |
+| `API_TIMEOUT`         | Timeout para llamadas API en ms      | `30000`                                   | number |
+| `EXCEL_DIRECTORY`     | Directorio a monitorear              | `./excel-files`                           | string |
+| `PROCESSED_DIRECTORY` | Directorio para archivos procesados  | `./processed-files`                       | string |
+| `ERROR_DIRECTORY`     | Directorio para archivos con errores | `./error-files`                           | string |
 
 | `LOG_FILE` | Archivo de logs | `./logs/app.log` | string |
 

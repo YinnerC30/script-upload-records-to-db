@@ -209,10 +209,7 @@ describe('ApiService', () => {
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Licitación enviada exitosamente');
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
-        '/up_compra.php',
-        mockLicitacion
-      );
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith('', mockLicitacion);
     });
 
     it('should handle API errors for individual licitacion', async () => {
@@ -258,10 +255,7 @@ describe('ApiService', () => {
       );
 
       expect(result).toEqual(mockResponse);
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
-        '/up_compra.php',
-        mockLicitacion
-      );
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith('', mockLicitacion);
     });
 
     it('should throw error on failure', async () => {

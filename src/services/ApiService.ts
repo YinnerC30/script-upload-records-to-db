@@ -100,7 +100,6 @@ export class ApiService {
     try {
       this.logger.info('Iniciando verificación de salud de la API', {
         baseURL: this.baseURL,
-        endpoint: '/up_compra.php',
         timeout: this.timeout,
       });
 
@@ -129,7 +128,7 @@ export class ApiService {
         estado: 'Publicada',
       };
 
-      const response = await this.client.post('/up_compra.php', testData);
+      const response = await this.client.post('', testData);
 
       // Considerar saludable si responde con 200 o 400 (400 puede ser esperado para datos de prueba)
       const isHealthy = response.status === 200 || response.status === 400;
@@ -137,7 +136,7 @@ export class ApiService {
       this.logger.info('API Health Check', {
         status: response.status,
         healthy: isHealthy,
-        url: `${this.baseURL}/up_compra.php`,
+        url: this.baseURL,
         responseData: response.data,
       });
 
@@ -150,7 +149,6 @@ export class ApiService {
         statusText: error.response?.statusText,
         data: error.response?.data,
         baseURL: this.baseURL,
-        endpoint: '/up_compra.php',
       });
 
       // Proporcionar información más específica sobre el error
@@ -187,13 +185,9 @@ export class ApiService {
     try {
       this.logger.debug('Enviando licitación individual a la API', {
         licitacion_id: licitacion.licitacion_id,
-        endpoint: '/up_compra.php',
       });
 
-      const response: any = await this.client.post(
-        '/up_compra.php',
-        licitacion
-      );
+      const response: any = await this.client.post('', licitacion);
 
       this.logger.debug('Licitación enviada exitosamente', {
         licitacion_id: licitacion.licitacion_id,
@@ -230,14 +224,12 @@ export class ApiService {
   async sendLicitacionWithResponse(
     licitacion: LicitacionApiData
   ): Promise<any> {
-    
     try {
       this.logger.debug('Enviando licitación individual a la API', {
         licitacion_id: licitacion.licitacion_id,
-        endpoint: '/up_compra.php',
       });
 
-      const response = await this.client.post('/up_compra.php', licitacion);
+      const response = await this.client.post('', licitacion);
 
       this.logger.debug('Licitación enviada exitosamente', {
         licitacion_id: licitacion.licitacion_id,

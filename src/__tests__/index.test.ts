@@ -17,6 +17,7 @@ vi.mock('../utils/logger', () => ({
     warn: vi.fn(),
     verbose: vi.fn(),
     debug: vi.fn(),
+    close: vi.fn(),
   },
   StructuredLogger: vi.fn().mockImplementation(() => ({
     info: vi.fn(),
@@ -297,7 +298,7 @@ describe('index.ts', () => {
   describe('main function', () => {
     beforeEach(() => {
       // Configurar variables de entorno para las pruebas
-      process.env.API_BASE_URL = 'http://localhost:3000/api';
+      process.env.API_BASE_URL = 'http://localhost:3000/api/up_compra.php';
       process.env.API_KEY = 'test-api-key';
       process.env.EXCEL_DIRECTORY = './test-excel-files';
       process.env.PROCESSED_DIRECTORY = './test-processed-files';
