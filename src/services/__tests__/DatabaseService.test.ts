@@ -24,6 +24,12 @@ const createTempDbPath = () => {
   return path.join(tmpDir, 'processed_ids.test.db');
 };
 
+// Función para validar formato UUID v4
+const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
 describe('DatabaseService', () => {
   let tempDbPath: string;
 
@@ -90,6 +96,26 @@ describe('DatabaseService', () => {
     expect(service.hasLicitacionId('A-3')).toBe(true);
     expect(service.hasLicitacionId('A-4')).toBe(true);
     expect(service.hasLicitacionId('NO-EXISTE')).toBe(false);
+
+    service.close();
+  });
+
+  it('debe generar UUIDs válidos para los registros insertados', async () => {
+    const { DatabaseService } = await import('../DatabaseService');
+    const service = DatabaseService.getInstance();
+
+    // Acceder directamente a la base de datos para verificar los UUIDs
+    const db = (service as any).db;
+    
+    const licitacionId = 'TEST-UUID-123';
+    service.addLicitacionId(licitacionId);
+
+    // Consultar el registro insertado para verificar el UUID
+    const row = db.prepare('SELECT id, licitacion_id FROM processed_records WHERE licitacion_id = ?').get(licitacionId);
+    
+    expect(row).toBeDefined();
+    expect(row.licitacion_id).toBe(licitacionId);
+    expect(isValidUUID(row.id)).toBe(true);
 
     service.close();
   });

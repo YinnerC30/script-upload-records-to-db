@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import Database from 'better-sqlite3';
+import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config/config';
 import logger, { StructuredLogger } from '../utils/logger';
 
@@ -24,11 +25,11 @@ export class DatabaseService {
     this.db.pragma('journal_mode = WAL');
     this.db.pragma('synchronous = NORMAL');
 
-    // Crear tabla si no existe
+    // Crear tabla si no existe con UUID como PRIMARY KEY
     this.db
       .prepare(
         `CREATE TABLE IF NOT EXISTS processed_records (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          id TEXT PRIMARY KEY,
           licitacion_id TEXT NOT NULL UNIQUE,
           created_at TEXT NOT NULL DEFAULT (datetime('now'))
         )`
@@ -75,11 +76,12 @@ export class DatabaseService {
 
   addLicitacionId(licitacionId: string): void {
     try {
+      const uuid = uuidv4();
       this.db
         .prepare(
-          'INSERT OR IGNORE INTO processed_records (licitacion_id) VALUES (?)'
+          'INSERT OR IGNORE INTO processed_records (id, licitacion_id) VALUES (?, ?)'
         )
-        .run(licitacionId);
+        .run(uuid, licitacionId);
     } catch (error: any) {
       this.logger.error('Error insertando licitacion_id', {
         licitacion_id: licitacionId,
@@ -90,10 +92,13 @@ export class DatabaseService {
 
   addManyLicitacionIds(licitacionIds: string[]): void {
     const insert = this.db.prepare(
-      'INSERT OR IGNORE INTO processed_records (licitacion_id) VALUES (?)'
+      'INSERT OR IGNORE INTO processed_records (id, licitacion_id) VALUES (?, ?)'
     );
     const transaction = this.db.transaction((ids: string[]) => {
-      for (const id of ids) insert.run(id);
+      for (const id of ids) {
+        const uuid = uuidv4();
+        insert.run(uuid, id);
+      }
     });
     try {
       transaction(licitacionIds.filter(Boolean));

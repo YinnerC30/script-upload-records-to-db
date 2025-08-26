@@ -21,7 +21,8 @@
       "node_modules/class-validator/**/*",
       "node_modules/axios/**/*",
       "node_modules/follow-redirects/**/*",
-      "node_modules/proxy-from-env/**/*"
+      "node_modules/proxy-from-env/**/*",
+      "node_modules/uuid/**/*"
     ],
     "scripts": [
       "node_modules/xlsx/**/*.js",
@@ -91,6 +92,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@types/uuid": "^10.0.0",
     "axios": "^1.6.7",
     "better-sqlite3": "^11.7.0",
     "class-transformer": "^0.5.1",
@@ -99,6 +101,7 @@
     "mysql2": "^3.9.2",
     "reflect-metadata": "^0.2.1",
     "typeorm": "^0.3.20",
+    "uuid": "^11.1.0",
     "winston": "^3.13.0",
     "xlsx": "^0.18.5"
   },
