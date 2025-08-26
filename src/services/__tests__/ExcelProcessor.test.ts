@@ -81,10 +81,10 @@ describe('ExcelProcessor', () => {
 
     // Mock de DatabaseService (SQLite)
     mockDbService = {
-      hasLicitacionId: vi.fn().mockReturnValue(false),
-      addLicitacionId: vi.fn(),
-      addManyLicitacionIds: vi.fn(),
-      close: vi.fn(),
+      hasLicitacionId: vi.fn().mockResolvedValue(false),
+      addLicitacionId: vi.fn().mockResolvedValue(undefined),
+      addManyLicitacionIds: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn().mockResolvedValue(undefined),
     };
     (DatabaseService as any).getInstance = vi
       .fn()
@@ -706,7 +706,7 @@ describe('ExcelProcessor', () => {
       });
 
       // Filtrar todos como duplicados
-      mockDbService.hasLicitacionId.mockReturnValue(true);
+      mockDbService.hasLicitacionId.mockResolvedValue(true);
 
       await excelProcessor.run();
 

@@ -227,17 +227,22 @@ export class ExcelProcessor {
     console.log(`🚀 Procesando ${data.length} registros...`);
 
     // Filtrar registros ya procesados por licitacion_id
-    const filteredData = data.filter((row) => {
+    const filteredData: ExcelRow[] = [];
+    for (const row of data) {
       const id = row.idLicitacion;
-      if (!id) return true; // permitir que validaciones manejen casos sin ID
-      const exists = this.db.hasLicitacionId(id);
+      if (!id) {
+        filteredData.push(row); // permitir que validaciones manejen casos sin ID
+        continue;
+      }
+      const exists = await this.db.hasLicitacionId(id);
       if (exists) {
         this.logger.debug('Registro omitido por duplicado (SQLite)', {
           licitacion_id: id,
         });
+      } else {
+        filteredData.push(row);
       }
-      return !exists;
-    });
+    }
 
     if (filteredData.length !== data.length) {
       console.log(
@@ -305,7 +310,7 @@ export class ExcelProcessor {
 
           // Registrar ID como procesado en SQLite
           if (licitacionData.licitacion_id) {
-            this.db.addLicitacionId(licitacionData.licitacion_id);
+            await this.db.addLicitacionId(licitacionData.licitacion_id);
           }
 
           // Mostrar progreso cada 100 registros
@@ -362,7 +367,7 @@ export class ExcelProcessor {
             responseId &&
             (errorText.includes('ya existe') || errorText.includes('duplic'))
           ) {
-            this.db.addLicitacionId(responseId);
+            await this.db.addLicitacionId(responseId);
             this.logger.info(
               'ID registrado en SQLite por respuesta 400 (duplicado en API)',
               {

@@ -26,7 +26,8 @@ const createTempDbPath = () => {
 
 // Función para validar formato UUID v4
 const isValidUUID = (uuid: string): boolean => {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uuid);
 };
 
@@ -73,15 +74,15 @@ describe('DatabaseService', () => {
 
     const id = 'LIC-123';
 
-    expect(service.hasLicitacionId(id)).toBe(false);
-    service.addLicitacionId(id);
-    expect(service.hasLicitacionId(id)).toBe(true);
+    expect(await service.hasLicitacionId(id)).toBe(false);
+    await service.addLicitacionId(id);
+    expect(await service.hasLicitacionId(id)).toBe(true);
 
     // Reinsertar no debe fallar por UNIQUE (usa INSERT OR IGNORE)
-    service.addLicitacionId(id);
-    expect(service.hasLicitacionId(id)).toBe(true);
+    await service.addLicitacionId(id);
+    expect(await service.hasLicitacionId(id)).toBe(true);
 
-    service.close();
+    await service.close();
   });
 
   it('debe insertar múltiples licitacion_id en transacción', async () => {
@@ -89,15 +90,15 @@ describe('DatabaseService', () => {
     const service = DatabaseService.getInstance();
 
     const ids = ['A-1', 'A-2', 'A-1', 'A-3', '', 'A-4'];
-    service.addManyLicitacionIds(ids);
+    await service.addManyLicitacionIds(ids);
 
-    expect(service.hasLicitacionId('A-1')).toBe(true);
-    expect(service.hasLicitacionId('A-2')).toBe(true);
-    expect(service.hasLicitacionId('A-3')).toBe(true);
-    expect(service.hasLicitacionId('A-4')).toBe(true);
-    expect(service.hasLicitacionId('NO-EXISTE')).toBe(false);
+    expect(await service.hasLicitacionId('A-1')).toBe(true);
+    expect(await service.hasLicitacionId('A-2')).toBe(true);
+    expect(await service.hasLicitacionId('A-3')).toBe(true);
+    expect(await service.hasLicitacionId('A-4')).toBe(true);
+    expect(await service.hasLicitacionId('NO-EXISTE')).toBe(false);
 
-    service.close();
+    await service.close();
   });
 
   it('debe generar UUIDs válidos para los registros insertados', async () => {
@@ -106,23 +107,32 @@ describe('DatabaseService', () => {
 
     // Acceder directamente a la base de datos para verificar los UUIDs
     const db = (service as any).db;
-    
+
     const licitacionId = 'TEST-UUID-123';
-    service.addLicitacionId(licitacionId);
+    await service.addLicitacionId(licitacionId);
 
     // Consultar el registro insertado para verificar el UUID
-    const row = db.prepare('SELECT id, licitacion_id FROM processed_records WHERE licitacion_id = ?').get(licitacionId);
-    
-    expect(row).toBeDefined();
-    expect(row.licitacion_id).toBe(licitacionId);
-    expect(isValidUUID(row.id)).toBe(true);
+    const row = await new Promise((resolve, reject) => {
+      db.get(
+        'SELECT id, licitacion_id FROM processed_records WHERE licitacion_id = ?',
+        [licitacionId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
 
-    service.close();
+    expect(row).toBeDefined();
+    expect((row as any).licitacion_id).toBe(licitacionId);
+    expect(isValidUUID((row as any).id)).toBe(true);
+
+    await service.close();
   });
 
   it('debe cerrar la conexión sin lanzar error', async () => {
     const { DatabaseService } = await import('../DatabaseService');
     const service = DatabaseService.getInstance();
-    expect(() => service.close()).not.toThrow();
+    await expect(service.close()).resolves.not.toThrow();
   });
 });
