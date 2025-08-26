@@ -113,7 +113,8 @@ class ConsoleCleaner {
   constructor(maxLogsBeforeClean: number = 100, cleanInterval: number = 30000) {
     this.maxLogsBeforeClean = maxLogsBeforeClean;
     this.cleanInterval = cleanInterval;
-    this.startCleanupInterval();
+    // No iniciar automáticamente el intervalo para evitar procesos huérfanos
+    // this.startCleanupInterval();
   }
 
   // Incrementar contador de logs
@@ -197,6 +198,13 @@ class ConsoleCleaner {
     }
   }
 
+  // Método para iniciar la limpieza automática
+  public start(): void {
+    if (!this.intervalId) {
+      this.startCleanupInterval();
+    }
+  }
+
   // Método para configurar parámetros
   public configure(maxLogs?: number, interval?: number): void {
     if (maxLogs !== undefined) {
@@ -245,10 +253,21 @@ logger.add(
 );
 
 // Crear instancia del limpiador de consola
-const consoleCleanerInstance = new ConsoleCleaner(
-  config.console.maxLogsBeforeClean,
-  config.console.cleanInterval
-);
+let consoleCleanerInstance: ConsoleCleaner | null = null;
+
+// Función para inicializar el limpiador de consola
+const initializeConsoleCleaner = () => {
+  if (!consoleCleanerInstance) {
+    consoleCleanerInstance = new ConsoleCleaner(
+      config.console.maxLogsBeforeClean,
+      config.console.cleanInterval
+    );
+  }
+  return consoleCleanerInstance;
+};
+
+// Inicializar el limpiador
+initializeConsoleCleaner();
 
 // Configurar el limpiador de consola para que funcione con el transport normal
 // El limpiador se ejecutará automáticamente basado en el tiempo y contador
@@ -352,23 +371,41 @@ export class StructuredLogger {
 export const consoleCleaner = {
   // Limpiar terminal manualmente
   cleanNow: () => {
-    consoleCleanerInstance.manualClean();
+    consoleCleanerInstance?.manualClean();
   },
 
   // Obtener estadísticas de limpieza
   getStats: () => {
-    return consoleCleanerInstance.getStats();
+    return consoleCleanerInstance?.getStats();
   },
 
   // Configurar parámetros de limpieza
   configure: (maxLogs?: number, interval?: number) => {
-    consoleCleanerInstance.configure(maxLogs, interval);
+    consoleCleanerInstance?.configure(maxLogs, interval);
   },
 
   // Detener la limpieza automática
   stop: () => {
-    consoleCleanerInstance.stop();
+    consoleCleanerInstance?.stop();
   },
 };
+
+// Configurar limpieza automática cuando el proceso termine
+process.on('exit', () => {
+  consoleCleanerInstance?.stop();
+  logger.close();
+});
+
+process.on('SIGINT', () => {
+  consoleCleanerInstance?.stop();
+  logger.close();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  consoleCleanerInstance?.stop();
+  logger.close();
+  process.exit(0);
+});
 
 export default logger;

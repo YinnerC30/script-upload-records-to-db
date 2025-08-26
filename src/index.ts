@@ -144,6 +144,9 @@ export async function main() {
     });
 
     process.exit(1);
+  } finally {
+    // Asegurar que el logger se cierre correctamente
+    logger.close();
   }
 }
 
@@ -151,6 +154,11 @@ export async function main() {
 if (require.main === module) {
   main().catch((error) => {
     console.error('❌ Error fatal:', error);
+    logger.error('❌ Error fatal', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    logger.close();
     process.exit(1);
   });
 }
