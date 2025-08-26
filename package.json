@@ -1,6 +1,6 @@
 {
   "name": "script-upload-records-to-db",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Script para procesar archivos Excel y subir registros a MySQL usando TypeORM",
   "main": "dist/index.js",
