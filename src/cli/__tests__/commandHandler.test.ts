@@ -123,7 +123,7 @@ describe('CommandHandler', () => {
       commandHandler.showVersion();
 
       expect(consoleSpy).toHaveBeenCalledTimes(1);
-      expect(consoleSpy).toHaveBeenCalledWith('Excel Processor v1.0.1');
+      expect(consoleSpy).toHaveBeenCalledWith('Excel Processor v1.1.0');
     });
 
     it('should use the version from package.json', () => {
@@ -131,7 +131,7 @@ describe('CommandHandler', () => {
       // El mock ya está configurado en el nivel superior
       commandHandler.showVersion();
 
-      expect(consoleSpy).toHaveBeenCalledWith('Excel Processor v1.0.1');
+      expect(consoleSpy).toHaveBeenCalledWith('Excel Processor v1.1.0');
     });
   });
 
@@ -177,7 +177,9 @@ describe('CommandHandler', () => {
       expect(calls[3]).toBe('  📁 Directorio procesados: ./processed-files');
       expect(calls[4]).toBe('  📁 Directorio errores: ./error-files');
       expect(calls[5]).toBe('  📄 Archivo de logs: ./logs/app.log');
-      expect(calls[6]).toBe('  🗄️  Base de datos SQLite: ./processed-db/processed_ids.db');
+      expect(calls[6]).toBe(
+        '  🗄️  Base de datos SQLite: ./processed-db/processed_ids.db'
+      );
       expect(calls[7]).toBe(
         '  📊 Nivel de logs: debug (siempre máximo detalle)'
       );
