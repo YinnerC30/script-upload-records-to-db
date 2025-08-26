@@ -224,7 +224,7 @@ const logger = winston.createLogger({
   level: config.logging.level,
   defaultMeta: {
     service: 'excel-processor',
-    version: process.env.npm_package_version || '1.0.0',
+    version: process.env.npm_package_version || '1.0.1',
   },
   transports: [
     // Archivo de logs general
