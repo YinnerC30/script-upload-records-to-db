@@ -119,7 +119,11 @@ check_executable_usage() {
 uninstall_config() {
     if [ -f "$INSTALL_DIR/.env" ]; then
         print_info "Eliminando archivo de configuración..."
-        sudo rm -f "$INSTALL_DIR/.env"
+        if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+            sudo rm -f "$INSTALL_DIR/.env"
+        else
+            rm -f "$INSTALL_DIR/.env"
+        fi
         print_success "Archivo de configuración eliminado"
     else
         print_info "No se encontró archivo de configuración para eliminar"
@@ -130,7 +134,11 @@ uninstall_config() {
 uninstall_executable() {
     if [ -f "$INSTALL_DIR/$EXECUTABLE_NAME" ]; then
         print_info "Eliminando ejecutable..."
-        sudo rm -f "$INSTALL_DIR/$EXECUTABLE_NAME"
+        if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+            sudo rm -f "$INSTALL_DIR/$EXECUTABLE_NAME"
+        else
+            rm -f "$INSTALL_DIR/$EXECUTABLE_NAME"
+        fi
         print_success "Ejecutable eliminado"
     else
         print_info "No se encontró ejecutable para eliminar en $INSTALL_DIR/$EXECUTABLE_NAME"
@@ -180,11 +188,13 @@ verify_uninstall() {
 main() {
     print_info "🗑️  Iniciando desinstalación de excel-processor..."
     
-    # Verificar permisos de administrador
-    if [ "$EUID" -ne 0 ] && ! sudo -n true 2>/dev/null; then
-        print_error "Este script requiere permisos de administrador"
-        print_info "Ejecuta: sudo $0"
-        exit 1
+    # Verificar permisos de administrador solo si es necesario
+    if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+        if [ "$EUID" -ne 0 ] && ! sudo -n true 2>/dev/null; then
+            print_error "Este script requiere permisos de administrador para desinstalar desde $INSTALL_DIR"
+            print_info "Ejecuta: sudo $0"
+            exit 1
+        fi
     fi
     
     # Confirmar desinstalación

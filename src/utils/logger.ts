@@ -1,9 +1,10 @@
 import winston from 'winston';
 import path from 'path';
 import fs from 'fs/promises';
+import { config } from '../config/config';
 
 // Crear directorio de logs si no existe
-const logDir = path.dirname(process.env.LOG_FILE || './logs/app.log');
+const logDir = path.dirname(config.logging.file);
 
 // Función async para crear directorio si no existe
 const ensureLogDirectory = async () => {
@@ -100,9 +101,127 @@ const consoleFormat = winston.format.combine(
   )
 );
 
+// Clase para manejar la limpieza automática de consola
+class ConsoleCleaner {
+  private logCount: number = 0;
+  private maxLogsBeforeClean: number;
+  private cleanInterval: number; // en milisegundos
+  private lastCleanTime: number = Date.now();
+  private isCleaning: boolean = false;
+  private intervalId?: NodeJS.Timeout;
+
+  constructor(maxLogsBeforeClean: number = 100, cleanInterval: number = 30000) {
+    this.maxLogsBeforeClean = maxLogsBeforeClean;
+    this.cleanInterval = cleanInterval;
+    // No iniciar automáticamente el intervalo para evitar procesos huérfanos
+    // this.startCleanupInterval();
+  }
+
+  // Incrementar contador de logs
+  incrementLogCount(): void {
+    this.logCount++;
+
+    // Verificar si es momento de limpiar
+    if (this.shouldCleanConsole() && !this.isCleaning) {
+      this.cleanConsole();
+    }
+  }
+
+  private shouldCleanConsole(): boolean {
+    const now = Date.now();
+    const timeSinceLastClean = now - this.lastCleanTime;
+
+    // Limpiar si han pasado muchos logs o mucho tiempo
+    return (
+      this.logCount >= this.maxLogsBeforeClean ||
+      timeSinceLastClean >= this.cleanInterval
+    );
+  }
+
+  private cleanConsole(): void {
+    this.isCleaning = true;
+
+    try {
+      // Limpiar la terminal
+      if (process.stdout.isTTY) {
+        // Usar códigos ANSI para limpiar la terminal
+        process.stdout.write('\x1B[2J\x1B[0f');
+      } else {
+        // Fallback: imprimir líneas en blanco
+        console.log('\n'.repeat(50));
+      }
+
+      // Imprimir mensaje de limpieza
+      const timestamp = new Date().toLocaleTimeString();
+      console.log(`\n🧹 Terminal limpiada automáticamente - ${timestamp}`);
+      console.log(
+        `📊 Logs procesados: ${this.logCount} | Archivos de log preservados\n`
+      );
+
+      // Resetear contadores
+      this.logCount = 0;
+      this.lastCleanTime = Date.now();
+    } catch (error) {
+      console.error('Error al limpiar terminal:', error);
+    } finally {
+      this.isCleaning = false;
+    }
+  }
+
+  private startCleanupInterval(): void {
+    // Limpiar por tiempo cada cierto intervalo
+    this.intervalId = setInterval(() => {
+      if (this.logCount > 0 && !this.isCleaning) {
+        this.cleanConsole();
+      }
+    }, this.cleanInterval);
+  }
+
+  // Método público para limpiar manualmente
+  public manualClean(): void {
+    this.cleanConsole();
+  }
+
+  // Método para obtener estadísticas
+  public getStats(): { logCount: number; lastCleanTime: number } {
+    return {
+      logCount: this.logCount,
+      lastCleanTime: this.lastCleanTime,
+    };
+  }
+
+  // Método para detener la limpieza automática
+  public stop(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = undefined;
+    }
+  }
+
+  // Método para iniciar la limpieza automática
+  public start(): void {
+    if (!this.intervalId) {
+      this.startCleanupInterval();
+    }
+  }
+
+  // Método para configurar parámetros
+  public configure(maxLogs?: number, interval?: number): void {
+    if (maxLogs !== undefined) {
+      this.maxLogsBeforeClean = maxLogs;
+    }
+    if (interval !== undefined) {
+      this.cleanInterval = interval;
+      // Reiniciar el intervalo con la nueva configuración
+      this.stop();
+      this.startCleanupInterval();
+    }
+  }
+}
+
 const logger = winston.createLogger({
   levels: customLevels,
-  level: process.env.LOG_LEVEL || 'info',
+  level: config.logging.level,
   defaultMeta: {
     service: 'excel-processor',
     version: process.env.npm_package_version || '1.0.0',
@@ -110,42 +229,65 @@ const logger = winston.createLogger({
   transports: [
     // Archivo de logs general
     new winston.transports.File({
-      filename: process.env.LOG_FILE || './logs/app.log',
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
+      filename: config.logging.file,
+      maxsize: config.logging.maxSize,
+      maxFiles: config.logging.maxFiles,
       format: fileFormat,
     }),
     // Archivo de errores
     new winston.transports.File({
-      filename:
-        process.env.LOG_FILE?.replace('.log', '.error.log') ||
-        './logs/app.error.log',
+      filename: config.logging.file.replace('.log', '.error.log'),
       level: 'error',
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
-      format: fileFormat,
-    }),
-    // Archivo de logs de rendimiento
-    new winston.transports.File({
-      filename:
-        process.env.LOG_FILE?.replace('.log', '.performance.log') ||
-        './logs/app.performance.log',
-      level: 'verbose',
-      maxsize: 5242880, // 5MB
-      maxFiles: 3,
+      maxsize: config.logging.maxSize,
+      maxFiles: config.logging.maxFiles,
       format: fileFormat,
     }),
   ],
 });
 
-// Agregar console transport en desarrollo
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(
-    new winston.transports.Console({
-      format: consoleFormat,
-    })
-  );
-}
+// Agregar console transport normal
+logger.add(
+  new winston.transports.Console({
+    format: consoleFormat,
+  })
+);
+
+// Agregar método close para compatibilidad con tests
+(logger as any).close = () => {
+  // Winston logger se cierra automáticamente, pero podemos forzar el cierre
+  logger.end();
+};
+
+// Crear instancia del limpiador de consola
+let consoleCleanerInstance: ConsoleCleaner | null = null;
+
+// Función para inicializar el limpiador de consola
+const initializeConsoleCleaner = () => {
+  if (!consoleCleanerInstance) {
+    consoleCleanerInstance = new ConsoleCleaner(
+      config.console.maxLogsBeforeClean,
+      config.console.cleanInterval
+    );
+  }
+  return consoleCleanerInstance;
+};
+
+// Inicializar el limpiador
+initializeConsoleCleaner();
+
+// Configurar el limpiador de consola para que funcione con el transport normal
+// El limpiador se ejecutará automáticamente basado en el tiempo y contador
+
+// Agregar archivo de rendimiento siempre
+logger.add(
+  new winston.transports.File({
+    filename: config.logging.file.replace('.log', '.performance.log'),
+    level: 'verbose',
+    maxsize: config.logging.maxSize,
+    maxFiles: Math.min(config.logging.maxFiles, 3),
+    format: fileFormat,
+  })
+);
 
 // Clase para logging estructurado
 export class StructuredLogger {
@@ -230,5 +372,46 @@ export class StructuredLogger {
     return this.sessionId;
   }
 }
+
+// Exportar funciones para control manual de la limpieza
+export const consoleCleaner = {
+  // Limpiar terminal manualmente
+  cleanNow: () => {
+    consoleCleanerInstance?.manualClean();
+  },
+
+  // Obtener estadísticas de limpieza
+  getStats: () => {
+    return consoleCleanerInstance?.getStats();
+  },
+
+  // Configurar parámetros de limpieza
+  configure: (maxLogs?: number, interval?: number) => {
+    consoleCleanerInstance?.configure(maxLogs, interval);
+  },
+
+  // Detener la limpieza automática
+  stop: () => {
+    consoleCleanerInstance?.stop();
+  },
+};
+
+// Configurar limpieza automática cuando el proceso termine
+process.on('exit', () => {
+  consoleCleanerInstance?.stop();
+  // Winston logger se cierra automáticamente en exit
+});
+
+process.on('SIGINT', () => {
+  consoleCleanerInstance?.stop();
+  // Winston logger se cierra automáticamente en SIGINT
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  consoleCleanerInstance?.stop();
+  // Winston logger se cierra automáticamente en SIGTERM
+  process.exit(0);
+});
 
 export default logger;

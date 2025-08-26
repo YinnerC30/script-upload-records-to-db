@@ -82,13 +82,22 @@ fi
 # Crear directorio de instalación si no existe
 if [ ! -d "$INSTALL_DIR" ]; then
     print_info "Creando directorio de instalación: $INSTALL_DIR"
-    sudo mkdir -p "$INSTALL_DIR"
+    if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+        sudo mkdir -p "$INSTALL_DIR"
+    else
+        mkdir -p "$INSTALL_DIR"
+    fi
 fi
 
 # Copiar ejecutable
 print_info "Copiando ejecutable a $INSTALL_DIR..."
-sudo cp "bin/script-upload-records-to-db" "$INSTALL_DIR/$EXECUTABLE_NAME"
-sudo chmod +x "$INSTALL_DIR/$EXECUTABLE_NAME"
+if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+    sudo cp "bin/script-upload-records-to-db" "$INSTALL_DIR/$EXECUTABLE_NAME"
+    sudo chmod +x "$INSTALL_DIR/$EXECUTABLE_NAME"
+else
+    cp "bin/script-upload-records-to-db" "$INSTALL_DIR/$EXECUTABLE_NAME"
+    chmod +x "$INSTALL_DIR/$EXECUTABLE_NAME"
+fi
 
 print_success "Ejecutable instalado en $INSTALL_DIR/$EXECUTABLE_NAME"
 
@@ -99,101 +108,109 @@ CONFIG_FILE="$INSTALL_DIR/.env"
 # Usar sudo si el directorio requiere permisos de administrador
 if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
     sudo tee "$CONFIG_FILE" > /dev/null << EOF
-# Configuración de Base de Datos
-DB_HOST=localhost
-DB_PORT=3306
-DB_USERNAME=root
-DB_PASSWORD=password
-DB_DATABASE=excel_data
+# Configuración de API REST
+API_BASE_URL=http://localhost:3000/api/up_compra.php
+API_KEY=test-key
+API_TIMEOUT=60000
 
-# Configuración de Retry y Pool de Conexiones
-DB_RETRY_MAX_ATTEMPTS=5
-DB_RETRY_INITIAL_DELAY=1000
-DB_RETRY_MAX_DELAY=30000
-DB_RETRY_BACKOFF_MULTIPLIER=2
-DB_CONNECTION_LIMIT=10
-DB_CONNECT_TIMEOUT_MS=30000
 
 # Configuración del Directorio de Archivos
 EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
-# Configuración de Logs Mejorada
-LOG_LEVEL=info
+# Configuración de Logs
+
 LOG_FILE=./logs/app.log
-LOG_ENABLE_CONSOLE=true
-LOG_ENABLE_PERFORMANCE=true
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
-LOG_RETENTION_DAYS=30
-
-# Configuración del Procesamiento
-BATCH_SIZE=100
-PROCESSING_INTERVAL=30000
 EOF
 else
     cat > "$CONFIG_FILE" << EOF
-# Configuración de Base de Datos
-DB_HOST=localhost
-DB_PORT=3306
-DB_USERNAME=root
-DB_PASSWORD=password
-DB_DATABASE=excel_data
+# Configuración de API REST
+API_BASE_URL=http://localhost:3000/api/up_compra.php
+API_KEY=test-key
+API_TIMEOUT=60000
 
-# Configuración de Retry y Pool de Conexiones
-DB_RETRY_MAX_ATTEMPTS=5
-DB_RETRY_INITIAL_DELAY=1000
-DB_RETRY_MAX_DELAY=30000
-DB_RETRY_BACKOFF_MULTIPLIER=2
-DB_CONNECTION_LIMIT=10
-DB_CONNECT_TIMEOUT_MS=30000
 
 # Configuración del Directorio de Archivos
 EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
-# Configuración de Logs Mejorada
-LOG_LEVEL=info
+# Configuración de Logs
+
 LOG_FILE=./logs/app.log
-LOG_ENABLE_CONSOLE=true
-LOG_ENABLE_PERFORMANCE=true
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
-LOG_RETENTION_DAYS=30
-
-# Configuración del Procesamiento
-BATCH_SIZE=100
-PROCESSING_INTERVAL=30000
 EOF
 fi
 
 print_success "Archivo de configuración creado en $CONFIG_FILE"
 
 # Mostrar información de configuración
-print_warning "⚠️  IMPORTANTE: Edita el archivo de configuración antes de usar:"
-echo "  sudo nano $CONFIG_FILE"
+print_warning "⚠️  IMPORTANTE: Configura las variables de entorno antes de usar:"
 echo ""
 
 print_success "🎉 Instalación completada exitosamente!"
 echo ""
-print_info "📋 Próximos pasos:"
-echo "  1. Editar configuración: sudo nano $CONFIG_FILE"
-echo "  2. Configurar base de datos MySQL"
-echo "  3. Crear directorios de trabajo"
+print_info "📋 Próximo paso - Configurar el entorno:"
+if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+    echo "  1. Ver configuración actual: sudo $EXECUTABLE_NAME --config"
+    echo "  2. Configurar API: sudo $EXECUTABLE_NAME --api-url <URL> --api-key <KEY>"
+    echo "  3. Configurar directorios: sudo $EXECUTABLE_NAME --excel-dir <PATH> --processed-dir <PATH>"
+    echo "  4. Configurar directorios: sudo $EXECUTABLE_NAME --excel-dir <PATH>"
+else
+    echo "  1. Ver configuración actual: $EXECUTABLE_NAME --config"
+    echo "  2. Configurar API: $EXECUTABLE_NAME --api-url <URL> --api-key <KEY>"
+    echo "  3. Configurar directorios: $EXECUTABLE_NAME --excel-dir <PATH> --processed-dir <PATH>"
+    echo "  4. Configurar directorios: $EXECUTABLE_NAME --excel-dir <PATH>"
+fi
+echo ""
+print_info "💡 Nota: Los comandos de configuración actualizan automáticamente el archivo .env"
+echo "   ubicado en el directorio de instalación."
+echo ""
+print_warning "⚠️  IMPORTANTE: Si instalaste en /usr/local/bin (instalación por defecto),"
+echo "   los comandos de configuración SÍ requieren permisos de administrador (sudo)."
+echo "   Para evitar esto, puedes instalar en un directorio personal: ./install.sh -d ~/bin"
+
+
 echo ""
 print_info "🚀 Comandos útiles:"
-echo "  $EXECUTABLE_NAME                    # Ejecutar directamente"
-echo "  $EXECUTABLE_NAME --help             # Ver ayuda"
-echo "  $EXECUTABLE_NAME --version          # Ver versión"
-echo "  $EXECUTABLE_NAME --config           # Ver configuración"
-echo "  $EXECUTABLE_NAME --dry-run          # Ejecutar sin procesar (solo validar)"
+if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+    echo "  $EXECUTABLE_NAME run                   # Ejecutar directamente"
+    echo "  $EXECUTABLE_NAME --help             # Ver ayuda completa"
+    echo "  $EXECUTABLE_NAME --version          # Ver versión"
+    echo "  sudo $EXECUTABLE_NAME --config      # Ver configuración actual"
+    echo "  $EXECUTABLE_NAME run --dry-run          # Ejecutar sin procesar (solo validar)"
+else
+    echo "  $EXECUTABLE_NAME                    # Ejecutar directamente"
+    echo "  $EXECUTABLE_NAME --help             # Ver ayuda completa"
+    echo "  $EXECUTABLE_NAME --version          # Ver versión"
+    echo "  $EXECUTABLE_NAME --config           # Ver configuración actual"
+    echo "  $EXECUTABLE_NAME run --dry-run          # Ejecutar sin procesar (solo validar)"
+fi
+echo ""
+print_info "🔧 Comandos de configuración:"
+if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
+    echo "  sudo $EXECUTABLE_NAME --api-url https://api.example.com --api-key my-key"
+    echo "  sudo $EXECUTABLE_NAME --excel-dir ./my-excel-files --processed-dir ./my-processed-files"
+    echo "  sudo $EXECUTABLE_NAME --excel-dir /path/to/excel/files"
+    echo ""
+    print_info "💡 Alternativa: Instalar en directorio personal para evitar sudo:"
+    echo "  ./install.sh -d ~/bin"
+    echo "  $EXECUTABLE_NAME --api-url https://api.example.com --api-key my-key"
+else
+    echo "  $EXECUTABLE_NAME --api-url https://api.example.com --api-key my-key"
+    echo "  $EXECUTABLE_NAME --excel-dir ./my-excel-files --processed-dir ./my-processed-files"
+    echo "  $EXECUTABLE_NAME --excel-dir /path/to/excel/files"
+fi
 echo ""
 print_info "⏰ Para programar ejecución automática:"
-echo "  # Ejecutar cada 24 horas a las 2:00 AM"
-echo "  crontab -e"
-echo "  # Agregar: 0 2 * * * $EXECUTABLE_NAME"
+echo "  # Usar el script de programación incluido:"
+echo "  ./setup-scheduler.sh -d          # Ejecutar diariamente a las 2:00 AM"
+echo "  ./setup-scheduler.sh -w          # Ejecutar semanalmente los domingos"
+echo "  ./setup-scheduler.sh -c          # Configurar programación personalizada"
 echo ""
 print_info "📁 Directorios que se crearán automáticamente:"
 echo "  ./excel-files/      # Archivos Excel a procesar"

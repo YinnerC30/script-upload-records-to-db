@@ -1,452 +1,575 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ExcelProcessor, ExcelRow } from '../ExcelProcessor';
-import * as fs from 'fs/promises';
+import { ExcelProcessor } from '../ExcelProcessor';
+import { FileProcessor } from '../FileProcessor';
+import { ExcelValidator } from '../ExcelValidator';
+import { DataTransformer } from '../DataTransformer';
+import { ApiService } from '../ApiService';
+import { ExcelRow, FailedRecord, LicitacionApiData } from '../../types/excel';
+import * as XLSX from 'xlsx';
 import * as path from 'path';
 
-// Mock de las dependencias
-vi.mock('fs/promises', () => ({
-  default: {
-    access: vi.fn(),
-    mkdir: vi.fn(),
-    readdir: vi.fn(() => []),
-    stat: vi.fn(() => ({ mtime: new Date() })),
-    rename: vi.fn(),
-  },
-  access: vi.fn(),
-  mkdir: vi.fn(),
-  readdir: vi.fn(() => []),
-  stat: vi.fn(() => ({ mtime: new Date() })),
-  rename: vi.fn(),
-}));
-
+// Mock de todas las dependencias
+vi.mock('../FileProcessor');
+vi.mock('../ExcelValidator');
+vi.mock('../DataTransformer');
+vi.mock('../ApiService');
+vi.mock('../../utils/logger');
+vi.mock('xlsx');
 vi.mock('path');
-vi.mock('../../config/database', () => ({
-  AppDataSource: {
-    getRepository: vi.fn(() => ({
-      save: vi.fn().mockResolvedValue([]),
-    })),
-  },
-}));
 
-vi.mock('xlsx', () => ({
-  readFile: vi.fn(),
-  utils: {
-    sheet_to_json: vi.fn(),
-  },
-}));
+// Mock de console.log para evitar output en pruebas
+const consoleSpy = {
+  log: vi.spyOn(console, 'log').mockImplementation(() => {}),
+  error: vi.spyOn(console, 'error').mockImplementation(() => {}),
+};
 
 describe('ExcelProcessor', () => {
-  let processor: ExcelProcessor;
-  const mockFs = vi.mocked(fs);
-  const mockPath = vi.mocked(path);
+  let excelProcessor: ExcelProcessor;
+  let mockFileProcessor: any;
+  let mockValidator: any;
+  let mockTransformer: any;
+  let mockApiService: any;
 
   beforeEach(() => {
+    // Limpiar todos los mocks
     vi.clearAllMocks();
-    processor = new ExcelProcessor();
+
+    // Mock de Date.now para evitar problemas con timestamps
+    vi.spyOn(Date, 'now').mockReturnValue(1640995200000); // 2022-01-01 00:00:00
+
+    // Configurar variables de entorno para las pruebas
+    process.env.API_BASE_URL = 'http://localhost:3000/api/up_compra.php';
+    process.env.API_KEY = 'test-api-key';
+    process.env.EXCEL_DIRECTORY = './test-excel-files';
+    process.env.PROCESSED_DIRECTORY = './test-processed-files';
+    process.env.ERROR_DIRECTORY = './test-error-files';
+    process.env.LOG_FILE = './test-logs/app.log';
+
+    // Mock de FileProcessor
+    mockFileProcessor = {
+      ensureDirectories: vi.fn(),
+      findLatestExcelFile: vi.fn(),
+      readExcelFile: vi.fn(),
+      moveToProcessed: vi.fn(),
+      moveToError: vi.fn(),
+    };
+    (FileProcessor as any).mockImplementation(() => mockFileProcessor);
+
+    // Mock de ExcelValidator
+    mockValidator = {
+      validateHeaders: vi.fn(),
+      validateData: vi.fn(),
+    };
+    (ExcelValidator as any).mockImplementation(() => mockValidator);
+
+    // Mock de DataTransformer
+    mockTransformer = {
+      mapHeaders: vi.fn(),
+      transformRawData: vi.fn(),
+      mapToLicitacionApiData: vi.fn(),
+    };
+    (DataTransformer as any).mockImplementation(() => mockTransformer);
+
+    // Mock de ApiService
+    mockApiService = {
+      sendLicitacionWithResponse: vi.fn(),
+    };
+    (ApiService as any).mockImplementation(() => mockApiService);
+
+    // Mock de XLSX
+    vi.mocked(XLSX.read).mockReturnValue({
+      SheetNames: ['Sheet1'],
+      Sheets: {
+        Sheet1: {},
+      },
+    } as any);
+    vi.mocked(XLSX.utils.sheet_to_json).mockReturnValue([]);
+    vi.mocked(XLSX.utils.book_new).mockReturnValue({} as any);
+    vi.mocked(XLSX.utils.json_to_sheet).mockReturnValue({} as any);
+    vi.mocked(XLSX.utils.book_append_sheet).mockImplementation(() => {});
+    vi.mocked(XLSX.writeFile).mockImplementation(() => {});
+
+    // Mock de path
+    vi.mocked(path.basename).mockReturnValue('test-file.xlsx');
+    vi.mocked(path.parse).mockReturnValue({
+      name: 'test-file',
+      ext: '.xlsx',
+    } as any);
+    vi.mocked(path.join).mockReturnValue(
+      './test-error-files/test-file_failed_2023-01-01T00-00-00.xlsx'
+    );
+
+    excelProcessor = new ExcelProcessor(false);
   });
 
   afterEach(() => {
+    consoleSpy.log.mockClear();
+    consoleSpy.error.mockClear();
     vi.restoreAllMocks();
   });
 
-  describe('findLatestExcelFile', () => {
-    it('should return null when no Excel files exist', async () => {
-      mockFs.readdir.mockResolvedValue(['file.txt', 'document.pdf'] as any);
-      mockPath.extname.mockReturnValue('.txt');
-
-      const result = await processor.findLatestExcelFile();
-
-      expect(result).toBeNull();
+  describe('constructor', () => {
+    it('should initialize with default values', () => {
+      expect(FileProcessor).toHaveBeenCalledWith(
+        './excel-files',
+        './processed-files',
+        './error-files'
+      );
+      expect(ExcelValidator).toHaveBeenCalled();
+      expect(DataTransformer).toHaveBeenCalled();
+      expect(ApiService).toHaveBeenCalled();
+      expect(mockFileProcessor.ensureDirectories).toHaveBeenCalled();
     });
 
-    it('should return the most recent Excel file', async () => {
-      const mockStatsOld = {
-        mtime: new Date('2023-01-01'),
-      };
-      const mockStatsNew = {
-        mtime: new Date('2023-01-02'),
-      };
-
-      mockFs.readdir.mockResolvedValue(['old.xlsx', 'new.xlsx'] as any);
-      mockFs.stat
-        .mockResolvedValueOnce(mockStatsOld as any)
-        .mockResolvedValueOnce(mockStatsNew as any);
-      mockPath.join.mockImplementation((...args) => args.join('/'));
-      mockPath.extname
-        .mockReturnValueOnce('.xlsx')
-        .mockReturnValueOnce('.xlsx');
-
-      const result = await processor.findLatestExcelFile();
-
-      expect(result).toBe('./excel-files/new.xlsx');
+    it('should initialize with dry run mode', () => {
+      const dryRunProcessor = new ExcelProcessor(true);
+      expect(dryRunProcessor).toBeInstanceOf(ExcelProcessor);
     });
   });
 
-  describe('validateData', () => {
-    it('should return false for empty array', async () => {
-      const result = await processor['validateData']([]);
-      expect(result).toBe(false);
-    });
-
-    it('should return false for invalid data structure', async () => {
-      const result = await processor['validateData'](null as any);
-      expect(result).toBe(false);
-    });
-
-    it('should return false when records lack required fields', async () => {
-      const data: ExcelRow[] = [
-        { nombre: 'Test', organismo: 'Test Org' }, // Sin idLicitacion
-        { idLicitacion: '123', nombre: 'Test 2' },
+  describe('run', () => {
+    it('should process files successfully', async () => {
+      const mockFilePath = './test-excel-files/test.xlsx';
+      const mockFileBuffer = Buffer.from('test');
+      const mockRawData = [
+        {
+          idLicitacion: '123',
+          nombre: 'Test Licitación',
+          fechaPublicacion: '2023-01-01',
+          fechaCierre: '2023-01-31',
+          organismo: 'Test Organismo',
+          unidad: 'Test Unidad',
+          montoDisponible: 1000000,
+          moneda: 'CLP',
+          estado: 'Activa',
+        },
       ];
 
-      const result = await processor['validateData'](data);
-      expect(result).toBe(false);
+      // Configurar mocks
+      mockFileProcessor.findLatestExcelFile.mockResolvedValue(mockFilePath);
+      mockFileProcessor.readExcelFile.mockResolvedValue(mockFileBuffer);
+      vi.mocked(XLSX.utils.sheet_to_json).mockReturnValue(mockRawData);
+
+      const mockHeaders = [
+        'idLicitacion',
+        'nombre',
+        'fechaPublicacion',
+        'fechaCierre',
+        'organismo',
+        'unidad',
+        'montoDisponible',
+        'moneda',
+        'estado',
+      ];
+      mockValidator.validateHeaders.mockReturnValue({
+        isValid: true,
+        missingHeaders: [],
+      });
+
+      const mockHeaderMapping = { idLicitacion: 'licitacion_id' };
+      mockTransformer.mapHeaders.mockReturnValue(mockHeaderMapping);
+
+      const mockTransformedData: ExcelRow[] = [
+        {
+          idLicitacion: '123',
+          nombre: 'Test Licitación',
+        },
+      ];
+      mockTransformer.transformRawData.mockReturnValue(mockTransformedData);
+
+      mockValidator.validateData.mockReturnValue({
+        isValid: true,
+        errors: [],
+        warnings: [],
+      });
+
+      const mockLicitacionData: LicitacionApiData = {
+        licitacion_id: '123',
+        nombre: 'Test Licitación',
+        fecha_publicacion: '2023-01-01',
+        fecha_cierre: '2023-01-31',
+        organismo: 'Test Organismo',
+        unidad: 'Test Unidad',
+        monto_disponible: 1000000,
+        moneda: 'CLP',
+        estado: 'Activa',
+      };
+      mockTransformer.mapToLicitacionApiData.mockReturnValue(
+        mockLicitacionData
+      );
+
+      mockApiService.sendLicitacionWithResponse.mockResolvedValue({
+        status: 200,
+      });
+
+      // Ejecutar
+      await excelProcessor.run();
+
+      // Verificar
+      expect(mockFileProcessor.findLatestExcelFile).toHaveBeenCalled();
+      expect(mockFileProcessor.readExcelFile).toHaveBeenCalledWith(
+        mockFilePath
+      );
+      expect(mockValidator.validateHeaders).toHaveBeenCalledWith(mockHeaders);
+      expect(mockTransformer.mapHeaders).toHaveBeenCalledWith(mockHeaders);
+      expect(mockTransformer.transformRawData).toHaveBeenCalledWith(
+        mockRawData,
+        mockHeaderMapping
+      );
+      expect(mockValidator.validateData).toHaveBeenCalledWith(
+        mockTransformedData
+      );
+      expect(mockApiService.sendLicitacionWithResponse).toHaveBeenCalledWith(
+        mockLicitacionData
+      );
+      expect(mockFileProcessor.moveToProcessed).toHaveBeenCalledWith(
+        mockFilePath,
+        'test-file.xlsx'
+      );
     });
 
-    it('should return true for valid data', async () => {
-      const data: ExcelRow[] = [
-        { idLicitacion: '123', nombre: 'Test' },
+    it('should handle no files found', async () => {
+      mockFileProcessor.findLatestExcelFile.mockResolvedValue(null);
+
+      await excelProcessor.run();
+
+      expect(mockFileProcessor.findLatestExcelFile).toHaveBeenCalled();
+      // Verificar que el método se ejecutó correctamente sin errores
+      expect(true).toBe(true);
+    });
+
+    it('should handle empty file data', async () => {
+      const mockFilePath = './test-excel-files/test.xlsx';
+      const mockFileBuffer = Buffer.from('test');
+
+      mockFileProcessor.findLatestExcelFile.mockResolvedValue(mockFilePath);
+      mockFileProcessor.readExcelFile.mockResolvedValue(mockFileBuffer);
+      vi.mocked(XLSX.utils.sheet_to_json).mockReturnValue([]);
+
+      await excelProcessor.run();
+
+      expect(mockFileProcessor.moveToError).toHaveBeenCalledWith(
+        mockFilePath,
+        'test-file.xlsx'
+      );
+    });
+
+    it('should handle invalid headers', async () => {
+      const mockFilePath = './test-excel-files/test.xlsx';
+      const mockFileBuffer = Buffer.from('test');
+      const mockRawData = [{ test: 'data' }];
+
+      mockFileProcessor.findLatestExcelFile.mockResolvedValue(mockFilePath);
+      mockFileProcessor.readExcelFile.mockResolvedValue(mockFileBuffer);
+      vi.mocked(XLSX.utils.sheet_to_json).mockReturnValue(mockRawData);
+
+      mockValidator.validateHeaders.mockReturnValue({
+        isValid: false,
+        missingHeaders: ['idLicitacion', 'nombre'],
+      });
+
+      await excelProcessor.run();
+
+      expect(mockFileProcessor.moveToError).toHaveBeenCalledWith(
+        mockFilePath,
+        'test-file.xlsx'
+      );
+    });
+
+    it('should handle dry run mode', async () => {
+      const dryRunProcessor = new ExcelProcessor(true);
+      const mockFilePath = './test-excel-files/test.xlsx';
+      const mockFileBuffer = Buffer.from('test');
+      const mockRawData = [{ idLicitacion: '123' }];
+
+      mockFileProcessor.findLatestExcelFile.mockResolvedValue(mockFilePath);
+      mockFileProcessor.readExcelFile.mockResolvedValue(mockFileBuffer);
+      vi.mocked(XLSX.utils.sheet_to_json).mockReturnValue(mockRawData);
+
+      mockValidator.validateHeaders.mockReturnValue({
+        isValid: true,
+        missingHeaders: [],
+      });
+
+      const mockHeaderMapping = { idLicitacion: 'licitacion_id' };
+      mockTransformer.mapHeaders.mockReturnValue(mockHeaderMapping);
+
+      const mockTransformedData: ExcelRow[] = [{ idLicitacion: '123' }];
+      mockTransformer.transformRawData.mockReturnValue(mockTransformedData);
+
+      mockValidator.validateData.mockReturnValue({
+        isValid: true,
+        errors: [],
+        warnings: [],
+      });
+
+      await dryRunProcessor.run();
+
+      expect(mockFileProcessor.moveToProcessed).not.toHaveBeenCalledWith(
+        mockFilePath,
+        'test-file.xlsx'
+      );
+      expect(mockApiService.sendLicitacionWithResponse).not.toHaveBeenCalled();
+    });
+
+    it('should handle processing errors', async () => {
+      const mockFilePath = './test-excel-files/test.xlsx';
+      const error = new Error('Test error');
+
+      mockFileProcessor.findLatestExcelFile.mockResolvedValue(mockFilePath);
+      mockFileProcessor.readExcelFile.mockRejectedValue(error);
+
+      await expect(excelProcessor.run()).rejects.toThrow('Test error');
+      expect(mockFileProcessor.moveToError).toHaveBeenCalledWith(
+        mockFilePath,
+        'test-file.xlsx'
+      );
+    });
+  });
+
+  describe('processRecordsIndividually', () => {
+    it('should process records successfully', async () => {
+      const mockData: ExcelRow[] = [
+        { idLicitacion: '123', nombre: 'Test 1' },
         { idLicitacion: '456', nombre: 'Test 2' },
       ];
 
-      const result = await processor['validateData'](data);
-      expect(result).toBe(true);
-    });
-
-    // Nuevos tests para validaciones mejoradas
-    it('should validate required fields properly', async () => {
-      const data: ExcelRow[] = [
-        {
-          idLicitacion: '123',
-          nombre: 'Licitación Test',
-          organismo: 'Organismo Test',
-          unidad: 'Unidad Test'
-        }
-      ];
-
-      const result = await processor['validateData'](data);
-      expect(result).toBe(true);
-    });
-
-    it('should reject records with missing required fields', async () => {
-      const data: ExcelRow[] = [
-        {
-          idLicitacion: '', // Vacío
-          nombre: 'Licitación Test',
-          organismo: 'Organismo Test',
-          unidad: 'Unidad Test'
-        }
-      ];
-
-      const result = await processor['validateData'](data);
-      expect(result).toBe(false);
-    });
-
-    it('should validate date formats', async () => {
-      const data: ExcelRow[] = [
-        {
-          idLicitacion: '123',
-          nombre: 'Licitación Test',
-          organismo: 'Organismo Test',
-          unidad: 'Unidad Test',
-          fechaPublicacion: '2023-01-01',
-          fechaCierre: '2023-01-31'
-        }
-      ];
-
-      const result = await processor['validateData'](data);
-      expect(result).toBe(true);
-    });
-
-    it('should reject invalid date formats', async () => {
-      const data: ExcelRow[] = [
-        {
-          idLicitacion: '123',
-          nombre: 'Licitación Test',
-          organismo: 'Organismo Test',
-          unidad: 'Unidad Test',
-          fechaPublicacion: 'fecha-invalida',
-          fechaCierre: '2023-01-31'
-        }
-      ];
-
-      const result = await processor['validateData'](data);
-      expect(result).toBe(false);
-    });
-
-    it('should validate date ranges', async () => {
-      const data: ExcelRow[] = [
-        {
-          idLicitacion: '123',
-          nombre: 'Licitación Test',
-          organismo: 'Organismo Test',
-          unidad: 'Unidad Test',
-          fechaPublicacion: '2023-01-01',
-          fechaCierre: '2023-01-31' // Después de publicación
-        }
-      ];
-
-      const result = await processor['validateData'](data);
-      expect(result).toBe(true);
-    });
-
-    it('should reject invalid date ranges', async () => {
-      const data: ExcelRow[] = [
-        {
-          idLicitacion: '123',
-          nombre: 'Licitación Test',
-          organismo: 'Organismo Test',
-          unidad: 'Unidad Test',
-          fechaPublicacion: '2023-01-31',
-          fechaCierre: '2023-01-01' // Antes de publicación
-        }
-      ];
-
-      const result = await processor['validateData'](data);
-      expect(result).toBe(false);
-    });
-
-    it('should validate numeric fields', async () => {
-      const data: ExcelRow[] = [
-        {
-          idLicitacion: '123',
-          nombre: 'Licitación Test',
-          organismo: 'Organismo Test',
-          unidad: 'Unidad Test',
-          montoDisponible: 1000.50
-        }
-      ];
-
-      const result = await processor['validateData'](data);
-      expect(result).toBe(true);
-    });
-
-    it('should validate string numeric fields', async () => {
-      const data: ExcelRow[] = [
-        {
-          idLicitacion: '123',
-          nombre: 'Licitación Test',
-          organismo: 'Organismo Test',
-          unidad: 'Unidad Test',
-          montoDisponible: '1000.50'
-        }
-      ];
-
-      const result = await processor['validateData'](data);
-      expect(result).toBe(true);
-    });
-
-    it('should reject invalid numeric fields', async () => {
-      const data: ExcelRow[] = [
-        {
-          idLicitacion: '123',
-          nombre: 'Licitación Test',
-          organismo: 'Organismo Test',
-          unidad: 'Unidad Test',
-          montoDisponible: 'no-es-numero'
-        }
-      ];
-
-      const result = await processor['validateData'](data);
-      expect(result).toBe(false);
-    });
-
-    it('should validate field length limits', async () => {
-      const data: ExcelRow[] = [
-        {
-          idLicitacion: '123',
-          nombre: 'A'.repeat(500), // Máximo permitido
-          organismo: 'B'.repeat(300), // Máximo permitido
-          unidad: 'C'.repeat(200), // Máximo permitido
-          moneda: 'USD',
-          estado: 'Activo'
-        }
-      ];
-
-      const result = await processor['validateData'](data);
-      expect(result).toBe(true);
-    });
-
-    it('should reject fields exceeding length limits', async () => {
-      const data: ExcelRow[] = [
-        {
-          idLicitacion: '123',
-          nombre: 'A'.repeat(501), // Excede límite
-          organismo: 'Organismo Test',
-          unidad: 'Unidad Test'
-        }
-      ];
-
-      const result = await processor['validateData'](data);
-      expect(result).toBe(false);
-    });
-
-    it('should handle undefined rows gracefully', async () => {
-      const data: ExcelRow[] = [
-        {
-          idLicitacion: '123',
-          nombre: 'Licitación Test',
-          organismo: 'Organismo Test',
-          unidad: 'Unidad Test'
-        },
-        undefined as any, // Fila undefined
-        {
-          idLicitacion: '456',
-          nombre: 'Licitación Test 2',
-          organismo: 'Organismo Test 2',
-          unidad: 'Unidad Test 2'
-        }
-      ];
-
-      const result = await processor['validateData'](data);
-      expect(result).toBe(false);
-    });
-  });
-
-  describe('parseDate', () => {
-    it('should parse string date correctly', () => {
-      const result = processor['parseDate']('2023-01-01');
-
-      expect(result).toBeInstanceOf(Date);
-      // Verificar que la fecha sea correcta sin depender de zona horaria
-      const expectedDate = new Date('2023-01-01');
-      expect(result.getTime()).toBe(expectedDate.getTime());
-    });
-
-    it('should return current date for invalid date', () => {
-      const result = processor['parseDate']('invalid-date');
-      expect(result).toBeInstanceOf(Date);
-    });
-
-    it('should return current date for undefined', () => {
-      const result = processor['parseDate'](undefined);
-      expect(result).toBeInstanceOf(Date);
-    });
-  });
-
-  describe('parseNumber', () => {
-    it('should parse number correctly', () => {
-      const result = processor['parseNumber'](123.45);
-      expect(result).toBe(123.45);
-    });
-
-    it('should parse string number correctly', () => {
-      const result = processor['parseNumber']('123.45');
-      expect(result).toBe(123.45);
-    });
-
-    it('should handle currency strings', () => {
-      const result = processor['parseNumber']('$1,234.56');
-      expect(result).toBe(1234.56);
-    });
-
-    it('should return 0 for invalid number', () => {
-      const result = processor['parseNumber']('invalid');
-      expect(result).toBe(0);
-    });
-  });
-});
-
-describe('ExcelProcessor - Mapeo de Encabezados', () => {
-  let processor: ExcelProcessor;
-
-  beforeEach(() => {
-    processor = new ExcelProcessor();
-  });
-
-  describe('normalizeHeader', () => {
-    it('should normalize headers correctly', () => {
-      const testCases = [
-        { input: 'ID', expected: 'id' },
-        { input: 'Nombre', expected: 'nombre' },
-        { input: 'Fecha de Publicación', expected: 'fecha de publicacion' },
-        { input: 'Fecha de cierre', expected: 'fecha de cierre' },
-        { input: 'Organismo', expected: 'organismo' },
-        { input: 'Unidad', expected: 'unidad' },
-        { input: 'Monto Disponible', expected: 'monto disponible' },
-        { input: 'Moneda', expected: 'moneda' },
-        { input: 'Estado', expected: 'estado' },
-        { input: '  ID  ', expected: 'id' },
-        { input: 'Fecha   de   Publicación', expected: 'fecha de publicacion' },
-      ];
-
-      testCases.forEach(({ input, expected }) => {
-        const result = (processor as any).normalizeHeader(input);
-        expect(result).toBe(expected);
-      });
-    });
-
-    it('should handle accented characters', () => {
-      const testCases = [
-        { input: 'Publicación', expected: 'publicacion' },
-        { input: 'Organismo', expected: 'organismo' },
-        { input: 'Unidad', expected: 'unidad' },
-      ];
-
-      testCases.forEach(({ input, expected }) => {
-        const result = (processor as any).normalizeHeader(input);
-        expect(result).toBe(expected);
-      });
-    });
-  });
-
-  describe('mapHeadersAndTransformData', () => {
-    it('should map headers correctly', () => {
-      const rawData = [
-        {
-          ID: 'LIC001',
-          Nombre: 'Licitación Test',
-          'Fecha de Publicación': '2024-01-01',
-          'Fecha de cierre': '2024-02-01',
-          Organismo: 'Ministerio Test',
-          Unidad: 'Unidad Test',
-          'Monto Disponible': '1000000',
-          Moneda: 'CLP',
-          Estado: 'Activa',
-        },
-      ];
-
-      const result = (processor as any).mapHeadersAndTransformData(rawData);
-
-      expect(result).toHaveLength(1);
-      expect(result[0]).toEqual({
-        idLicitacion: 'LIC001',
-        nombre: 'Licitación Test',
-        fechaPublicacion: '2024-01-01',
-        fechaCierre: '2024-02-01',
-        organismo: 'Ministerio Test',
-        unidad: 'Unidad Test',
-        montoDisponible: '1000000',
+      const mockLicitacionData: LicitacionApiData = {
+        licitacion_id: '123',
+        nombre: 'Test',
+        fecha_publicacion: '2023-01-01',
+        fecha_cierre: '2023-01-31',
+        organismo: 'Test',
+        unidad: 'Test',
+        monto_disponible: 1000000,
         moneda: 'CLP',
         estado: 'Activa',
+      };
+
+      mockTransformer.mapToLicitacionApiData.mockReturnValue(
+        mockLicitacionData
+      );
+      mockApiService.sendLicitacionWithResponse.mockResolvedValue({
+        status: 200,
       });
+
+      // Usar reflection para acceder al método privado
+      const result = await (excelProcessor as any).processRecordsIndividually(
+        mockData,
+        'test.xlsx'
+      );
+
+      expect(result.successCount).toBe(2);
+      expect(result.failedRecords).toHaveLength(0);
+      expect(mockApiService.sendLicitacionWithResponse).toHaveBeenCalledTimes(
+        2
+      );
     });
 
-    it('should handle empty data', () => {
-      const result = (processor as any).mapHeadersAndTransformData([]);
-      expect(result).toEqual([]);
+    it('should handle failed records', async () => {
+      const mockData: ExcelRow[] = [
+        { idLicitacion: '123', nombre: 'Test 1' },
+        { idLicitacion: '456', nombre: 'Test 2' },
+      ];
+
+      const mockLicitacionData: LicitacionApiData = {
+        licitacion_id: '123',
+        nombre: 'Test',
+        fecha_publicacion: '2023-01-01',
+        fecha_cierre: '2023-01-31',
+        organismo: 'Test',
+        unidad: 'Test',
+        monto_disponible: 1000000,
+        moneda: 'CLP',
+        estado: 'Activa',
+      };
+
+      mockTransformer.mapToLicitacionApiData.mockReturnValue(
+        mockLicitacionData
+      );
+      mockApiService.sendLicitacionWithResponse
+        .mockResolvedValueOnce({ status: 200 })
+        .mockResolvedValueOnce({ status: 400 });
+
+      const result = await (excelProcessor as any).processRecordsIndividually(
+        mockData,
+        'test.xlsx'
+      );
+
+      expect(result.successCount).toBe(1);
+      expect(result.failedRecords).toHaveLength(1);
+      expect(result.failedRecords[0].error).toBe(
+        'API respondió con código 400'
+      );
     });
 
-    it('should handle unmapped headers', () => {
-      const rawData = [
+    it('should handle network errors', async () => {
+      const mockData: ExcelRow[] = [{ idLicitacion: '123', nombre: 'Test 1' }];
+
+      const mockLicitacionData: LicitacionApiData = {
+        licitacion_id: '123',
+        nombre: 'Test',
+        fecha_publicacion: '2023-01-01',
+        fecha_cierre: '2023-01-31',
+        organismo: 'Test',
+        unidad: 'Test',
+        monto_disponible: 1000000,
+        moneda: 'CLP',
+        estado: 'Activa',
+      };
+
+      mockTransformer.mapToLicitacionApiData.mockReturnValue(
+        mockLicitacionData
+      );
+      mockApiService.sendLicitacionWithResponse.mockRejectedValue(
+        new Error('Network error')
+      );
+
+      const result = await (excelProcessor as any).processRecordsIndividually(
+        mockData,
+        'test.xlsx'
+      );
+
+      expect(result.successCount).toBe(0);
+      expect(result.failedRecords).toHaveLength(1);
+      expect(result.failedRecords[0].error).toBe('Network error');
+    });
+  });
+
+  describe('createFailedRecordsFile', () => {
+    it('should create failed records file', async () => {
+      const mockFailedRecords: FailedRecord[] = [
         {
-          ID: 'LIC001',
-          Nombre: 'Licitación Test',
-          'Campo Desconocido': 'valor',
-          Estado: 'Activa',
+          originalRow: { idLicitacion: '123', nombre: 'Test' },
+          licitacionData: {
+            licitacion_id: '123',
+            nombre: 'Test',
+            fecha_publicacion: '2023-01-01',
+            fecha_cierre: '2023-01-31',
+            organismo: 'Test',
+            unidad: 'Test',
+            monto_disponible: 1000000,
+            moneda: 'CLP',
+            estado: 'Activa',
+          },
+          error: 'Test error',
+          statusCode: 400,
+          rowIndex: 0,
         },
       ];
 
-      const result = (processor as any).mapHeadersAndTransformData(rawData);
+      // Mock de Date para timestamp consistente
+      const mockDate = new Date('2023-01-01T00:00:00.000Z');
+      vi.spyOn(global, 'Date').mockImplementation(() => mockDate as any);
 
-      expect(result).toHaveLength(1);
-      expect(result[0]).toEqual({
-        idLicitacion: 'LIC001',
-        nombre: 'Licitación Test',
-        estado: 'Activa',
+      const result = await (excelProcessor as any).createFailedRecordsFile(
+        mockFailedRecords,
+        'test.xlsx'
+      );
+
+      expect(XLSX.utils.book_new).toHaveBeenCalled();
+      expect(XLSX.utils.json_to_sheet).toHaveBeenCalled();
+      expect(XLSX.utils.book_append_sheet).toHaveBeenCalled();
+      expect(XLSX.writeFile).toHaveBeenCalled();
+      expect(result).toBe(
+        './test-error-files/test-file_failed_2023-01-01T00-00-00.xlsx'
+      );
+    });
+
+    it('should return empty string for no failed records', async () => {
+      const result = await (excelProcessor as any).createFailedRecordsFile(
+        [],
+        'test.xlsx'
+      );
+
+      expect(result).toBe('');
+      expect(XLSX.writeFile).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('error handling', () => {
+    it('should handle XLSX read errors', async () => {
+      const mockFilePath = './test-excel-files/test.xlsx';
+      const mockFileBuffer = Buffer.from('test');
+
+      mockFileProcessor.findLatestExcelFile.mockResolvedValue(mockFilePath);
+      mockFileProcessor.readExcelFile.mockResolvedValue(mockFileBuffer);
+      vi.mocked(XLSX.read).mockImplementation(() => {
+        throw new Error('Invalid Excel file');
       });
-      // El campo 'Campo Desconocido' no debería estar en el resultado
-      expect(result[0]['Campo Desconocido']).toBeUndefined();
+
+      await expect(excelProcessor.run()).rejects.toThrow('Invalid Excel file');
+      expect(mockFileProcessor.moveToError).toHaveBeenCalledWith(
+        mockFilePath,
+        'test-file.xlsx'
+      );
+    });
+
+    it('should handle missing worksheet', async () => {
+      const mockFilePath = './test-excel-files/test.xlsx';
+      const mockFileBuffer = Buffer.from('test');
+
+      mockFileProcessor.findLatestExcelFile.mockResolvedValue(mockFilePath);
+      mockFileProcessor.readExcelFile.mockResolvedValue(mockFileBuffer);
+      vi.mocked(XLSX.read).mockReturnValue({
+        SheetNames: [],
+        Sheets: {},
+      } as any);
+
+      await expect(excelProcessor.run()).rejects.toThrow(
+        'No se encontró ninguna hoja en el archivo Excel'
+      );
+    });
+
+    it('should handle validation errors', async () => {
+      const mockFilePath = './test-excel-files/test.xlsx';
+      const mockFileBuffer = Buffer.from('test');
+      const mockRawData = [{ idLicitacion: '123' }];
+
+      mockFileProcessor.findLatestExcelFile.mockResolvedValue(mockFilePath);
+      mockFileProcessor.readExcelFile.mockResolvedValue(mockFileBuffer);
+      vi.mocked(XLSX.utils.sheet_to_json).mockReturnValue(mockRawData);
+
+      mockValidator.validateHeaders.mockReturnValue({
+        isValid: true,
+        missingHeaders: [],
+      });
+
+      const mockHeaderMapping = { idLicitacion: 'licitacion_id' };
+      mockTransformer.mapHeaders.mockReturnValue(mockHeaderMapping);
+
+      const mockTransformedData: ExcelRow[] = [{ idLicitacion: '123' }];
+      mockTransformer.transformRawData.mockReturnValue(mockTransformedData);
+
+      mockValidator.validateData.mockReturnValue({
+        isValid: false,
+        errors: ['Error 1', 'Error 2'],
+        warnings: ['Warning 1'],
+      });
+
+      const mockLicitacionData: LicitacionApiData = {
+        licitacion_id: '123',
+        nombre: 'Test',
+        fecha_publicacion: '2023-01-01',
+        fecha_cierre: '2023-01-31',
+        organismo: 'Test',
+        unidad: 'Test',
+        monto_disponible: 1000000,
+        moneda: 'CLP',
+        estado: 'Activa',
+      };
+      mockTransformer.mapToLicitacionApiData.mockReturnValue(
+        mockLicitacionData
+      );
+
+      mockApiService.sendLicitacionWithResponse.mockResolvedValue({
+        status: 200,
+      });
+
+      await excelProcessor.run();
+
+      // Debería continuar procesando a pesar de los errores de validación
+      expect(mockApiService.sendLicitacionWithResponse).toHaveBeenCalled();
     });
   });
 });

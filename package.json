@@ -18,13 +18,18 @@
       "node_modules/winston/**/*",
       "node_modules/dotenv/**/*",
       "node_modules/class-transformer/**/*",
-      "node_modules/class-validator/**/*"
+      "node_modules/class-validator/**/*",
+      "node_modules/axios/**/*",
+      "node_modules/follow-redirects/**/*",
+      "node_modules/proxy-from-env/**/*"
     ],
     "scripts": [
       "node_modules/xlsx/**/*.js",
       "node_modules/typeorm/**/*.js",
       "node_modules/mysql2/**/*.js",
-      "node_modules/reflect-metadata/**/*.js"
+      "node_modules/reflect-metadata/**/*.js",
+      "node_modules/axios/**/*.js",
+      "node_modules/follow-redirects/**/*.js"
     ],
     "ignore": [
       "node_modules/typeorm/browser/**/*",
@@ -46,7 +51,10 @@
     "build:executable:clean": "npm run build && pkg . > /dev/null 2>&1 && echo '✅ Ejecutable creado exitosamente'",
     "build:all": "npm run build && pkg . && chmod +x bin/script-upload-records-to-db",
     "build:all:clean": "npm run build && pkg . > /dev/null 2>&1 && chmod +x bin/script-upload-records-to-db && echo '✅ Ejecutable creado y configurado exitosamente'",
-    "start": "node dist/index.js",
+    "build:run": "npm run build && npm start",
+    "build:dev": "npm run build && npm run dev",
+    "start": "node dist/index.js run",
+    "start:dry-run": "node dist/index.js run --dry-run",
     "dev": "ts-node src/index.ts",
     "test": "vitest",
     "test:watch": "vitest --watch",
@@ -59,19 +67,20 @@
     "db:logs": "docker compose logs mysql",
     "db:clean": "docker compose down -v && docker volume rm script-upload-records-to-db_mysql_data",
     "db:status": "docker compose ps mysql",
-    "logs:analyze": "ts-node scripts/log-analyzer.ts",
+    "logs:analyze": "npx ts-node scripts/tools/log-analyzer.ts",
     "logs:clean": "find ./logs -name '*.log' -mtime +30 -delete",
     "logs:report": "npm run logs:analyze && echo 'Reporte generado en ./logs/report.md'",
-    "logs:test": "npm run build && node scripts/test-improved-logging.js",
-    "test:excel": "node scripts/create-test-excel.js",
-    "test:excel:large": "node scripts/create-large-test-excel.js",
-    "demo": "node scripts/demo-progress.js",
-    "test:retry": "npm run build && node scripts/test-database-retry.js",
-    "test:env-config": "npm run build && node scripts/test-env-config.js",
-    "release": "./scripts/create-release.sh",
-    "release:patch": "./scripts/create-release.sh $(npm version patch --no-git-tag-version | sed 's/v//')",
-    "release:minor": "./scripts/create-release.sh $(npm version minor --no-git-tag-version | sed 's/v//')",
-    "release:major": "./scripts/create-release.sh $(npm version major --no-git-tag-version | sed 's/v//')"
+    "test:api": "npm run build && node scripts/tools/api-tester.js",
+    "test:api:quick": "npm run build && node scripts/tools/api-tester.js --quick",
+    "generate:excel:basic": "node scripts/tools/excel-generator.js --basic",
+    "generate:excel:large": "node scripts/tools/excel-generator.js --large",
+    "generate:excel:custom": "node scripts/tools/excel-generator.js --custom",
+    "diagnose:api": "node scripts/tools/api-diagnostic.js",
+    "configure:api": "node scripts/tools/api-configurator.js",
+    "release": "./scripts/dev-tools/create-release.sh",
+    "release:patch": "./scripts/dev-tools/create-release.sh $(npm version patch --no-git-tag-version | sed 's/v//')",
+    "release:minor": "./scripts/dev-tools/create-release.sh $(npm version minor --no-git-tag-version | sed 's/v//')",
+    "release:major": "./scripts/dev-tools/create-release.sh $(npm version major --no-git-tag-version | sed 's/v//')"
   },
   "keywords": [
     "excel",
@@ -82,6 +91,9 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "axios": "^1.6.7",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
     "dotenv": "^16.4.5",
     "mysql2": "^3.9.2",
     "reflect-metadata": "^0.2.1",
@@ -90,7 +102,9 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/axios": "^0.9.36",
     "@types/node": "^22.10.2",
+    "@vitest/coverage-v8": "^2.1.9",
     "@vitest/ui": "^2.1.8",
     "pkg": "^5.8.1",
     "ts-node": "^10.9.2",
