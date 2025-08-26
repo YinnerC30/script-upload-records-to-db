@@ -883,4 +883,4 @@ npm run db:status     # Ver estado de MySQL
 ---
 
 **Última actualización**: Agosto 2025  
-**Versión**: 1.0.1
+**Versión**: 1.1.0
