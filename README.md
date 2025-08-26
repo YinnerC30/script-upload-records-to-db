@@ -329,16 +329,19 @@ El sistema mapea automáticamente los siguientes encabezados del Excel:
 
 ### Variables de Entorno Detalladas
 
-| Variable              | Descripción                          | Valor por Defecto                         | Tipo   |
-| --------------------- | ------------------------------------ | ----------------------------------------- | ------ |
-| `API_BASE_URL`        | URL completa del endpoint de la API  | `http://localhost:3000/api/up_compra.php` | string |
-| `API_KEY`             | Clave de autenticación para la API   | `''`                                      | string |
-| `API_TIMEOUT`         | Timeout para llamadas API en ms      | `30000`                                   | number |
-| `EXCEL_DIRECTORY`     | Directorio a monitorear              | `./excel-files`                           | string |
-| `PROCESSED_DIRECTORY` | Directorio para archivos procesados  | `./processed-files`                       | string |
-| `ERROR_DIRECTORY`     | Directorio para archivos con errores | `./error-files`                           | string |
-
-| `LOG_FILE` | Archivo de logs | `./logs/app.log` | string |
+| Variable                 | Descripción                          | Valor por Defecto                         | Tipo   |
+| ------------------------ | ------------------------------------ | ----------------------------------------- | ------ |
+| `API_BASE_URL`           | URL completa del endpoint de la API  | `http://localhost:3000/api/up_compra.php` | string |
+| `API_KEY`                | Clave de autenticación para la API   | `''`                                      | string |
+| `API_TIMEOUT`            | Timeout para llamadas API en ms      | `30000`                                   | number |
+| `EXCEL_DIRECTORY`        | Directorio a monitorear              | `./excel-files`                           | string |
+| `PROCESSED_DIRECTORY`    | Directorio para archivos procesados  | `./processed-files`                       | string |
+| `ERROR_DIRECTORY`        | Directorio para archivos con errores | `./error-files`                           | string |
+| `LOG_FILE`               | Archivo de logs                      | `./logs/app.log`                          | string |
+| `LOG_MAX_SIZE`           | Tamaño máximo del archivo de log     | `5242880` (5MB)                           | number |
+| `LOG_MAX_FILES`          | Número máximo de archivos de log     | `5`                                       | number |
+| `CONSOLE_CLEAN_MAX_LOGS` | Máximo de logs antes de limpiar      | `100`                                     | number |
+| `CONSOLE_CLEAN_INTERVAL` | Intervalo de limpieza en ms          | `30000`                                   | number |
 
 ### Directorios Automáticos
 
@@ -529,14 +532,27 @@ npm run logs:test
 ### Scripts de Generación de Datos
 
 ```bash
-# Crear archivo Excel de prueba pequeño
-npm run test:excel
+# Crear archivo Excel de prueba básico
+npm run generate:excel:basic
 
 # Crear archivo Excel de prueba grande
-npm run test:excel:large 10000
+npm run generate:excel:large
 
-# Ejecutar demostración de progreso
-npm run demo
+# Crear archivo Excel personalizado
+npm run generate:excel:custom
+```
+
+### Scripts de Diagnóstico y Configuración
+
+```bash
+# Diagnosticar problemas de API
+npm run diagnose:api
+
+# Configurar API interactivamente
+npm run configure:api
+
+# Probar API rápidamente
+npm run test:api:quick
 ```
 
 ### Scripts Disponibles
@@ -548,8 +564,8 @@ npm run dev            # Ejecutar en modo desarrollo
 npm run start          # Ejecutar en modo producción
 npm run test           # Ejecutar pruebas
 npm run test:watch     # Ejecutar pruebas en modo watch
-npm run test:env-config # Probar configuración del archivo .env
-npm run test:api       # Probar integración con API
+npm run test:coverage  # Ejecutar pruebas con cobertura
+npm run test:ui        # Ejecutar pruebas con UI
 ```
 
 ## 🔧 Solución de Problemas
@@ -566,7 +582,7 @@ npm run test:api       # Probar integración con API
 ls -la ./excel-files/
 
 # Crear archivo de prueba
-npm run test:excel
+npm run generate:excel:basic
 ```
 
 #### 2. Error: "API no disponible"
@@ -583,6 +599,9 @@ curl -X GET http://localhost:3000/api
 
 # Probar con modo dry-run
 ./bin/script-upload-records-to-db run --dry-run
+
+# Diagnosticar problemas de API
+npm run diagnose:api
 ```
 
 #### 3. Error: "Encabezado no mapeado"
@@ -660,27 +679,47 @@ script-upload-records-to-db/
 │   ├── services/
 │   │   ├── __tests__/
 │   │   │   ├── ExcelProcessor.test.ts
-│   │   │   └── HeaderMapping.test.ts
+│   │   │   ├── ApiService.test.ts
+│   │   │   ├── DataTransformer.test.ts
+│   │   │   ├── ExcelValidator.test.ts
+│   │   │   └── FileProcessor.test.ts
 │   │   ├── ApiService.ts      # Servicio para API REST
 │   │   ├── ExcelProcessor.ts  # Lógica principal de procesamiento
 │   │   ├── ExcelValidator.ts  # Validación de datos
 │   │   ├── DataTransformer.ts # Transformación de datos
 │   │   └── FileProcessor.ts   # Manejo de archivos
 │   ├── cli/
+│   │   ├── __tests__/
+│   │   │   ├── argumentParser.test.ts
+│   │   │   ├── commandHandler.test.ts
+│   │   │   └── environmentManager.test.ts
 │   │   ├── argumentParser.ts  # Parser de argumentos CLI
 │   │   ├── commandHandler.ts  # Manejador de comandos
 │   │   └── environmentManager.ts # Gestor de variables de entorno
 │   ├── utils/
+│   │   ├── __tests__/
+│   │   │   ├── console-cleaner.test.ts
+│   │   │   ├── logger-exit.test.ts
+│   │   │   └── logger-working.test.ts
 │   │   └── logger.ts          # Configuración de Winston
+│   ├── types/
+│   │   ├── excel.ts           # Tipos para datos de Excel
+│   │   └── index.ts           # Tipos generales
+│   ├── test/
+│   │   └── setup.ts           # Configuración de pruebas
 │   └── index.ts               # Punto de entrada principal
 ├── scripts/
-│   ├── create-test-excel.js
-│   ├── create-large-test-excel.js
-│   ├── demo-progress.js
-│   ├── log-analyzer.ts
-│   ├── test-api-integration.js
-│   ├── test-env-config.js
-│   └── test-header-mapping.js
+│   ├── dev-tools/
+│   │   ├── create-release.sh  # Script para crear releases
+│   │   └── release-config.json
+│   ├── tools/
+│   │   ├── api-configurator.js # Configurador interactivo de API
+│   │   ├── api-diagnostic.js   # Diagnóstico de problemas de API
+│   │   ├── api-tester.js       # Probador de API
+│   │   ├── excel-generator.js  # Generador de archivos Excel de prueba
+│   │   └── log-analyzer.ts     # Analizador de logs
+│   └── examples/
+│       └── usage-example.js    # Ejemplo de uso
 ├── bin/                       # Ejecutables generados
 ├── logs/                      # Archivos de log
 ├── excel-files/               # Archivos Excel a procesar
@@ -689,6 +728,7 @@ script-upload-records-to-db/
 ├── install.sh                 # Script de instalación
 ├── uninstall.sh               # Script de desinstalación
 ├── setup-scheduler.sh         # Script de programación automática
+├── docker-compose.yml         # Configuración de Docker para MySQL
 ├── package.json
 ├── tsconfig.json
 ├── vitest.config.ts
@@ -776,6 +816,7 @@ Si tienes problemas o preguntas:
 3. Asegúrate de que la API REST esté accesible
 4. Verifica que los archivos Excel tengan la estructura correcta
 5. Usa el modo dry-run para validar sin enviar datos
+6. Usa los scripts de diagnóstico: `npm run diagnose:api`
 
 ## 📚 Referencias Técnicas
 
@@ -789,6 +830,9 @@ Si tienes problemas o preguntas:
 | `dotenv`            | ^16.4.5 | Variables de entorno            |
 | `class-transformer` | ^0.5.1  | Transformación de datos         |
 | `class-validator`   | ^0.14.1 | Validación de datos             |
+| `mysql2`            | ^3.9.2  | Driver de MySQL                 |
+| `typeorm`           | ^0.3.20 | ORM para base de datos          |
+| `reflect-metadata`  | ^0.2.1  | Metadatos para decoradores      |
 
 ### Scripts de Build
 
@@ -838,7 +882,41 @@ export default defineConfig({
 });
 ```
 
+### Configuración de Docker (MySQL)
+
+```yaml
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: excel_data_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: excel_data
+      MYSQL_USER: excel_user
+      MYSQL_PASSWORD: excel_password
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - excel_network
+    command: --default-authentication-plugin=mysql_native_password
+```
+
+### Scripts de Base de Datos
+
+```bash
+npm run db:start      # Iniciar MySQL con Docker
+npm run db:stop       # Detener MySQL
+npm run db:reset      # Reiniciar MySQL y limpiar datos
+npm run db:restart    # Reiniciar MySQL
+npm run db:logs       # Ver logs de MySQL
+npm run db:clean      # Limpiar volumen de datos
+npm run db:status     # Ver estado de MySQL
+```
+
 ---
 
 **Última actualización**: Agosto 2025  
-**Versión**: 1.0.0
+**Versión**: 1.0.1
