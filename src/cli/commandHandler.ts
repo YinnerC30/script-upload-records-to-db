@@ -28,9 +28,12 @@ Opciones de configuración de directorios:
 Opciones de configuración de logs:
   --log-file <path>             Configurar archivo de logs
 
+Opciones de configuración de base de datos SQLite:
+  --sqlite-db-path <path>        Configurar ruta de la base de datos SQLite
+
 Ejemplos:
-  excel-processor run                                    # Ejecutar procesamiento
-  excel-processor run --dry-run                          # Validar sin enviar
+  sudo excel-processor run                              # Ejecutar procesamiento
+  excel-processor run --dry-run                         # Validar sin enviar
   excel-processor --api-url https://api.example.com     # Cambiar URL de API
   excel-processor --api-key new-api-key                 # Cambiar API key
 
@@ -58,6 +61,7 @@ Nota: Las opciones de configuración modifican el archivo .env permanentemente.
     console.log(`  📁 Directorio procesados: ${config.directories.processed}`);
     console.log(`  📁 Directorio errores: ${config.directories.error}`);
     console.log(`  📄 Archivo de logs: ${config.logging.file}`);
+    console.log(`  🗄️  Base de datos SQLite: ${config.directories.sqliteDbPath}`);
     console.log(`  📊 Nivel de logs: debug (siempre máximo detalle)`);
   }
 }

@@ -4,6 +4,7 @@ import { FileProcessor } from '../FileProcessor';
 import { ExcelValidator } from '../ExcelValidator';
 import { DataTransformer } from '../DataTransformer';
 import { ApiService } from '../ApiService';
+import { DatabaseService } from '../DatabaseService';
 import { ExcelRow, FailedRecord, LicitacionApiData } from '../../types/excel';
 import * as XLSX from 'xlsx';
 import * as path from 'path';
@@ -13,6 +14,7 @@ vi.mock('../FileProcessor');
 vi.mock('../ExcelValidator');
 vi.mock('../DataTransformer');
 vi.mock('../ApiService');
+vi.mock('../DatabaseService');
 vi.mock('../../utils/logger');
 vi.mock('xlsx');
 vi.mock('path');
@@ -29,6 +31,7 @@ describe('ExcelProcessor', () => {
   let mockValidator: any;
   let mockTransformer: any;
   let mockApiService: any;
+  let mockDbService: any;
 
   beforeEach(() => {
     // Limpiar todos los mocks
@@ -76,6 +79,17 @@ describe('ExcelProcessor', () => {
     };
     (ApiService as any).mockImplementation(() => mockApiService);
 
+    // Mock de DatabaseService (SQLite)
+    mockDbService = {
+      hasLicitacionId: vi.fn().mockResolvedValue(false),
+      addLicitacionId: vi.fn().mockResolvedValue(undefined),
+      addManyLicitacionIds: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+    (DatabaseService as any).getInstance = vi
+      .fn()
+      .mockReturnValue(mockDbService);
+
     // Mock de XLSX
     vi.mocked(XLSX.read).mockReturnValue({
       SheetNames: ['Sheet1'],
@@ -118,6 +132,7 @@ describe('ExcelProcessor', () => {
       expect(ExcelValidator).toHaveBeenCalled();
       expect(DataTransformer).toHaveBeenCalled();
       expect(ApiService).toHaveBeenCalled();
+      expect((DatabaseService as any).getInstance).toHaveBeenCalled();
       expect(mockFileProcessor.ensureDirectories).toHaveBeenCalled();
     });
 
@@ -222,6 +237,7 @@ describe('ExcelProcessor', () => {
       expect(mockApiService.sendLicitacionWithResponse).toHaveBeenCalledWith(
         mockLicitacionData
       );
+      expect(mockDbService.addLicitacionId).toHaveBeenCalledWith('123');
       expect(mockFileProcessor.moveToProcessed).toHaveBeenCalledWith(
         mockFilePath,
         'test-file.xlsx'
@@ -310,6 +326,7 @@ describe('ExcelProcessor', () => {
         'test-file.xlsx'
       );
       expect(mockApiService.sendLicitacionWithResponse).not.toHaveBeenCalled();
+      expect(mockDbService.addLicitacionId).not.toHaveBeenCalled();
     });
 
     it('should handle processing errors', async () => {
@@ -334,9 +351,10 @@ describe('ExcelProcessor', () => {
         { idLicitacion: '456', nombre: 'Test 2' },
       ];
 
-      const mockLicitacionData: LicitacionApiData = {
-        licitacion_id: '123',
-        nombre: 'Test',
+      // Devolver un objeto con el mismo id que el row para validar el registro en SQLite
+      mockTransformer.mapToLicitacionApiData.mockImplementation((row: any) => ({
+        licitacion_id: row.idLicitacion,
+        nombre: row.nombre,
         fecha_publicacion: '2023-01-01',
         fecha_cierre: '2023-01-31',
         organismo: 'Test',
@@ -344,11 +362,7 @@ describe('ExcelProcessor', () => {
         monto_disponible: 1000000,
         moneda: 'CLP',
         estado: 'Activa',
-      };
-
-      mockTransformer.mapToLicitacionApiData.mockReturnValue(
-        mockLicitacionData
-      );
+      }));
       mockApiService.sendLicitacionWithResponse.mockResolvedValue({
         status: 200,
       });
@@ -364,6 +378,8 @@ describe('ExcelProcessor', () => {
       expect(mockApiService.sendLicitacionWithResponse).toHaveBeenCalledTimes(
         2
       );
+      expect(mockDbService.addLicitacionId).toHaveBeenCalledWith('123');
+      expect(mockDbService.addLicitacionId).toHaveBeenCalledWith('456');
     });
 
     it('should handle failed records', async () => {
@@ -570,6 +586,135 @@ describe('ExcelProcessor', () => {
 
       // Debería continuar procesando a pesar de los errores de validación
       expect(mockApiService.sendLicitacionWithResponse).toHaveBeenCalled();
+    });
+  });
+
+  // Nuevos casos de prueba relacionados con SQLite
+  describe('SQLite integration behaviors', () => {
+    it('should filter out records already present in SQLite', async () => {
+      const mockFilePath = './test-excel-files/test.xlsx';
+      const mockFileBuffer = Buffer.from('test');
+      const mockRawData = [
+        { idLicitacion: '111', nombre: 'Nueva' },
+        { idLicitacion: '222', nombre: 'Duplicada' },
+      ];
+
+      mockFileProcessor.findLatestExcelFile.mockResolvedValue(mockFilePath);
+      mockFileProcessor.readExcelFile.mockResolvedValue(mockFileBuffer);
+      vi.mocked(XLSX.utils.sheet_to_json).mockReturnValue(mockRawData);
+
+      const mockHeaders = ['idLicitacion', 'nombre'];
+      mockValidator.validateHeaders.mockReturnValue({
+        isValid: true,
+        missingHeaders: [],
+      });
+      mockTransformer.mapHeaders.mockReturnValue({
+        idLicitacion: 'licitacion_id',
+        nombre: 'nombre',
+      });
+      const transformed: ExcelRow[] = [
+        { idLicitacion: '111', nombre: 'Nueva' },
+        { idLicitacion: '222', nombre: 'Duplicada' },
+      ];
+      mockTransformer.transformRawData.mockReturnValue(transformed);
+      mockValidator.validateData.mockReturnValue({
+        isValid: true,
+        errors: [],
+        warnings: [],
+      });
+
+      // Simular que '222' ya existe en SQLite
+      mockDbService.hasLicitacionId
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(true);
+
+      const licData111: LicitacionApiData = {
+        licitacion_id: '111',
+        nombre: 'Nueva',
+        fecha_publicacion: '2023-01-01',
+        fecha_cierre: '2023-01-31',
+        organismo: 'Org',
+        unidad: 'Uni',
+        monto_disponible: 1,
+        moneda: 'CLP',
+        estado: 'Activa',
+      };
+      mockTransformer.mapToLicitacionApiData.mockReturnValue(licData111);
+      mockApiService.sendLicitacionWithResponse.mockResolvedValue({
+        status: 200,
+      });
+
+      await excelProcessor.run();
+
+      expect(mockDbService.hasLicitacionId).toHaveBeenCalledTimes(2);
+      expect(mockApiService.sendLicitacionWithResponse).toHaveBeenCalledTimes(
+        1
+      );
+      expect(mockDbService.addLicitacionId).toHaveBeenCalledWith('111');
+    });
+
+    it('should register ID when API returns 400 duplicate with message', async () => {
+      const data: ExcelRow[] = [{ idLicitacion: '999', nombre: 'Dup' }];
+      const licData: LicitacionApiData = {
+        licitacion_id: '999',
+        nombre: 'Dup',
+        fecha_publicacion: '2023-01-01',
+        fecha_cierre: '2023-01-31',
+        organismo: 'O',
+        unidad: 'U',
+        monto_disponible: 1,
+        moneda: 'CLP',
+        estado: 'Activa',
+      };
+      mockTransformer.mapToLicitacionApiData.mockReturnValue(licData);
+
+      // Simular error 400 con mensaje de duplicado
+      const error: any = new Error('duplicado');
+      error.response = { status: 400, data: { message: 'Ya existe registro' } };
+      mockApiService.sendLicitacionWithResponse.mockRejectedValue(error);
+
+      const result = await (excelProcessor as any).processRecordsIndividually(
+        data,
+        'test.xlsx'
+      );
+
+      expect(result.successCount).toBe(0);
+      expect(mockDbService.addLicitacionId).toHaveBeenCalledWith('999');
+    });
+
+    it('should move file to processed when all records are filtered out as duplicates', async () => {
+      const mockFilePath = './test-excel-files/test.xlsx';
+      const mockFileBuffer = Buffer.from('test');
+      const mockRawData = [{ idLicitacion: 'A' }];
+
+      mockFileProcessor.findLatestExcelFile.mockResolvedValue(mockFilePath);
+      mockFileProcessor.readExcelFile.mockResolvedValue(mockFileBuffer);
+      vi.mocked(XLSX.utils.sheet_to_json).mockReturnValue(mockRawData);
+
+      mockValidator.validateHeaders.mockReturnValue({
+        isValid: true,
+        missingHeaders: [],
+      });
+      mockTransformer.mapHeaders.mockReturnValue({
+        idLicitacion: 'licitacion_id',
+      });
+      mockTransformer.transformRawData.mockReturnValue([{ idLicitacion: 'A' }]);
+      mockValidator.validateData.mockReturnValue({
+        isValid: true,
+        errors: [],
+        warnings: [],
+      });
+
+      // Filtrar todos como duplicados
+      mockDbService.hasLicitacionId.mockResolvedValue(true);
+
+      await excelProcessor.run();
+
+      expect(mockFileProcessor.moveToProcessed).toHaveBeenCalledWith(
+        mockFilePath,
+        'test-file.xlsx'
+      );
+      expect(mockApiService.sendLicitacionWithResponse).not.toHaveBeenCalled();
     });
   });
 });

@@ -141,3 +141,5 @@ RELEASE_NOTES_v*.md
 # ==========================================
 !env.example
 !mysql/init/
+
+/processed-db

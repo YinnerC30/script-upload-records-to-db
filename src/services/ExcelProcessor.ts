@@ -8,6 +8,7 @@ import {
   HeaderValidationResult,
 } from './ExcelValidator';
 import { DataTransformer } from './DataTransformer';
+import { DatabaseService } from './DatabaseService';
 import { ExcelRow, FailedRecord, LicitacionApiData } from '../types/excel';
 import logger, { StructuredLogger } from '../utils/logger';
 import { config } from '../config/config';
@@ -19,6 +20,7 @@ export class ExcelProcessor {
   private readonly apiService: ApiService;
   private readonly dryRun: boolean;
   private readonly logger: StructuredLogger;
+  private readonly db: DatabaseService;
 
   constructor(dryRun: boolean = false) {
     const excelDirectory = config.directories.excel;
@@ -35,6 +37,7 @@ export class ExcelProcessor {
     this.transformer = new DataTransformer();
     this.apiService = new ApiService();
     this.logger = new StructuredLogger('ExcelProcessor');
+    this.db = DatabaseService.getInstance();
 
     // Crear directorios si no existen
     this.fileProcessor.ensureDirectories();
@@ -223,8 +226,37 @@ export class ExcelProcessor {
     // console.log('🚀 ~ ExcelProcessor ~ processData ~ data:', data)
     console.log(`🚀 Procesando ${data.length} registros...`);
 
-    // Procesar registros individualmente
-    const result = await this.processRecordsIndividually(data, fileName);
+    // Filtrar registros ya procesados por licitacion_id
+    const filteredData: ExcelRow[] = [];
+    for (const row of data) {
+      const id = row.idLicitacion;
+      if (!id) {
+        filteredData.push(row); // permitir que validaciones manejen casos sin ID
+        continue;
+      }
+      const exists = await this.db.hasLicitacionId(id);
+      if (exists) {
+        this.logger.debug('Registro omitido por duplicado (SQLite)', {
+          licitacion_id: id,
+        });
+      } else {
+        filteredData.push(row);
+      }
+    }
+
+    if (filteredData.length !== data.length) {
+      console.log(
+        `🔎 Filtrado por SQLite: ${filteredData.length} nuevos / ${
+          data.length - filteredData.length
+        } duplicados`
+      );
+    }
+
+    // Procesar registros individualmente sobre los nuevos
+    const result = await this.processRecordsIndividually(
+      filteredData,
+      fileName
+    );
 
     console.log(`\n📊 Resumen del procesamiento:`);
     console.log(`   ✅ Registros exitosos: ${result.successCount}`);
@@ -237,7 +269,7 @@ export class ExcelProcessor {
     }
 
     // Mover archivo original
-    if (result.successCount > 0) {
+    if (result.successCount > 0 || filteredData.length === 0) {
       await this.fileProcessor.moveToProcessed(filePath, fileName);
     } else if (result.successCount === 0 && result.failedRecords.length > 0) {
       await this.fileProcessor.moveToError(filePath, fileName);
@@ -276,6 +308,11 @@ export class ExcelProcessor {
         if (response.status === 200) {
           successCount++;
 
+          // Registrar ID como procesado en SQLite
+          if (licitacionData.licitacion_id) {
+            await this.db.addLicitacionId(licitacionData.licitacion_id);
+          }
+
           // Mostrar progreso cada 100 registros
           if (successCount % 100 === 0 || i === data.length - 1) {
             const progress = (((i + 1) / data.length) * 100).toFixed(1);
@@ -305,14 +342,47 @@ export class ExcelProcessor {
         }
       } catch (error: any) {
         // Error de red, timeout, etc.
+        const licitacionData = this.transformer.mapToLicitacionApiData(
+          row,
+          fileName
+        );
+
+        // Si la API devuelve 400 y el body indica duplicado, registrar el ID en SQLite
+        const statusCode = error.response?.status;
+        const responseData = error.response?.data;
+        if (
+          statusCode === 400 &&
+          responseData &&
+          (responseData.licitacion_id ||
+            responseData.error ||
+            responseData.message)
+        ) {
+          const responseId =
+            responseData.licitacion_id || licitacionData.licitacion_id;
+          const errorText = `${responseData.error || ''} ${
+            responseData.message || ''
+          }`.toLowerCase();
+          // Guardar si claramente es un duplicado en la API
+          if (
+            responseId &&
+            (errorText.includes('ya existe') || errorText.includes('duplic'))
+          ) {
+            await this.db.addLicitacionId(responseId);
+            this.logger.info(
+              'ID registrado en SQLite por respuesta 400 (duplicado en API)',
+              {
+                licitacion_id: responseId,
+                statusCode,
+              }
+            );
+          }
+        }
+
         const failedRecord: FailedRecord = {
           originalRow: row,
-          licitacionData: this.transformer.mapToLicitacionApiData(
-            row,
-            fileName
-          ),
+          licitacionData,
           error: error.message || 'Error de conexión',
-          statusCode: error.response?.status,
+          statusCode,
           rowIndex: i,
         };
         failedRecords.push(failedRecord);

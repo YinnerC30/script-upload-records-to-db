@@ -11,6 +11,7 @@ vi.mock('../../config/config', () => ({
       excel: './excel-files',
       processed: './processed-files',
       error: './error-files',
+      sqliteDbPath: './processed-db/processed_ids.db',
     },
     processing: {
       batchSize: 100,
@@ -39,6 +40,7 @@ describe('CommandHandler', () => {
           excel: './excel-files',
           processed: './processed-files',
           error: './error-files',
+          sqliteDbPath: './processed-db/processed_ids.db',
         },
         api: {
           baseURL: 'https://api.example.com',
@@ -121,7 +123,7 @@ describe('CommandHandler', () => {
       commandHandler.showVersion();
 
       expect(consoleSpy).toHaveBeenCalledTimes(1);
-      expect(consoleSpy).toHaveBeenCalledWith('Excel Processor v1.0.1');
+      expect(consoleSpy).toHaveBeenCalledWith('Excel Processor v1.1.0');
     });
 
     it('should use the version from package.json', () => {
@@ -129,7 +131,7 @@ describe('CommandHandler', () => {
       // El mock ya está configurado en el nivel superior
       commandHandler.showVersion();
 
-      expect(consoleSpy).toHaveBeenCalledWith('Excel Processor v1.0.1');
+      expect(consoleSpy).toHaveBeenCalledWith('Excel Processor v1.1.0');
     });
   });
 
@@ -137,7 +139,7 @@ describe('CommandHandler', () => {
     it('should display current configuration when called', () => {
       commandHandler.showConfig();
 
-      expect(consoleSpy).toHaveBeenCalledTimes(7); // 7 líneas de configuración (incluyendo el título)
+      expect(consoleSpy).toHaveBeenCalledTimes(8); // 8 líneas de configuración (incluyendo el título)
 
       // Verificar que se muestran todas las secciones de configuración
       expect(consoleSpy).toHaveBeenCalledWith('📋 Configuración actual:');
@@ -153,9 +155,11 @@ describe('CommandHandler', () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         '  📁 Directorio errores: ./error-files'
       );
-
       expect(consoleSpy).toHaveBeenCalledWith(
         '  📄 Archivo de logs: ./logs/app.log'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '  🗄️  Base de datos SQLite: ./processed-db/processed_ids.db'
       );
       expect(consoleSpy).toHaveBeenCalledWith(
         '  📊 Nivel de logs: debug (siempre máximo detalle)'
@@ -172,9 +176,11 @@ describe('CommandHandler', () => {
       expect(calls[2]).toBe('  📁 Directorio Excel: ./excel-files');
       expect(calls[3]).toBe('  📁 Directorio procesados: ./processed-files');
       expect(calls[4]).toBe('  📁 Directorio errores: ./error-files');
-
       expect(calls[5]).toBe('  📄 Archivo de logs: ./logs/app.log');
       expect(calls[6]).toBe(
+        '  🗄️  Base de datos SQLite: ./processed-db/processed_ids.db'
+      );
+      expect(calls[7]).toBe(
         '  📊 Nivel de logs: debug (siempre máximo detalle)'
       );
     });
@@ -197,9 +203,11 @@ describe('CommandHandler', () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         '  📁 Directorio errores: ./error-files'
       );
-
       expect(consoleSpy).toHaveBeenCalledWith(
         '  📄 Archivo de logs: ./logs/app.log'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '  🗄️  Base de datos SQLite: ./processed-db/processed_ids.db'
       );
       expect(consoleSpy).toHaveBeenCalledWith(
         '  📊 Nivel de logs: debug (siempre máximo detalle)'

@@ -109,7 +109,7 @@ CONFIG_FILE="$INSTALL_DIR/.env"
 if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
     sudo tee "$CONFIG_FILE" > /dev/null << EOF
 # Configuración de API REST
-API_BASE_URL=http://localhost:3000/api/up_compra.php
+API_BASE_URL=http://localhost:3000
 API_KEY=test-key
 API_TIMEOUT=60000
 
@@ -119,16 +119,26 @@ EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
+# Configuración de Base de Datos SQLite
+SQLITE_DB_PATH=./processed-db/processed_ids.db
+
 # Configuración de Logs
 
 LOG_FILE=./logs/app.log
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
+
+
+# Configuración de Limpieza Automática de Consola
+# Número máximo de logs antes de limpiar la terminal
+CONSOLE_CLEAN_MAX_LOGS=100
+# Intervalo en milisegundos para limpieza automática por tiempo
+CONSOLE_CLEAN_INTERVAL=30000
 EOF
 else
     cat > "$CONFIG_FILE" << EOF
 # Configuración de API REST
-API_BASE_URL=http://localhost:3000/api/up_compra.php
+API_BASE_URL=http://localhost:3000
 API_KEY=test-key
 API_TIMEOUT=60000
 
@@ -138,11 +148,21 @@ EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
+# Configuración de Base de Datos SQLite
+SQLITE_DB_PATH=./processed-db/processed_ids.db
+
 # Configuración de Logs
 
 LOG_FILE=./logs/app.log
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
+
+
+# Configuración de Limpieza Automática de Consola
+# Número máximo de logs antes de limpiar la terminal
+CONSOLE_CLEAN_MAX_LOGS=100
+# Intervalo en milisegundos para limpieza automática por tiempo
+CONSOLE_CLEAN_INTERVAL=30000
 EOF
 fi
 
@@ -206,14 +226,9 @@ else
     echo "  $EXECUTABLE_NAME --excel-dir /path/to/excel/files"
 fi
 echo ""
-print_info "⏰ Para programar ejecución automática:"
-echo "  # Usar el script de programación incluido:"
-echo "  ./setup-scheduler.sh -d          # Ejecutar diariamente a las 2:00 AM"
-echo "  ./setup-scheduler.sh -w          # Ejecutar semanalmente los domingos"
-echo "  ./setup-scheduler.sh -c          # Configurar programación personalizada"
-echo ""
 print_info "📁 Directorios que se crearán automáticamente:"
 echo "  ./excel-files/      # Archivos Excel a procesar"
 echo "  ./processed-files/  # Archivos procesados exitosamente"
+echo "  ./processed-db      # Ubicación de base de datos sqlite"
 echo "  ./error-files/      # Archivos que generaron errores"
 echo "  ./logs/             # Archivos de logs"
