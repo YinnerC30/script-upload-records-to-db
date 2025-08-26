@@ -264,7 +264,7 @@ export class ExcelProcessor {
     }
 
     // Mover archivo original
-    if (result.successCount > 0) {
+    if (result.successCount > 0 || filteredData.length === 0) {
       await this.fileProcessor.moveToProcessed(filePath, fileName);
     } else if (result.successCount === 0 && result.failedRecords.length > 0) {
       await this.fileProcessor.moveToError(filePath, fileName);
