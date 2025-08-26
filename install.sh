@@ -109,7 +109,7 @@ CONFIG_FILE="$INSTALL_DIR/.env"
 if [ "$INSTALL_DIR" = "/usr/local/bin" ] || [ "$INSTALL_DIR" = "/usr/bin" ]; then
     sudo tee "$CONFIG_FILE" > /dev/null << EOF
 # Configuración de API REST
-API_BASE_URL=http://localhost:3000/api/up_compra.php
+API_BASE_URL=http://localhost:3000
 API_KEY=test-key
 API_TIMEOUT=60000
 
@@ -124,11 +124,18 @@ ERROR_DIRECTORY=./error-files
 LOG_FILE=./logs/app.log
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
+
+
+# Configuración de Limpieza Automática de Consola
+# Número máximo de logs antes de limpiar la terminal
+CONSOLE_CLEAN_MAX_LOGS=100
+# Intervalo en milisegundos para limpieza automática por tiempo
+CONSOLE_CLEAN_INTERVAL=30000
 EOF
 else
     cat > "$CONFIG_FILE" << EOF
 # Configuración de API REST
-API_BASE_URL=http://localhost:3000/api/up_compra.php
+API_BASE_URL=http://localhost:3000
 API_KEY=test-key
 API_TIMEOUT=60000
 
@@ -143,6 +150,13 @@ ERROR_DIRECTORY=./error-files
 LOG_FILE=./logs/app.log
 LOG_MAX_SIZE=5242880
 LOG_MAX_FILES=5
+
+
+# Configuración de Limpieza Automática de Consola
+# Número máximo de logs antes de limpiar la terminal
+CONSOLE_CLEAN_MAX_LOGS=100
+# Intervalo en milisegundos para limpieza automática por tiempo
+CONSOLE_CLEAN_INTERVAL=30000
 EOF
 fi
 
