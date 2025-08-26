@@ -226,12 +226,6 @@ else
     echo "  $EXECUTABLE_NAME --excel-dir /path/to/excel/files"
 fi
 echo ""
-print_info "⏰ Para programar ejecución automática:"
-echo "  # Usar el script de programación incluido:"
-echo "  ./setup-scheduler.sh -d          # Ejecutar diariamente a las 2:00 AM"
-echo "  ./setup-scheduler.sh -w          # Ejecutar semanalmente los domingos"
-echo "  ./setup-scheduler.sh -c          # Configurar programación personalizada"
-echo ""
 print_info "📁 Directorios que se crearán automáticamente:"
 echo "  ./excel-files/      # Archivos Excel a procesar"
 echo "  ./processed-files/  # Archivos procesados exitosamente"

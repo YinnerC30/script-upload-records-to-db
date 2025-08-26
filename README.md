@@ -169,21 +169,7 @@ sudo ./bin/script-upload-records-to-db --config               # Si instalado glo
 ~/bin/excel-processor run
 ```
 
-### ⏰ Programación Automática
-
-Para ejecutar el programa automáticamente en horarios específicos:
-
-```bash
-# Usar el script de programación (recomendado)
-./setup-scheduler.sh
-
-# Opciones disponibles:
-./setup-scheduler.sh -d          # Ejecutar diariamente a las 2:00 AM
-./setup-scheduler.sh -w          # Ejecutar semanalmente los domingos
-./setup-scheduler.sh -c          # Configurar programación personalizada
-./setup-scheduler.sh -r          # Remover programación existente
-./setup-scheduler.sh -s          # Ver programación actual
-```
+````
 
 ### 🧹 Limpieza Automática de Consola
 
@@ -204,7 +190,7 @@ CONSOLE_CLEAN_MAX_LOGS=100
 
 # Intervalo en milisegundos para limpieza automática por tiempo
 CONSOLE_CLEAN_INTERVAL=30000
-```
+````
 
 #### Uso Programático
 
@@ -263,34 +249,6 @@ sudo ./uninstall.sh
 ./uninstall.sh --help            # Mostrar ayuda
 ./uninstall.sh -d <directorio>   # Especificar directorio de instalación
 ./uninstall.sh --force           # Forzar desinstalación sin confirmación
-```
-
-#### `setup-scheduler.sh` - Script de Programación
-
-```bash
-# Configurar ejecución automática
-./setup-scheduler.sh
-
-# Opciones disponibles:
-./setup-scheduler.sh -d          # Programar ejecución diaria
-./setup-scheduler.sh -w          # Programar ejecución semanal
-./setup-scheduler.sh -c          # Configuración personalizada
-./setup-scheduler.sh -r          # Remover programación
-./setup-scheduler.sh -s          # Ver programación actual
-./setup-scheduler.sh --help      # Mostrar ayuda completa
-```
-
-**Ejemplos de programación personalizada:**
-
-```bash
-# Ejecutar cada 6 horas
-0 */6 * * * excel-processor
-
-# Ejecutar solo días laborables a las 9:00 AM
-0 9 * * 1-5 excel-processor
-
-# Ejecutar los fines de semana a las 3:00 PM
-0 15 * * 6,0 excel-processor
 ```
 
 ## 📊 Estructura de Datos
@@ -734,7 +692,6 @@ script-upload-records-to-db/
 ├── error-files/               # Archivos con errores
 ├── install.sh                 # Script de instalación
 ├── uninstall.sh               # Script de desinstalación
-├── setup-scheduler.sh         # Script de programación automática
 ├── docker-compose.yml         # Configuración de Docker para MySQL
 ├── package.json
 ├── tsconfig.json
