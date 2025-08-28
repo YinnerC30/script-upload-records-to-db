@@ -78,9 +78,7 @@ export class DatabaseService {
   private persistSync(): void {
     try {
       const payload = {
-        version: 1,
         records: Array.from(this.processedIndex).map((licitacion_id) => ({
-          id: uuidv4(),
           licitacion_id,
           created_at: new Date().toISOString(),
         })),
