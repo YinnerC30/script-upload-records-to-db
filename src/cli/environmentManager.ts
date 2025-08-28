@@ -95,8 +95,8 @@ EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
-# Configuración de Base de Datos SQLite
-SQLITE_DB_PATH=./processed-db/processed_ids.db
+# Configuración de almacenamiento JSON de IDs procesados
+PROCESSED_IDS_PATH=./processed-db/processed_ids.json
 
 # Configuración de Logs Mejorada
 LOG_FILE=./logs/app.log

@@ -22,8 +22,7 @@
       "node_modules/axios/**/*",
       "node_modules/follow-redirects/**/*",
       "node_modules/proxy-from-env/**/*",
-      "node_modules/uuid/**/*",
-      "node_modules/sqlite3/**/*"
+      "node_modules/uuid/**/*"
     ],
     "scripts": [
       "node_modules/xlsx/**/*.js",
@@ -31,8 +30,7 @@
       "node_modules/mysql2/**/*.js",
       "node_modules/reflect-metadata/**/*.js",
       "node_modules/axios/**/*.js",
-      "node_modules/follow-redirects/**/*.js",
-      "node_modules/sqlite3/**/*.js"
+      "node_modules/follow-redirects/**/*.js"
     ],
     "ignore": [
       "node_modules/typeorm/browser/**/*",
@@ -94,7 +92,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@types/sqlite3": "^3.1.11",
     "@types/uuid": "^10.0.0",
     "axios": "^1.6.7",
     "class-transformer": "^0.5.1",
@@ -102,7 +99,6 @@
     "dotenv": "^16.4.5",
     "mysql2": "^3.9.2",
     "reflect-metadata": "^0.2.1",
-    "sqlite3": "^5.1.7",
     "typeorm": "^0.3.20",
     "uuid": "^11.1.0",
     "winston": "^3.13.0",

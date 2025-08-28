@@ -79,7 +79,7 @@ describe('ExcelProcessor', () => {
     };
     (ApiService as any).mockImplementation(() => mockApiService);
 
-    // Mock de DatabaseService (SQLite)
+    // Mock de DatabaseService (JSON store)
     mockDbService = {
       hasLicitacionId: vi.fn().mockResolvedValue(false),
       addLicitacionId: vi.fn().mockResolvedValue(undefined),
@@ -590,8 +590,8 @@ describe('ExcelProcessor', () => {
   });
 
   // Nuevos casos de prueba relacionados con SQLite
-  describe('SQLite integration behaviors', () => {
-    it('should filter out records already present in SQLite', async () => {
+  describe('JSON store integration behaviors', () => {
+    it('should filter out records already present in JSON store', async () => {
       const mockFilePath = './test-excel-files/test.xlsx';
       const mockFileBuffer = Buffer.from('test');
       const mockRawData = [
@@ -623,7 +623,7 @@ describe('ExcelProcessor', () => {
         warnings: [],
       });
 
-      // Simular que '222' ya existe en SQLite
+      // Simular que '222' ya existe en el JSON store
       mockDbService.hasLicitacionId
         .mockReturnValueOnce(false)
         .mockReturnValueOnce(true);

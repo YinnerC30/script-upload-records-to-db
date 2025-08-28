@@ -28,8 +28,8 @@ Opciones de configuración de directorios:
 Opciones de configuración de logs:
   --log-file <path>             Configurar archivo de logs
 
-Opciones de configuración de base de datos SQLite:
-  --sqlite-db-path <path>        Configurar ruta de la base de datos SQLite
+Opciones de configuración de almacenamiento JSON de IDs:
+  --processed-ids-path <path>    Configurar ruta del archivo JSON de IDs procesados
 
 Ejemplos:
   sudo excel-processor run                              # Ejecutar procesamiento
@@ -61,7 +61,9 @@ Nota: Las opciones de configuración modifican el archivo .env permanentemente.
     console.log(`  📁 Directorio procesados: ${config.directories.processed}`);
     console.log(`  📁 Directorio errores: ${config.directories.error}`);
     console.log(`  📄 Archivo de logs: ${config.logging.file}`);
-    console.log(`  🗄️  Base de datos SQLite: ${config.directories.sqliteDbPath}`);
+    console.log(
+      `  🗄️  Almacenamiento JSON de IDs: ${config.directories.processedIdsPath}`
+    );
     console.log(`  📊 Nivel de logs: debug (siempre máximo detalle)`);
   }
 }

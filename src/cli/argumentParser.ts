@@ -144,17 +144,17 @@ export class ArgumentParser {
           }
           break;
 
-        // Opciones de base de datos SQLite
-        case '--sqlite-db-path':
+        // Opciones de almacenamiento JSON de IDs procesados
+        case '--processed-ids-path':
           if (i + 1 < args.length) {
             const value = args[++i];
             if (value) {
-              result.envUpdates['SQLITE_DB_PATH'] = value;
+              result.envUpdates['PROCESSED_IDS_PATH'] = value;
             } else {
-              this.handleError('--sqlite-db-path requiere un valor');
+              this.handleError('--processed-ids-path requiere un valor');
             }
           } else {
-            this.handleError('--sqlite-db-path requiere un valor');
+            this.handleError('--processed-ids-path requiere un valor');
           }
           break;
 

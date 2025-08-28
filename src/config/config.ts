@@ -50,10 +50,10 @@ export const config = {
     processed: getEnvVar('PROCESSED_DIRECTORY', './processed-files'),
     error: getEnvVar('ERROR_DIRECTORY', './error-files'),
     logs: getEnvVar('LOG_FILE', './logs/app.log'),
-    // Ruta de la base de datos SQLite para tracking de IDs procesados
-    sqliteDbPath: getEnvVar(
-      'SQLITE_DB_PATH',
-      './processed-db/processed_ids.db'
+    // Ruta del archivo JSON para tracking de IDs procesados
+    processedIdsPath: getEnvVar(
+      'PROCESSED_IDS_PATH',
+      './processed-db/processed_ids.json'
     ),
   },
 

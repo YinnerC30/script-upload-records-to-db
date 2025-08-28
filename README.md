@@ -66,8 +66,8 @@ EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
-# Configuración de Base de Datos SQLite
-SQLITE_DB_PATH=./processed-db/processed_ids.db
+# Configuración de almacenamiento JSON de IDs procesados
+PROCESSED_IDS_PATH=./processed-db/processed_ids.json
 
 # Configuración de Logs Mejorada
 LOG_FILE=./logs/app.log
@@ -148,8 +148,8 @@ sudo ./bin/script-upload-records-to-db --config               # Si instalado glo
 # Configurar directorios (solo aplica cambios)
 ./bin/script-upload-records-to-db --excel-dir ./my-excel-files --processed-dir ./my-processed-files
 
-# Configurar base de datos SQLite (solo aplica cambios)
-./bin/script-upload-records-to-db --sqlite-db-path ./custom-db/tracking.db
+# Configurar almacenamiento JSON de IDs (solo aplica cambios)
+./bin/script-upload-records-to-db --processed-ids-path ./processed-db/processed_ids.json
 
 # Validar sin enviar datos (ejecuta en modo validación)
 ./bin/script-upload-records-to-db run --dry-run
@@ -159,7 +159,7 @@ sudo ./bin/script-upload-records-to-db --config               # Si instalado glo
   --api-url https://api.example.com \
   --api-key secret123 \
   --excel-dir ./excel-files \
-  --sqlite-db-path ./processed-db/processed_ids.db \
+  --processed-ids-path ./processed-db/processed_ids.json \
   --log-level info
 ./bin/script-upload-records-to-db run
 

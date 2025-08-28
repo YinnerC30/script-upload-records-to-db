@@ -11,7 +11,7 @@ vi.mock('../../config/config', () => ({
       excel: './excel-files',
       processed: './processed-files',
       error: './error-files',
-      sqliteDbPath: './processed-db/processed_ids.db',
+      processedIdsPath: './processed-db/processed_ids.json',
     },
     processing: {
       batchSize: 100,
@@ -40,7 +40,7 @@ describe('CommandHandler', () => {
           excel: './excel-files',
           processed: './processed-files',
           error: './error-files',
-          sqliteDbPath: './processed-db/processed_ids.db',
+          processedIdsPath: './processed-db/processed_ids.json',
         },
         api: {
           baseURL: 'https://api.example.com',
@@ -159,7 +159,7 @@ describe('CommandHandler', () => {
         '  📄 Archivo de logs: ./logs/app.log'
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        '  🗄️  Base de datos SQLite: ./processed-db/processed_ids.db'
+        '  🗄️  Almacenamiento JSON de IDs: ./processed-db/processed_ids.json'
       );
       expect(consoleSpy).toHaveBeenCalledWith(
         '  📊 Nivel de logs: debug (siempre máximo detalle)'
@@ -178,7 +178,7 @@ describe('CommandHandler', () => {
       expect(calls[4]).toBe('  📁 Directorio errores: ./error-files');
       expect(calls[5]).toBe('  📄 Archivo de logs: ./logs/app.log');
       expect(calls[6]).toBe(
-        '  🗄️  Base de datos SQLite: ./processed-db/processed_ids.db'
+        '  🗄️  Almacenamiento JSON de IDs: ./processed-db/processed_ids.json'
       );
       expect(calls[7]).toBe(
         '  📊 Nivel de logs: debug (siempre máximo detalle)'
@@ -207,7 +207,7 @@ describe('CommandHandler', () => {
         '  📄 Archivo de logs: ./logs/app.log'
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        '  🗄️  Base de datos SQLite: ./processed-db/processed_ids.db'
+        '  🗄️  Almacenamiento JSON de IDs: ./processed-db/processed_ids.json'
       );
       expect(consoleSpy).toHaveBeenCalledWith(
         '  📊 Nivel de logs: debug (siempre máximo detalle)'

@@ -236,7 +236,7 @@ export class ExcelProcessor {
       }
       const exists = await this.db.hasLicitacionId(id);
       if (exists) {
-        this.logger.debug('Registro omitido por duplicado (SQLite)', {
+        this.logger.debug('Registro omitido por duplicado (JSON store)', {
           licitacion_id: id,
         });
       } else {
@@ -246,7 +246,7 @@ export class ExcelProcessor {
 
     if (filteredData.length !== data.length) {
       console.log(
-        `🔎 Filtrado por SQLite: ${filteredData.length} nuevos / ${
+        `🔎 Filtrado por JSON: ${filteredData.length} nuevos / ${
           data.length - filteredData.length
         } duplicados`
       );
@@ -308,7 +308,7 @@ export class ExcelProcessor {
         if (response.status === 200) {
           successCount++;
 
-          // Registrar ID como procesado en SQLite
+          // Registrar ID como procesado en almacenamiento JSON
           if (licitacionData.licitacion_id) {
             await this.db.addLicitacionId(licitacionData.licitacion_id);
           }
@@ -347,7 +347,7 @@ export class ExcelProcessor {
           fileName
         );
 
-        // Si la API devuelve 400 y el body indica duplicado, registrar el ID en SQLite
+        // Si la API devuelve 400 y el body indica duplicado, registrar el ID en JSON store
         const statusCode = error.response?.status;
         const responseData = error.response?.data;
         if (
@@ -369,7 +369,7 @@ export class ExcelProcessor {
           ) {
             await this.db.addLicitacionId(responseId);
             this.logger.info(
-              'ID registrado en SQLite por respuesta 400 (duplicado en API)',
+              'ID registrado en JSON por respuesta 400 (duplicado en API)',
               {
                 licitacion_id: responseId,
                 statusCode,
