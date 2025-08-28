@@ -119,8 +119,8 @@ EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
-# Configuración de Base de Datos SQLite
-SQLITE_DB_PATH=./processed-db/processed_ids.db
+# Configuración de almacenamiento JSON de IDs procesados
+PROCESSED_IDS_PATH=./processed-db/processed_ids.json
 
 # Configuración de Logs
 
@@ -148,8 +148,8 @@ EXCEL_DIRECTORY=./excel-files
 PROCESSED_DIRECTORY=./processed-files
 ERROR_DIRECTORY=./error-files
 
-# Configuración de Base de Datos SQLite
-SQLITE_DB_PATH=./processed-db/processed_ids.db
+# Configuración de almacenamiento JSON de IDs procesados
+PROCESSED_IDS_PATH=./processed-db/processed_ids.json
 
 # Configuración de Logs
 
@@ -229,6 +229,6 @@ echo ""
 print_info "📁 Directorios que se crearán automáticamente:"
 echo "  ./excel-files/      # Archivos Excel a procesar"
 echo "  ./processed-files/  # Archivos procesados exitosamente"
-echo "  ./processed-db      # Ubicación de base de datos sqlite"
+echo "  ./processed-db      # Ubicación del archivo JSON de IDs"
 echo "  ./error-files/      # Archivos que generaron errores"
 echo "  ./logs/             # Archivos de logs"

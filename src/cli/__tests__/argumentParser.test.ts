@@ -239,43 +239,43 @@ describe('ArgumentParser', () => {
       });
     });
 
-    describe('SQLite database options', () => {
-      it('should parse --sqlite-db-path correctly', () => {
+    describe('Processed IDs JSON options', () => {
+      it('should parse --processed-ids-path correctly', () => {
         process.argv = [
           'node',
           'script.js',
-          '--sqlite-db-path',
-          '/path/to/custom/database.db',
+          '--processed-ids-path',
+          '/path/to/processed/ids.json',
         ];
 
         const result = parser.parseArguments();
 
-        expect(result.envUpdates['SQLITE_DB_PATH']).toBe(
-          '/path/to/custom/database.db'
+        expect(result.envUpdates['PROCESSED_IDS_PATH']).toBe(
+          '/path/to/processed/ids.json'
         );
       });
 
-      it('should handle --sqlite-db-path without value', () => {
-        process.argv = ['node', 'script.js', '--sqlite-db-path'];
+      it('should handle --processed-ids-path without value', () => {
+        process.argv = ['node', 'script.js', '--processed-ids-path'];
 
         expect(() => parser.parseArguments()).toThrow('process.exit called');
         expect(mockConsoleError).toHaveBeenCalledWith(
-          '❌ Error: --sqlite-db-path requiere un valor'
+          '❌ Error: --processed-ids-path requiere un valor'
         );
       });
 
-      it('should handle --sqlite-db-path with relative path', () => {
+      it('should handle --processed-ids-path with relative path', () => {
         process.argv = [
           'node',
           'script.js',
-          '--sqlite-db-path',
-          './custom-db/tracking.db',
+          '--processed-ids-path',
+          './processed-db/processed_ids.json',
         ];
 
         const result = parser.parseArguments();
 
-        expect(result.envUpdates['SQLITE_DB_PATH']).toBe(
-          './custom-db/tracking.db'
+        expect(result.envUpdates['PROCESSED_IDS_PATH']).toBe(
+          './processed-db/processed_ids.json'
         );
       });
     });
@@ -315,8 +315,8 @@ describe('ArgumentParser', () => {
           'secret-key',
           '--excel-dir',
           '/path/to/excel',
-          '--sqlite-db-path',
-          '/path/to/custom/db.db',
+          '--processed-ids-path',
+          '/path/to/processed/ids.json',
         ];
 
         const result = parser.parseArguments();
@@ -327,7 +327,9 @@ describe('ArgumentParser', () => {
         );
         expect(result.envUpdates['API_KEY']).toBe('secret-key');
         expect(result.envUpdates['EXCEL_DIRECTORY']).toBe('/path/to/excel');
-        expect(result.envUpdates['SQLITE_DB_PATH']).toBe('/path/to/custom/db.db');
+        expect(result.envUpdates['PROCESSED_IDS_PATH']).toBe(
+          '/path/to/processed/ids.json'
+        );
       });
 
       it('should handle empty string values as invalid', () => {
