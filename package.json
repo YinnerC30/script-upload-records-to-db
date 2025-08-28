@@ -1,6 +1,6 @@
 {
   "name": "script-upload-records-to-db",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Script para procesar archivos Excel y subir registros a MySQL usando TypeORM",
   "main": "dist/index.js",
@@ -12,9 +12,7 @@
     "outputPath": "bin",
     "assets": [
       "node_modules/xlsx/**/*",
-      "node_modules/typeorm/**/*",
       "node_modules/reflect-metadata/**/*",
-      "node_modules/mysql2/**/*",
       "node_modules/winston/**/*",
       "node_modules/dotenv/**/*",
       "node_modules/class-transformer/**/*",
@@ -27,7 +25,6 @@
     "scripts": [
       "node_modules/xlsx/**/*.js",
       "node_modules/typeorm/**/*.js",
-      "node_modules/mysql2/**/*.js",
       "node_modules/reflect-metadata/**/*.js",
       "node_modules/axios/**/*.js",
       "node_modules/follow-redirects/**/*.js"
@@ -97,9 +94,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "dotenv": "^16.4.5",
-    "mysql2": "^3.9.2",
     "reflect-metadata": "^0.2.1",
-    "typeorm": "^0.3.20",
     "uuid": "^11.1.0",
     "winston": "^3.13.0",
     "xlsx": "^0.18.5"

@@ -123,7 +123,7 @@ describe('CommandHandler', () => {
       commandHandler.showVersion();
 
       expect(consoleSpy).toHaveBeenCalledTimes(1);
-      expect(consoleSpy).toHaveBeenCalledWith('Excel Processor v1.1.0');
+      expect(consoleSpy).toHaveBeenCalledWith('Excel Processor v1.2.0');
     });
 
     it('should use the version from package.json', () => {
@@ -131,7 +131,7 @@ describe('CommandHandler', () => {
       // El mock ya está configurado en el nivel superior
       commandHandler.showVersion();
 
-      expect(consoleSpy).toHaveBeenCalledWith('Excel Processor v1.1.0');
+      expect(consoleSpy).toHaveBeenCalledWith('Excel Processor v1.2.0');
     });
   });
 
