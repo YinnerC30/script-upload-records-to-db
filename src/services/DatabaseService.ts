@@ -99,68 +99,56 @@ export class DatabaseService {
     }
   }
 
-  hasLicitacionId(licitacionId: string): Promise<boolean> {
-    return Promise.resolve(this.processedIndex.has(licitacionId));
+  async hasLicitacionId(licitacionId: string): Promise<boolean> {
+    return this.processedIndex.has(licitacionId);
   }
 
-  addLicitacionId(licitacionId: string): Promise<void> {
-    return new Promise((resolve) => {
-      try {
-        if (!licitacionId) return resolve();
-        if (!this.processedIndex.has(licitacionId)) {
-          this.processedIndex.add(licitacionId);
-          this.isDirty = true;
-          this.persistSync();
-        }
-        resolve();
-      } catch (error: any) {
-        this.logger.error('Error insertando licitacion_id', {
-          licitacion_id: licitacionId,
-          error: error.message,
-        });
-        resolve();
+  async addLicitacionId(licitacionId: string): Promise<void> {
+    try {
+      if (!licitacionId) return;
+      if (!this.processedIndex.has(licitacionId)) {
+        this.processedIndex.add(licitacionId);
+        this.isDirty = true;
+        this.persistSync();
       }
-    });
+    } catch (error: any) {
+      this.logger.error('Error insertando licitacion_id', {
+        licitacion_id: licitacionId,
+        error: error.message,
+      });
+    }
   }
 
-  addManyLicitacionIds(licitacionIds: string[]): Promise<void> {
-    return new Promise((resolve) => {
-      try {
-        const filteredIds = licitacionIds.filter(Boolean);
-        if (filteredIds.length === 0) return resolve();
-        let added = false;
-        for (const id of filteredIds) {
-          if (!this.processedIndex.has(id)) {
-            this.processedIndex.add(id);
-            added = true;
-          }
+  async addManyLicitacionIds(licitacionIds: string[]): Promise<void> {
+    try {
+      const filteredIds = licitacionIds.filter(Boolean);
+      if (filteredIds.length === 0) return;
+      let added = false;
+      for (const id of filteredIds) {
+        if (!this.processedIndex.has(id)) {
+          this.processedIndex.add(id);
+          added = true;
         }
-        if (added) {
-          this.isDirty = true;
-          this.persistSync();
-        }
-        resolve();
-      } catch (error: any) {
-        this.logger.error('Error insertando múltiples licitacion_id', {
-          count: licitacionIds.length,
-          error: error.message,
-        });
-        resolve();
       }
-    });
+      if (added) {
+        this.isDirty = true;
+        this.persistSync();
+      }
+    } catch (error: any) {
+      this.logger.error('Error insertando múltiples licitacion_id', {
+        count: licitacionIds.length,
+        error: error.message,
+      });
+    }
   }
 
-  close(): Promise<void> {
-    return new Promise((resolve) => {
-      try {
-        if (this.isDirty) this.persistSync();
-        resolve();
-      } catch (error: any) {
-        this.logger.error('Error cerrando almacenamiento JSON', {
-          error: error.message,
-        });
-        resolve();
-      }
-    });
+  async close(): Promise<void> {
+    try {
+      if (this.isDirty) this.persistSync();
+    } catch (error: any) {
+      this.logger.error('Error cerrando almacenamiento JSON', {
+        error: error.message,
+      });
+    }
   }
 }
