@@ -17,6 +17,7 @@ export class DataTransformer {
       descripcion: row.descripcion || '',
       moneda: row.moneda || '',
       fecha_hora_cierre: fechaCierre || new Date(),
+      fecha_hora_publicacion: fechaPublicacion || new Date(),
       monto_disponible: this.parseNumber(row.montoDisponible),
     };
   }

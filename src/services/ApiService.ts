@@ -17,6 +17,7 @@ export interface LicitacionApiData {
   descripcion: string;
   moneda: string;
   fecha_hora_cierre: Date;
+  fecha_hora_publicacion: Date;
   monto_disponible: number;
 }
 
