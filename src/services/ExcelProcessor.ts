@@ -305,7 +305,7 @@ export class ExcelProcessor {
         );
 
         // Verificar si la respuesta es exitosa
-        if (response.status === 200) {
+        if (response.status === 200 || response.status === 201) {
           successCount++;
 
           // Registrar ID como procesado en almacenamiento JSON
