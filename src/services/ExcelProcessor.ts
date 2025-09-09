@@ -309,8 +309,8 @@ export class ExcelProcessor {
           successCount++;
 
           // Registrar ID como procesado en almacenamiento JSON
-          if (licitacionData.licitacion_id) {
-            await this.db.addLicitacionId(licitacionData.licitacion_id);
+          if (licitacionData.id_original) {
+            await this.db.addLicitacionId(licitacionData.id_original);
           }
 
           // Mostrar progreso cada 100 registros
@@ -326,7 +326,7 @@ export class ExcelProcessor {
           // Registro falló pero la API respondió
           const failedRecord: FailedRecord = {
             originalRow: row,
-            licitacionData,
+            licitacionData: licitacionData as any,
             error: `API respondió con código ${response.status}`,
             statusCode: response.status,
             rowIndex: i,
@@ -335,7 +335,7 @@ export class ExcelProcessor {
 
           this.logger.warn('Registro falló en API', {
             rowIndex: i + 1,
-            licitacion_id: licitacionData.licitacion_id,
+            licitacion_id: licitacionData.id_original,
             statusCode: response.status,
             error: `API respondió con código ${response.status}`,
           });
@@ -353,12 +353,12 @@ export class ExcelProcessor {
         if (
           statusCode === 400 &&
           responseData &&
-          (responseData.licitacion_id ||
+          (responseData.id_original ||
             responseData.error ||
             responseData.message)
         ) {
           const responseId =
-            responseData.licitacion_id || licitacionData.licitacion_id;
+            responseData.id_original || licitacionData.id_original;
           const errorText = `${responseData.error || ''} ${
             responseData.message || ''
           }`.toLowerCase();
@@ -380,10 +380,11 @@ export class ExcelProcessor {
 
         const failedRecord: FailedRecord = {
           originalRow: row,
-          licitacionData,
+
           error: error.message || 'Error de conexión',
           statusCode,
           rowIndex: i,
+          licitacionData: licitacionData as any,
         };
         failedRecords.push(failedRecord);
 

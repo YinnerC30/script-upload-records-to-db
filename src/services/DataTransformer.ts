@@ -10,17 +10,14 @@ export class DataTransformer {
     const fechaCierre = this.parseDate(row.fechaCierre);
 
     return {
-      licitacion_id: row.idLicitacion || '',
+      id_original: row.idLicitacion || '',
       nombre: row.nombre || '',
-      fecha_publicacion: fechaPublicacion
-        ? this.formatDateForApi(fechaPublicacion)
-        : '',
-      fecha_cierre: fechaCierre ? this.formatDateForApi(fechaCierre) : '',
-      organismo: row.organismo || '',
-      unidad: row.unidad || '',
+      fecha_hora_ejecucion_cron: new Date(),
+      nombre_organismo: row.organismo || '',
+      descripcion: row.descripcion || '',
+      moneda: row.moneda || '',
+      fecha_hora_cierre: fechaCierre || new Date(),
       monto_disponible: this.parseNumber(row.montoDisponible),
-      moneda: row.moneda || 'CLP',
-      estado: row.estado || '',
     };
   }
 

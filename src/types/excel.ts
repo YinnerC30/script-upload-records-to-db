@@ -22,7 +22,7 @@ export interface FailedRecord {
 
 // Importar LicitacionApiData desde ApiService para evitar dependencias circulares
 export interface LicitacionApiData {
-  licitacion_id: string;
+  id_original: string;
   nombre: string;
   fecha_publicacion: string;
   fecha_cierre: string;
