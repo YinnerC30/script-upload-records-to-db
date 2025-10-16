@@ -130,7 +130,7 @@ export class ExcelProcessor {
 
       if (rawData.length === 0) {
         console.log('⚠️  El archivo no contiene datos válidos');
-        await this.fileProcessor.moveToError(filePath, fileName);
+        // await this.fileProcessor.moveToError(filePath, fileName);
         return { total: 0, successCount: 0, failedCount: 0 };
       }
 
@@ -145,7 +145,7 @@ export class ExcelProcessor {
         headerValidation.missingHeaders.forEach((header) =>
           console.log(`   - Falta: ${header}`)
         );
-        await this.fileProcessor.moveToError(filePath, fileName);
+        // await this.fileProcessor.moveToError(filePath, fileName);
         return { total: 0, successCount: 0, failedCount: 0 };
       }
 
@@ -214,7 +214,7 @@ export class ExcelProcessor {
         fileName,
         error: error instanceof Error ? error.message : String(error),
       });
-      await this.fileProcessor.moveToError(filePath, fileName);
+      // await this.fileProcessor.moveToError(filePath, fileName);
       throw error;
     }
   }
@@ -269,14 +269,14 @@ export class ExcelProcessor {
 
     // Crear archivo de registros fallidos si es necesario
     if (result.failedRecords.length > 0 && result.successCount > 0) {
-      await this.createFailedRecordsFile(result.failedRecords, fileName);
+      // await this.createFailedRecordsFile(result.failedRecords, fileName);
     }
 
     // Mover archivo original
     if (result.successCount > 0 || filteredData.length === 0) {
-      await this.fileProcessor.moveToProcessed(filePath, fileName);
+      // await this.fileProcessor.moveToProcessed(filePath, fileName);
     } else if (result.successCount === 0 && result.failedRecords.length > 0) {
-      await this.fileProcessor.moveToError(filePath, fileName);
+      // await this.fileProcessor.moveToError(filePath, fileName);
     }
     return result;
   }
