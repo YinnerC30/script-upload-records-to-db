@@ -186,11 +186,15 @@ export class ExcelProcessor {
       // Procesar datos
       if (this.dryRun) {
         console.log('🔍 Modo dry-run: Solo validación, no se enviarán datos');
-        console.log(`📊 Registros válidos: ${transformedData.length}`);
+        console.log(`📊 Registros válidos: ${dataValidation.validRowsCount}`);
+        console.log(
+          `📊 Registros inválidos: ${dataValidation.invalidRowsCount}`
+        );
         return {
-          total: transformedData.length,
-          successCount: transformedData.length,
-          failedCount: 0,
+          total:
+            dataValidation.validRowsCount + dataValidation.invalidRowsCount,
+          successCount: dataValidation.validRowsCount,
+          failedCount: dataValidation.invalidRowsCount,
         };
       } else {
         const dataResult = await this.processData(

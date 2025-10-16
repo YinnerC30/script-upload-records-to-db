@@ -199,12 +199,16 @@ export class ExcelValidator {
   /**
    * Valida un conjunto de datos
    */
-  validateData(data: ExcelRow[]): ValidationResult {
+  validateData(
+    data: ExcelRow[]
+  ): ValidationResult & { invalidRowsCount: number; validRowsCount: number } {
     if (!Array.isArray(data) || data.length === 0) {
       return {
         isValid: false,
         errors: ['Los datos deben ser un array no vacío'],
         warnings: [],
+        invalidRowsCount: 0,
+        validRowsCount: 0,
       };
     }
 
@@ -237,6 +241,8 @@ export class ExcelValidator {
       isValid: allErrors.length === 0,
       errors: allErrors,
       warnings: allWarnings,
+      invalidRowsCount: invalidRows,
+      validRowsCount: validRows,
     };
   }
 
