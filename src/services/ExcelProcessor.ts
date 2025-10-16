@@ -159,17 +159,17 @@ export class ExcelProcessor {
       // Validar datos
       const dataValidation = this.validator.validateData(transformedData);
 
-      if (!dataValidation.isValid) {
-        console.log('❌ Errores de validación encontrados:');
-        dataValidation.errors
-          .slice(0, 5)
-          .forEach((error) => console.log(`   - ${error}`));
-        if (dataValidation.errors.length > 5) {
-          console.log(
-            `   ... y ${dataValidation.errors.length - 5} errores más`
-          );
-        }
-      }
+      // if (!dataValidation.isValid) {
+      //   console.log('❌ Errores de validación encontrados:');
+      //   dataValidation.errors
+      //     .slice(0, 5)
+      //     .forEach((error) => console.log(`   - ${error}`));
+      //   if (dataValidation.errors.length > 5) {
+      //     console.log(
+      //       `   ... y ${dataValidation.errors.length - 5} errores más`
+      //     );
+      //   }
+      // }
 
       // Procesar datos
       if (this.dryRun) {

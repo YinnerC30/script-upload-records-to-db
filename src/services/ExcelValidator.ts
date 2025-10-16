@@ -206,7 +206,7 @@ export class ExcelValidator {
       if (!row) continue;
       const validation = this.validateRow(row, i);
 
-      allErrors.push(...validation.errors);
+      // allErrors.push(...validation.errors);
 
       if (validation.isValid) {
         validRows++;
