@@ -384,7 +384,7 @@ export class ExcelProcessor {
           licitacion_id: row.licitacion_id,
           error: error.message,
           statusCode: error.response?.status,
-          row: JSON.stringify(row),
+          row: row,
         });
       }
 
