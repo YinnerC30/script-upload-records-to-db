@@ -1,4 +1,4 @@
-import z from 'zod';
+import z, { ZodError } from 'zod';
 import { ExcelRow } from '../types/excel';
 
 export interface ValidationResult {
@@ -169,13 +169,10 @@ export class ExcelValidator {
     });
 
     try {
-      const validatedRow = rowSchema.parse(row);
+      rowSchema.parse(row);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        errors.push(...error.issues.map((err: any) => err.message));
-      } else {
-        errors.push(`Fila ${rowIndex + 1}: Error de validación inesperado`);
-      }
+      if (error instanceof ZodError)
+        errors.push(`Fila ${rowIndex + 1}: Error de validación de campos`);
     }
 
     return {
