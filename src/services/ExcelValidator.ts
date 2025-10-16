@@ -1,10 +1,9 @@
-import z, { ZodIssue } from 'zod';
+import z from 'zod';
 import { ExcelRow } from '../types/excel';
 
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
-  warnings: string[];
 }
 
 export interface HeaderValidationResult {
@@ -86,7 +85,6 @@ export class ExcelValidator {
    */
   validateRow(row: ExcelRow, rowIndex: number): ValidationResult {
     const errors: string[] = [];
-    const warnings: string[] = [];
 
     // Definir esquema Zod para validación de fila
     const rowSchema = z.object({
@@ -165,17 +163,8 @@ export class ExcelValidator {
         .min(1, `Fila ${rowIndex + 1}: Organismo es requerido`),
       unidad: z.string().min(1, `Fila ${rowIndex + 1}: Unidad es requerido`),
       moneda: z.string().min(1, `Fila ${rowIndex + 1}: Moneda es requerido`),
-      cotizaciones_enviadas: z
-        .number()
-        .min(
-          0,
-          `Fila ${
-            rowIndex + 1
-          }: Cotizaciones enviadas debe ser un número positivo`
-        ),
-      estado_convocatoria: z
-        .string()
-        .min(1, `Fila ${rowIndex + 1}: Estado de convocatoria es requerido`),
+      cotizaciones_enviadas: z.number().optional(),
+      estado_convocatoria: z.string().optional(),
       estado: z.string().min(1, `Fila ${rowIndex + 1}: Estado es requerido`),
     });
 
@@ -192,7 +181,6 @@ export class ExcelValidator {
     return {
       isValid: errors.length === 0,
       errors,
-      warnings,
     };
   }
 
@@ -206,14 +194,13 @@ export class ExcelValidator {
       return {
         isValid: false,
         errors: ['Los datos deben ser un array no vacío'],
-        warnings: [],
         invalidRowsCount: 0,
         validRowsCount: 0,
       };
     }
 
     const allErrors: string[] = [];
-    const allWarnings: string[] = [];
+
     let validRows = 0;
 
     for (let i = 0; i < data.length; i++) {
@@ -222,7 +209,6 @@ export class ExcelValidator {
       const validation = this.validateRow(row, i);
 
       allErrors.push(...validation.errors);
-      allWarnings.push(...validation.warnings);
 
       if (validation.isValid) {
         validRows++;
@@ -231,16 +217,10 @@ export class ExcelValidator {
 
     // Advertencia si hay muchas filas inválidas
     const invalidRows = data.length - validRows;
-    if (invalidRows > 0) {
-      allWarnings.push(
-        `${invalidRows} de ${data.length} filas tienen errores de validación`
-      );
-    }
 
     return {
       isValid: allErrors.length === 0,
       errors: allErrors,
-      warnings: allWarnings,
       invalidRowsCount: invalidRows,
       validRowsCount: validRows,
     };

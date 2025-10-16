@@ -171,18 +171,6 @@ export class ExcelProcessor {
         }
       }
 
-      if (dataValidation.warnings.length > 0) {
-        console.log('⚠️  Advertencias:');
-        dataValidation.warnings
-          .slice(0, 3)
-          .forEach((warning) => console.log(`   - ${warning}`));
-        if (dataValidation.warnings.length > 3) {
-          console.log(
-            `   ... y ${dataValidation.warnings.length - 3} advertencias más`
-          );
-        }
-      }
-
       // Procesar datos
       if (this.dryRun) {
         console.log('🔍 Modo dry-run: Solo validación, no se enviarán datos');
