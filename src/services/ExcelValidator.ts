@@ -87,11 +87,19 @@ export class ExcelValidator {
     // Definir esquema Zod para validación de fila
     const rowSchema = z.object({
       licitacion_id: z
-        .string()
+        .string({
+          message: `Fila ${rowIndex + 1}: ID de licitación es requerido`,
+        })
         .min(1, `Fila ${rowIndex + 1}: ID de licitación es requerido`),
-      nombre: z.string().min(1, `Fila ${rowIndex + 1}: Nombre es requerido`),
+      nombre: z
+        .string({
+          message: `Fila ${rowIndex + 1}: Nombre es requerido`,
+        })
+        .min(1, `Fila ${rowIndex + 1}: Nombre es requerido`),
       fecha_publicacion: z
-        .string()
+        .string({
+          message: `Fila ${rowIndex + 1}: Fecha de publicación es requerida`,
+        })
         .regex(
           /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/,
           `Fila ${
@@ -121,7 +129,9 @@ export class ExcelValidator {
           );
         }, `Fila ${rowIndex + 1}: Fecha de publicación no es una fecha válida`),
       fecha_cierre: z
-        .string()
+        .string({
+          message: `Fila ${rowIndex + 1}: Fecha de cierre es requerida`,
+        })
         .regex(
           /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/,
           `Fila ${
@@ -151,19 +161,39 @@ export class ExcelValidator {
           );
         }, `Fila ${rowIndex + 1}: Fecha de cierre no es una fecha válida`),
       monto_disponible: z
-        .number()
+        .number({
+          message: `Fila ${rowIndex + 1}: Monto disponible es requerido`,
+        })
         .min(
           0,
           `Fila ${rowIndex + 1}: Monto disponible debe ser un número positivo`
         ),
       organismo: z
-        .string()
+        .string({
+          message: `Fila ${rowIndex + 1}: Organismo es requerido`,
+        })
         .min(1, `Fila ${rowIndex + 1}: Organismo es requerido`),
-      unidad: z.string().min(1, `Fila ${rowIndex + 1}: Unidad es requerido`),
-      moneda: z.string().min(1, `Fila ${rowIndex + 1}: Moneda es requerido`),
+      unidad: z
+        .string({
+          message: `Fila ${rowIndex + 1}: Unidad es requerido`,
+        })
+        .min(1, `Fila ${rowIndex + 1}: Unidad es requerido`),
+      moneda: z
+        .string({
+          message: `Fila ${rowIndex + 1}: Moneda es requerido`,
+        })
+        .min(1, `Fila ${rowIndex + 1}: Moneda es requerido`),
       cotizaciones_enviadas: z.number().optional(),
-      estado_convocatoria: z.string().optional(),
-      estado: z.string().min(1, `Fila ${rowIndex + 1}: Estado es requerido`),
+      estado_convocatoria: z
+        .string({
+          message: `Fila ${rowIndex + 1}: Estado de convocatoria es requerido`,
+        })
+        .optional(),
+      estado: z
+        .string({
+          message: `Fila ${rowIndex + 1}: Estado es requerido`,
+        })
+        .min(1, `Fila ${rowIndex + 1}: Estado es requerido`),
     });
 
     rowSchema.safeParse(row);
