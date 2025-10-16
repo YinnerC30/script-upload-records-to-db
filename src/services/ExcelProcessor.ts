@@ -130,7 +130,7 @@ export class ExcelProcessor {
 
       if (rawData.length === 0) {
         console.log('⚠️  El archivo no contiene datos válidos');
-        // await this.fileProcessor.moveToError(filePath, fileName);
+        await this.fileProcessor.moveToError(filePath, fileName);
         return { total: 0, successCount: 0, failedCount: 0 };
       }
 
@@ -145,7 +145,7 @@ export class ExcelProcessor {
         headerValidation.missingHeaders.forEach((header) =>
           console.log(`   - Falta: ${header}`)
         );
-        // await this.fileProcessor.moveToError(filePath, fileName);
+        await this.fileProcessor.moveToError(filePath, fileName);
         return { total: 0, successCount: 0, failedCount: 0 };
       }
 
@@ -203,7 +203,7 @@ export class ExcelProcessor {
         fileName,
         error: error instanceof Error ? error.message : String(error),
       });
-      // await this.fileProcessor.moveToError(filePath, fileName);
+      await this.fileProcessor.moveToError(filePath, fileName);
       throw error;
     }
   }
@@ -258,14 +258,14 @@ export class ExcelProcessor {
 
     // Crear archivo de registros fallidos si es necesario
     if (result.failedRecords.length > 0 && result.successCount > 0) {
-      // await this.createFailedRecordsFile(result.failedRecords, fileName);
+      await this.createFailedRecordsFile(result.failedRecords, fileName);
     }
 
     // Mover archivo original
     if (result.successCount > 0 || filteredData.length === 0) {
-      // await this.fileProcessor.moveToProcessed(filePath, fileName);
+      await this.fileProcessor.moveToProcessed(filePath, fileName);
     } else if (result.successCount === 0 && result.failedRecords.length > 0) {
-      // await this.fileProcessor.moveToError(filePath, fileName);
+      await this.fileProcessor.moveToError(filePath, fileName);
     }
     return result;
   }
@@ -422,17 +422,17 @@ export class ExcelProcessor {
     const workbook = XLSX.utils.book_new();
     const worksheetData = failedRecords.map((record) => ({
       'Fila Original': record.rowIndex + 1,
-      'ID Licitación': record.originalRow.licitacion_id || '',
+      ID: record.originalRow.licitacion_id || '',
       Nombre: record.originalRow.nombre || '',
+      'Unidad de compra': record.originalRow.unidad || '',
       'Fecha de publicación': record.originalRow.fecha_publicacion || '',
       'Fecha de cierre': record.originalRow.fecha_cierre || '',
+      Estado: record.originalRow.estado || '',
+      'Cotizaciones enviadas': record.originalRow.cotizaciones_enviadas,
       Institución: record.originalRow.organismo || '',
-      Unidad: record.originalRow.unidad || '',
       'Presupuesto estimado': record.originalRow.monto_disponible || '',
       'Tipo Moneda': record.originalRow.moneda || '',
-      Estado: record.originalRow.estado || '',
-      'Código de Estado': record.statusCode || 'N/A',
-      'Cotizaciones enviadas': record.originalRow.cotizaciones_enviadas,
+      'Estado de Convocatoria': record.originalRow.estado_convocatoria || '',
       Error: record.error,
     }));
 
