@@ -252,9 +252,9 @@ export class ExcelProcessor {
     );
 
     console.log(`\n📊 Resumen del procesamiento:`);
+    console.log(`   📄 Total registros: ${data.length}`);
     console.log(`   ✅ Registros exitosos: ${result.successCount}`);
     console.log(`   ❌ Registros fallidos: ${result.failedRecords.length}`);
-    console.log(`   📄 Total procesados: ${data.length}`);
 
     // Crear archivo de registros fallidos si es necesario
     if (result.failedRecords.length > 0 && result.successCount > 0) {
