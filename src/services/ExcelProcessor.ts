@@ -178,13 +178,21 @@ export class ExcelProcessor {
           failedCount: dataValidation.invalidRowsCount,
         };
       } else {
+        if (dataValidation.invalidRowsCount > 0) {
+          this.logger.warn(
+            'Algunos registros no cumplieron con la validacioń',
+            {
+              invalidRows: dataValidation.invalidRows,
+            }
+          );
+        }
         const dataResult = await this.processData(
-          dataValidation.validRows,
+          transformedData,
           fileName,
           filePath
         );
         return {
-          total: dataValidation.validRowsCount,
+          total: transformedData.length,
           successCount: dataResult.successCount,
           failedCount: dataResult.failedRecords.length,
         };
