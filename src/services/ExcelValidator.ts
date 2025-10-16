@@ -171,8 +171,10 @@ export class ExcelValidator {
     try {
       rowSchema.parse(row);
     } catch (error) {
-      if (error instanceof ZodError)
+      if (error instanceof ZodError) {
+        console.log('🚀 ~ ExcelValidator ~ validateRow ~ error:', error);
         errors.push(`Fila ${rowIndex + 1}: Error de validación de campos`);
+      }
     }
 
     return {
