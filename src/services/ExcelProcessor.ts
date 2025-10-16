@@ -393,7 +393,7 @@ export class ExcelProcessor {
 
         this.logger.error('Error procesando registro individual', {
           rowIndex: i + 1,
-          licitacion_id: row.idLicitacion,
+          licitacion_id: row.licitacion_id,
           error: error.message,
           statusCode: error.response?.status,
         });
@@ -430,19 +430,20 @@ export class ExcelProcessor {
 
     // Preparar datos para el Excel
     const workbook = XLSX.utils.book_new();
-    const worksheetData = failedRecords.map((record, index) => ({
+    const worksheetData = failedRecords.map((record) => ({
       'Fila Original': record.rowIndex + 1,
-      'ID Licitación': record.originalRow.idLicitacion || '',
+      'ID Licitación': record.originalRow.licitacion_id || '',
       Nombre: record.originalRow.nombre || '',
-      'Fecha Publicación': record.originalRow.fechaPublicacion || '',
-      'Fecha Cierre': record.originalRow.fechaCierre || '',
-      Organismo: record.originalRow.organismo || '',
+      'Fecha de publicación': record.originalRow.fecha_publicacion || '',
+      'Fecha de cierre': record.originalRow.fecha_cierre || '',
+      Institución: record.originalRow.organismo || '',
       Unidad: record.originalRow.unidad || '',
-      'Monto Disponible': record.originalRow.montoDisponible || '',
-      Moneda: record.originalRow.moneda || '',
+      'Presupuesto estimado': record.originalRow.monto_disponible || '',
+      'Tipo Moneda': record.originalRow.moneda || '',
       Estado: record.originalRow.estado || '',
-      Error: record.error,
       'Código de Estado': record.statusCode || 'N/A',
+      'Cotizaciones enviadas': record.originalRow.cotizaciones_enviadas,
+      Error: record.error,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
