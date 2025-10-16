@@ -161,38 +161,31 @@ export class ExcelProcessor {
 
       if (!dataValidation.isValid) {
         console.log('❌ Errores de validación encontrados:');
-        dataValidation.errors
-          .slice(0, 5)
-          .forEach((error) => console.log(`   - ${error}`));
-        if (dataValidation.errors.length > 5) {
-          console.log(
-            `   ... y ${dataValidation.errors.length - 5} errores más`
-          );
-        }
-      }
-
-      if (dataValidation.warnings.length > 0) {
-        console.log('⚠️  Advertencias:');
-        dataValidation.warnings
-          .slice(0, 3)
-          .forEach((warning) => console.log(`   - ${warning}`));
-        if (dataValidation.warnings.length > 3) {
-          console.log(
-            `   ... y ${dataValidation.warnings.length - 3} advertencias más`
-          );
-        }
+        dataValidation.errors.forEach((error) => console.log(`   - ${error}`));
       }
 
       // Procesar datos
       if (this.dryRun) {
         console.log('🔍 Modo dry-run: Solo validación, no se enviarán datos');
-        console.log(`📊 Registros válidos: ${transformedData.length}`);
+        console.log(`📊 Registros válidos: ${dataValidation.validRowsCount}`);
+        console.log(
+          `📊 Registros inválidos: ${dataValidation.invalidRowsCount}`
+        );
         return {
-          total: transformedData.length,
-          successCount: transformedData.length,
-          failedCount: 0,
+          total:
+            dataValidation.validRowsCount + dataValidation.invalidRowsCount,
+          successCount: dataValidation.validRowsCount,
+          failedCount: dataValidation.invalidRowsCount,
         };
       } else {
+        if (dataValidation.invalidRowsCount > 0) {
+          this.logger.warn(
+            'Algunos registros no cumplieron con la validacioń',
+            {
+              invalidRows: dataValidation.invalidRows,
+            }
+          );
+        }
         const dataResult = await this.processData(
           transformedData,
           fileName,
@@ -229,7 +222,7 @@ export class ExcelProcessor {
     // Filtrar registros ya procesados por licitacion_id
     const filteredData: ExcelRow[] = [];
     for (const row of data) {
-      const id = row.idLicitacion;
+      const id = row['licitacion_id'];
       if (!id) {
         filteredData.push(row); // permitir que validaciones manejen casos sin ID
         continue;
@@ -259,9 +252,9 @@ export class ExcelProcessor {
     );
 
     console.log(`\n📊 Resumen del procesamiento:`);
+    console.log(`   📄 Total registros: ${data.length}`);
     console.log(`   ✅ Registros exitosos: ${result.successCount}`);
     console.log(`   ❌ Registros fallidos: ${result.failedRecords.length}`);
-    console.log(`   📄 Total procesados: ${data.length}`);
 
     // Crear archivo de registros fallidos si es necesario
     if (result.failedRecords.length > 0 && result.successCount > 0) {
@@ -389,9 +382,10 @@ export class ExcelProcessor {
 
         this.logger.error('Error procesando registro individual', {
           rowIndex: i + 1,
-          licitacion_id: row.idLicitacion,
+          licitacion_id: row.licitacion_id,
           error: error.message,
           statusCode: error.response?.status,
+          row: row,
         });
       }
 
@@ -426,19 +420,20 @@ export class ExcelProcessor {
 
     // Preparar datos para el Excel
     const workbook = XLSX.utils.book_new();
-    const worksheetData = failedRecords.map((record, index) => ({
+    const worksheetData = failedRecords.map((record) => ({
       'Fila Original': record.rowIndex + 1,
-      'ID Licitación': record.originalRow.idLicitacion || '',
+      ID: record.originalRow.licitacion_id || '',
       Nombre: record.originalRow.nombre || '',
-      'Fecha Publicación': record.originalRow.fechaPublicacion || '',
-      'Fecha Cierre': record.originalRow.fechaCierre || '',
-      Organismo: record.originalRow.organismo || '',
-      Unidad: record.originalRow.unidad || '',
-      'Monto Disponible': record.originalRow.montoDisponible || '',
-      Moneda: record.originalRow.moneda || '',
+      'Unidad de compra': record.originalRow.unidad || '',
+      'Fecha de publicación': record.originalRow.fecha_publicacion || '',
+      'Fecha de cierre': record.originalRow.fecha_cierre || '',
       Estado: record.originalRow.estado || '',
+      'Cotizaciones enviadas': record.originalRow.cotizaciones_enviadas,
+      Institución: record.originalRow.organismo || '',
+      'Presupuesto estimado': record.originalRow.monto_disponible || '',
+      'Tipo Moneda': record.originalRow.moneda || '',
+      'Estado de Convocatoria': record.originalRow.estado_convocatoria || '',
       Error: record.error,
-      'Código de Estado': record.statusCode || 'N/A',
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);

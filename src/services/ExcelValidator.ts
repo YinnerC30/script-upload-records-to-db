@@ -1,9 +1,9 @@
+import z, { ZodError } from 'zod';
 import { ExcelRow } from '../types/excel';
 
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
-  warnings: string[];
 }
 
 export interface HeaderValidationResult {
@@ -16,28 +16,31 @@ export interface HeaderValidationResult {
 export class ExcelValidator {
   // Mapeo de encabezados del Excel a campos del código (normalizados)
   private readonly HEADER_MAPPING: { [key: string]: string } = {
-    id: 'idLicitacion',
+    id: 'licitacion_id',
     nombre: 'nombre',
-    'fecha de publicacion': 'fechaPublicacion',
-    'fecha de cierre': 'fechaCierre',
-    organismo: 'organismo',
-    unidad: 'unidad',
-    'monto disponible': 'montoDisponible',
-    moneda: 'moneda',
+    'unidad de compra': 'unidad',
+    'fecha de publicacion': 'fecha_publicacion',
+    'fecha de cierre': 'fecha_cierre',
     estado: 'estado',
-    // Variaciones adicionales para mayor compatibilidad
-    id_licitacion: 'idLicitacion',
-    idlicitacion: 'idLicitacion',
-    fecha_publicacion: 'fechaPublicacion',
-    fechapublicacion: 'fechaPublicacion',
-    fecha_cierre: 'fechaCierre',
-    fechacierre: 'fechaCierre',
-    monto_disponible: 'montoDisponible',
-    montodisponible: 'montoDisponible',
+    'cotizaciones enviadas': 'cotizaciones_enviadas',
+    institucion: 'organismo',
+    'presupuesto estimado': 'monto_disponible',
+    'tipo moneda': 'moneda',
+    'estado de convocatoria': 'estado_convocatoria',
   };
 
   // Campos requeridos para una licitación válida
-  private readonly REQUIRED_FIELDS = ['idLicitacion', 'nombre'];
+  private readonly REQUIRED_FIELDS = [
+    'licitacion_id',
+    'nombre',
+    'fecha_publicacion',
+    'fecha_cierre',
+    'organismo',
+    'unidad',
+    'monto_disponible',
+    'moneda',
+    'estado',
+  ];
 
   /**
    * Valida los encabezados del archivo Excel
@@ -81,100 +84,181 @@ export class ExcelValidator {
    * Valida una fila de datos
    */
   validateRow(row: ExcelRow, rowIndex: number): ValidationResult {
-    const errors: string[] = [];
-    const warnings: string[] = [];
+    // Definir esquema Zod para validación de fila
+    const rowSchema = z.object({
+      licitacion_id: z
+        .string({
+          message: `Fila ${rowIndex + 1}: ID de licitación es requerido`,
+        })
+        .min(1, `Fila ${rowIndex + 1}: ID de licitación es requerido`),
+      nombre: z
+        .string({
+          message: `Fila ${rowIndex + 1}: Nombre es requerido`,
+        })
+        .min(1, `Fila ${rowIndex + 1}: Nombre es requerido`),
+      fecha_publicacion: z
+        .string({
+          message: `Fila ${rowIndex + 1}: Fecha de publicación es requerida`,
+        })
+        .regex(
+          /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/,
+          `Fila ${
+            rowIndex + 1
+          }: Fecha de publicación debe tener formato DD/MM/YYYY HH:MM`
+        )
+        .refine((dateStr) => {
+          const [datePart = '', timePart = ''] = dateStr.split(' ');
+          const [day = 0, month = 0, year = 0] = datePart
+            .split('/')
+            .map(Number);
+          const [hour = 0, minute = 0] = timePart.split(':').map(Number);
 
-    // Validar campos requeridos
-    if (!row.idLicitacion || row.idLicitacion.toString().trim() === '') {
-      errors.push(`Fila ${rowIndex + 1}: ID de licitación es requerido`);
-    }
+          // Validar rangos
+          if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900)
+            return false;
+          if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return false;
 
-    if (!row.nombre || row.nombre.toString().trim() === '') {
-      errors.push(`Fila ${rowIndex + 1}: Nombre es requerido`);
-    }
+          // Crear fecha y verificar que sea válida
+          const date = new Date(year, month - 1, day, hour, minute);
+          return (
+            date.getFullYear() === year &&
+            date.getMonth() === month - 1 &&
+            date.getDate() === day &&
+            date.getHours() === hour &&
+            date.getMinutes() === minute
+          );
+        }, `Fila ${rowIndex + 1}: Fecha de publicación no es una fecha válida`),
+      fecha_cierre: z
+        .string({
+          message: `Fila ${rowIndex + 1}: Fecha de cierre es requerida`,
+        })
+        .regex(
+          /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/,
+          `Fila ${
+            rowIndex + 1
+          }: Fecha de cierre debe tener formato DD/MM/YYYY HH:MM`
+        )
+        .refine((dateStr) => {
+          const [datePart = '', timePart = ''] = dateStr.split(' ');
+          const [day = 0, month = 0, year = 0] = datePart
+            .split('/')
+            .map(Number);
+          const [hour = 0, minute = 0] = timePart.split(':').map(Number);
 
-    // Validar formato de fechas
-    if (row.fechaPublicacion) {
-      const date = this.parseDate(row.fechaPublicacion);
-      if (!date || isNaN(date.getTime())) {
-        errors.push(`Fila ${rowIndex + 1}: Fecha de publicación inválida`);
-      }
-    }
+          // Validar rangos
+          if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900)
+            return false;
+          if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return false;
 
-    if (row.fechaCierre) {
-      const date = this.parseDate(row.fechaCierre);
-      if (!date || isNaN(date.getTime())) {
-        errors.push(`Fila ${rowIndex + 1}: Fecha de cierre inválida`);
-      }
-    }
-
-    // Validar monto disponible
-    if (row.montoDisponible !== undefined && row.montoDisponible !== null) {
-      const amount = this.parseNumber(row.montoDisponible);
-      if (isNaN(amount) || amount < 0) {
-        errors.push(
+          // Crear fecha y verificar que sea válida
+          const date = new Date(year, month - 1, day, hour, minute);
+          return (
+            date.getFullYear() === year &&
+            date.getMonth() === month - 1 &&
+            date.getDate() === day &&
+            date.getHours() === hour &&
+            date.getMinutes() === minute
+          );
+        }, `Fila ${rowIndex + 1}: Fecha de cierre no es una fecha válida`),
+      monto_disponible: z
+        .number({
+          message: `Fila ${rowIndex + 1}: Monto disponible es requerido`,
+        })
+        .min(
+          0,
           `Fila ${rowIndex + 1}: Monto disponible debe ser un número positivo`
-        );
-      }
-    }
+        ),
+      organismo: z
+        .string({
+          message: `Fila ${rowIndex + 1}: Organismo es requerido`,
+        })
+        .min(1, `Fila ${rowIndex + 1}: Organismo es requerido`),
+      unidad: z
+        .string({
+          message: `Fila ${rowIndex + 1}: Unidad es requerido`,
+        })
+        .min(1, `Fila ${rowIndex + 1}: Unidad es requerido`),
+      moneda: z
+        .string({
+          message: `Fila ${rowIndex + 1}: Moneda es requerido`,
+        })
+        .min(1, `Fila ${rowIndex + 1}: Moneda es requerido`),
+      cotizaciones_enviadas: z.number().optional(),
+      estado_convocatoria: z
+        .string({
+          message: `Fila ${rowIndex + 1}: Estado de convocatoria es requerido`,
+        })
+        .optional(),
+      estado: z
+        .string({
+          message: `Fila ${rowIndex + 1}: Estado es requerido`,
+        })
+        .min(1, `Fila ${rowIndex + 1}: Estado es requerido`),
+    });
 
-    // Advertencias para campos opcionales vacíos
-    if (!row.organismo || row.organismo.toString().trim() === '') {
-      warnings.push(`Fila ${rowIndex + 1}: Organismo está vacío`);
-    }
+    rowSchema.safeParse(row);
+    const result = rowSchema.safeParse(row);
 
-    if (!row.unidad || row.unidad.toString().trim() === '') {
-      warnings.push(`Fila ${rowIndex + 1}: Unidad está vacía`);
+    if (result.success) {
+      return {
+        isValid: true,
+        errors: [],
+      };
+    } else {
+      return {
+        isValid: false,
+        errors: result.error.issues.map((issue) => issue.message),
+      };
     }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-      warnings,
-    };
   }
 
   /**
    * Valida un conjunto de datos
    */
-  validateData(data: ExcelRow[]): ValidationResult {
+  validateData(data: ExcelRow[]): ValidationResult & {
+    invalidRowsCount: number;
+    validRowsCount: number;
+    validRows: ExcelRow[];
+    invalidRows: ExcelRow[];
+  } {
     if (!Array.isArray(data) || data.length === 0) {
       return {
         isValid: false,
         errors: ['Los datos deben ser un array no vacío'],
-        warnings: [],
+        invalidRowsCount: 0,
+        validRowsCount: 0,
+        validRows: [],
+        invalidRows: [],
       };
     }
 
+    // const validRows = [];
     const allErrors: string[] = [];
-    const allWarnings: string[] = [];
-    let validRows = 0;
+
+    let validRows: ExcelRow[] = [];
+    let invalidRows: ExcelRow[] = [];
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       if (!row) continue;
       const validation = this.validateRow(row, i);
 
-      allErrors.push(...validation.errors);
-      allWarnings.push(...validation.warnings);
-
       if (validation.isValid) {
-        validRows++;
+        validRows.push(row);
+      } else {
+        invalidRows.push(row);
       }
-    }
 
-    // Advertencia si hay muchas filas inválidas
-    const invalidRows = data.length - validRows;
-    if (invalidRows > 0) {
-      allWarnings.push(
-        `${invalidRows} de ${data.length} filas tienen errores de validación`
-      );
+      allErrors.push(...validation.errors);
     }
 
     return {
       isValid: allErrors.length === 0,
       errors: allErrors,
-      warnings: allWarnings,
+      invalidRowsCount: invalidRows.length,
+      validRowsCount: validRows.length,
+      validRows,
+      invalidRows,
     };
   }
 
@@ -186,7 +270,22 @@ export class ExcelValidator {
       .toLowerCase()
       .trim()
       .replace(/\s+/g, ' ')
-      .replace(/[^\w\s]/g, '');
+      .replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '')
+      .replace(/[áéíóúÁÉÍÓÚ]/g, (match: string) => {
+        const map: { [key: string]: string } = {
+          á: 'a',
+          é: 'e',
+          í: 'i',
+          ó: 'o',
+          ú: 'u',
+          Á: 'A',
+          É: 'E',
+          Í: 'I',
+          Ó: 'O',
+          Ú: 'U',
+        };
+        return map[match] || match;
+      });
   }
 
   /**

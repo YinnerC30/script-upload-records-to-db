@@ -1,14 +1,15 @@
 export interface ExcelRow {
-  idLicitacion?: string;
+  licitacion_id?: string;
   nombre?: string;
-  fechaPublicacion?: string | Date;
-  fechaCierre?: string | Date;
+  fecha_publicacion?: string | Date;
+  fecha_cierre?: string | Date;
   organismo?: string;
   unidad?: string;
-  montoDisponible?: number | string;
+  monto_disponible?: number;
   moneda?: string;
   estado?: string;
-  [key: string]: any;
+  estado_convocatoria?: string;
+  cotizaciones_enviadas?: string;
 }
 
 // Interfaz para manejar registros fallidos

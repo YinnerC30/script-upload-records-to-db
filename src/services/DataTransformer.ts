@@ -6,20 +6,18 @@ export class DataTransformer {
    * Mapea una fila del Excel a LicitacionApiData
    */
   mapToLicitacionApiData(row: ExcelRow, fileName: string): LicitacionApiData {
-    const fechaPublicacion = this.parseDate(row.fechaPublicacion);
-    const fechaCierre = this.parseDate(row.fechaCierre);
+    const fechaPublicacion = this.parseDate(row['fecha_publicacion']);
+    const fechaCierre = this.parseDate(row['fecha_cierre']);
 
     return {
-      licitacion_id: row.idLicitacion || '',
+      licitacion_id: row['licitacion_id'] || '',
       nombre: row.nombre || '',
-      fecha_publicacion: fechaPublicacion
-        ? this.formatDateForApi(fechaPublicacion)
-        : '',
-      fecha_cierre: fechaCierre ? this.formatDateForApi(fechaCierre) : '',
+      fecha_publicacion: this.formatDateForApi(fechaPublicacion!) || '',
+      fecha_cierre: this.formatDateForApi(fechaCierre!) || '',
       organismo: row.organismo || '',
       unidad: row.unidad || '',
-      monto_disponible: this.parseNumber(row.montoDisponible),
-      moneda: row.moneda || 'CLP',
+      monto_disponible: this.parseNumber(row['monto_disponible']),
+      moneda: row.moneda || '',
       estado: row.estado || '',
     };
   }
@@ -33,7 +31,22 @@ export class DataTransformer {
         .toLowerCase()
         .trim()
         .replace(/\s+/g, ' ')
-        .replace(/[^\w\s]/g, '')
+        .replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '')
+        .replace(/[áéíóúÁÉÍÓÚ]/g, (match: string) => {
+          const map: { [key: string]: string } = {
+            á: 'a',
+            é: 'e',
+            í: 'i',
+            ó: 'o',
+            ú: 'u',
+            Á: 'A',
+            É: 'E',
+            Í: 'I',
+            Ó: 'O',
+            Ú: 'U',
+          };
+          return map[match] || match;
+        })
     );
   }
 
@@ -43,26 +56,17 @@ export class DataTransformer {
   mapHeaders(rawHeaders: string[]): { [key: string]: string } {
     const normalizedHeaders = this.normalizeHeaders(rawHeaders);
     const headerMapping: { [key: string]: string } = {
-      id: 'idLicitacion',
+      id: 'licitacion_id',
       nombre: 'nombre',
-      'fecha de publicacion': 'fechaPublicacion',
-      'fecha de cierre': 'fechaCierre',
-      organismo: 'organismo',
-      unidad: 'unidad',
-      'monto disponible': 'montoDisponible',
-      moneda: 'moneda',
+      'unidad de compra': 'unidad',
+      'fecha de publicacion': 'fecha_publicacion',
+      'fecha de cierre': 'fecha_cierre',
       estado: 'estado',
-      // Variaciones adicionales para mayor compatibilidad
-      id_licitacion: 'idLicitacion',
-      idlicitacion: 'idLicitacion',
-      fecha_publicacion: 'fechaPublicacion',
-      fechapublicacion: 'fechaPublicacion',
-      fecha_cierre: 'fechaCierre',
-      fechacierre: 'fechaCierre',
-      monto_disponible: 'montoDisponible',
-      montodisponible: 'montoDisponible',
-      // Variaciones sin acentos (resultado de la normalización)
-      'fecha de publicacin': 'fechaPublicacion',
+      'cotizaciones enviadas': 'cotizaciones_enviadas',
+      institucion: 'organismo',
+      'presupuesto estimado': 'monto_disponible',
+      'tipo moneda': 'moneda',
+      'estado de convocatoria': 'estado_convocatoria',
     };
 
     const mappedHeaders: { [key: string]: string } = {};
@@ -128,65 +132,16 @@ export class DataTransformer {
       return dateValue;
     }
 
-    // Intentar parsear la fecha con diferentes formatos
-    const dateString = dateValue.toString().trim();
-
-    // Formato ISO: YYYY-MM-DD
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      const parts = dateString.split('-').map(Number);
-      if (parts.length === 3 && parts.every((p) => !isNaN(p))) {
-        const year = parts[0]!;
-        const month = parts[1]!;
-        const day = parts[2]!;
-        const date = new Date(year, month - 1, day, 0, 0, 0, 0);
-        return isNaN(date.getTime()) ? null : date;
-      }
-      return null;
+    const regex = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/;
+    const match = dateValue.match(regex);
+    if (!match) {
+      throw new Error('Formato de fecha inválido. Esperado: DD/MM/YYYY HH:mm');
     }
 
-    // Formato con hora: YYYY-MM-DD HH:mm:ss o YYYY-MM-DD HH:mm
-    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(dateString)) {
-      const parsed = new Date(dateString);
-      return isNaN(parsed.getTime()) ? null : parsed;
-    }
-
-    // Formato ISO con T: YYYY-MM-DDTHH:mm:ss
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(dateString)) {
-      const parsed = new Date(dateString);
-      return isNaN(parsed.getTime()) ? null : parsed;
-    }
-
-    // Formato DD/MM/YYYY
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
-      const parts = dateString.split('/').map(Number);
-      if (parts.length === 3 && parts.every((p) => !isNaN(p))) {
-        const day = parts[0]!;
-        const month = parts[1]!;
-        const year = parts[2]!;
-        const date = new Date(year, month - 1, day, 0, 0, 0, 0);
-        return isNaN(date.getTime()) ? null : date;
-      }
-      return null;
-    }
-
-    // Formato YYYY/MM/DD
-    if (/^\d{4}\/\d{2}\/\d{2}$/.test(dateString)) {
-      const parts = dateString.split('/').map(Number);
-      if (parts.length === 3 && parts.every((p) => !isNaN(p))) {
-        const year = parts[0]!;
-        const month = parts[1]!;
-        const day = parts[2]!;
-        const date = new Date(year, month - 1, day, 0, 0, 0, 0);
-        return isNaN(date.getTime()) ? null : date;
-      }
-      return null;
-    }
-
-    // Intentar parseo general como último recurso
-    const parsed = new Date(dateString);
-    return isNaN(parsed.getTime()) ? null : parsed;
+    const [, day = 0, month = 0, year = 0, hours = 0, minutes = 0] =
+      match.map(Number);
+    return new Date(year, month - 1, day, hours, minutes);
   }
-
   /**
    * Parsea un número desde string o number
    */

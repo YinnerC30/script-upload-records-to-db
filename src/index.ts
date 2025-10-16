@@ -127,14 +127,6 @@ export async function main() {
     } else if (result.total === 0) {
       console.log('\nℹ️  No hubo registros válidos para procesar');
       logger.warn('ℹ️  No hubo registros válidos para procesar');
-    } else {
-      console.log(
-        `\n⚠️  Procesamiento completado con errores (${result.failedCount} fallidos de ${result.total})`
-      );
-      logger.warn('⚠️  Procesamiento completado con errores', {
-        failed: result.failedCount,
-        total: result.total,
-      });
     }
   } catch (error) {
     console.error('\n❌ Error durante el procesamiento:', error);
