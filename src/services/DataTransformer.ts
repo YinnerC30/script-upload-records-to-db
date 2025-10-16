@@ -10,12 +10,10 @@ export class DataTransformer {
     const fechaCierre = this.parseDate(row['fecha_cierre']);
 
     return {
-      licitacion_id: row.idLicitacion || '',
+      licitacion_id: row['licitacion_id'] || '',
       nombre: row.nombre || '',
-      fecha_publicacion: fechaPublicacion
-        ? this.formatDateForApi(fechaPublicacion)
-        : '',
-      fecha_cierre: fechaCierre ? this.formatDateForApi(fechaCierre) : '',
+      fecha_publicacion: this.formatDateForApi(fechaPublicacion!) || '',
+      fecha_cierre: this.formatDateForApi(fechaCierre!) || '',
       organismo: row.organismo || '',
       unidad: row.unidad || '',
       monto_disponible: this.parseNumber(row['monto_disponible']),
@@ -134,65 +132,16 @@ export class DataTransformer {
       return dateValue;
     }
 
-    // Intentar parsear la fecha con diferentes formatos
-    const dateString = dateValue.toString().trim();
-
-    // Formato ISO: YYYY-MM-DD
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      const parts = dateString.split('-').map(Number);
-      if (parts.length === 3 && parts.every((p) => !isNaN(p))) {
-        const year = parts[0]!;
-        const month = parts[1]!;
-        const day = parts[2]!;
-        const date = new Date(year, month - 1, day, 0, 0, 0, 0);
-        return isNaN(date.getTime()) ? null : date;
-      }
-      return null;
+    const regex = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/;
+    const match = dateValue.match(regex);
+    if (!match) {
+      throw new Error('Formato de fecha inválido. Esperado: DD/MM/YYYY HH:mm');
     }
 
-    // Formato con hora: YYYY-MM-DD HH:mm:ss o YYYY-MM-DD HH:mm
-    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(dateString)) {
-      const parsed = new Date(dateString);
-      return isNaN(parsed.getTime()) ? null : parsed;
-    }
-
-    // Formato ISO con T: YYYY-MM-DDTHH:mm:ss
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(dateString)) {
-      const parsed = new Date(dateString);
-      return isNaN(parsed.getTime()) ? null : parsed;
-    }
-
-    // Formato DD/MM/YYYY
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
-      const parts = dateString.split('/').map(Number);
-      if (parts.length === 3 && parts.every((p) => !isNaN(p))) {
-        const day = parts[0]!;
-        const month = parts[1]!;
-        const year = parts[2]!;
-        const date = new Date(year, month - 1, day, 0, 0, 0, 0);
-        return isNaN(date.getTime()) ? null : date;
-      }
-      return null;
-    }
-
-    // Formato YYYY/MM/DD
-    if (/^\d{4}\/\d{2}\/\d{2}$/.test(dateString)) {
-      const parts = dateString.split('/').map(Number);
-      if (parts.length === 3 && parts.every((p) => !isNaN(p))) {
-        const year = parts[0]!;
-        const month = parts[1]!;
-        const day = parts[2]!;
-        const date = new Date(year, month - 1, day, 0, 0, 0, 0);
-        return isNaN(date.getTime()) ? null : date;
-      }
-      return null;
-    }
-
-    // Intentar parseo general como último recurso
-    const parsed = new Date(dateString);
-    return isNaN(parsed.getTime()) ? null : parsed;
+    const [, day = 0, month = 0, year = 0, hours = 0, minutes = 0] =
+      match.map(Number);
+    return new Date(year, month - 1, day, hours, minutes);
   }
-
   /**
    * Parsea un número desde string o number
    */

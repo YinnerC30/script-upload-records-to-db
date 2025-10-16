@@ -1,3 +1,4 @@
+import z, { ZodIssue } from 'zod';
 import { ExcelRow } from '../types/excel';
 
 export interface ValidationResult {
@@ -87,53 +88,105 @@ export class ExcelValidator {
     const errors: string[] = [];
     const warnings: string[] = [];
 
-    // Validar campos requeridos
-    if (
-      !row['licitacion_id'] ||
-      row['licitacion_id'].toString().trim() === ''
-    ) {
-      errors.push(`Fila ${rowIndex + 1}: ID de licitación es requerido`);
-    }
+    // Definir esquema Zod para validación de fila
+    const rowSchema = z.object({
+      licitacion_id: z
+        .string()
+        .min(1, `Fila ${rowIndex + 1}: ID de licitación es requerido`),
+      nombre: z.string().min(1, `Fila ${rowIndex + 1}: Nombre es requerido`),
+      fecha_publicacion: z
+        .string()
+        .regex(
+          /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/,
+          `Fila ${
+            rowIndex + 1
+          }: Fecha de publicación debe tener formato DD/MM/YYYY HH:MM`
+        )
+        .refine((dateStr) => {
+          const [datePart = '', timePart = ''] = dateStr.split(' ');
+          const [day = 0, month = 0, year = 0] = datePart
+            .split('/')
+            .map(Number);
+          const [hour = 0, minute = 0] = timePart.split(':').map(Number);
 
-    if (!row.nombre || row.nombre.toString().trim() === '') {
-      errors.push(`Fila ${rowIndex + 1}: Nombre es requerido`);
-    }
+          // Validar rangos
+          if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900)
+            return false;
+          if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return false;
 
-    // Validar formato de fechas
-    if (row['fecha_publicacion']) {
-      const date = this.parseDate(row['fecha_publicacion']);
-      if (!date || isNaN(date.getTime())) {
-        errors.push(`Fila ${rowIndex + 1}: Fecha de publicación inválida`);
-      }
-    }
+          // Crear fecha y verificar que sea válida
+          const date = new Date(year, month - 1, day, hour, minute);
+          return (
+            date.getFullYear() === year &&
+            date.getMonth() === month - 1 &&
+            date.getDate() === day &&
+            date.getHours() === hour &&
+            date.getMinutes() === minute
+          );
+        }, `Fila ${rowIndex + 1}: Fecha de publicación no es una fecha válida`),
+      fecha_cierre: z
+        .string()
+        .regex(
+          /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/,
+          `Fila ${
+            rowIndex + 1
+          }: Fecha de cierre debe tener formato DD/MM/YYYY HH:MM`
+        )
+        .refine((dateStr) => {
+          const [datePart = '', timePart = ''] = dateStr.split(' ');
+          const [day = 0, month = 0, year = 0] = datePart
+            .split('/')
+            .map(Number);
+          const [hour = 0, minute = 0] = timePart.split(':').map(Number);
 
-    if (row['fecha_cierre']) {
-      const date = this.parseDate(row['fecha_cierre']);
-      if (!date || isNaN(date.getTime())) {
-        errors.push(`Fila ${rowIndex + 1}: Fecha de cierre inválida`);
-      }
-    }
+          // Validar rangos
+          if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900)
+            return false;
+          if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return false;
 
-    // Validar monto disponible
-    if (
-      row['monto_disponible'] !== undefined &&
-      row['monto_disponible'] !== null
-    ) {
-      const amount = this.parseNumber(row['monto_disponible']);
-      if (isNaN(amount) || amount < 0) {
-        errors.push(
+          // Crear fecha y verificar que sea válida
+          const date = new Date(year, month - 1, day, hour, minute);
+          return (
+            date.getFullYear() === year &&
+            date.getMonth() === month - 1 &&
+            date.getDate() === day &&
+            date.getHours() === hour &&
+            date.getMinutes() === minute
+          );
+        }, `Fila ${rowIndex + 1}: Fecha de cierre no es una fecha válida`),
+      monto_disponible: z
+        .number()
+        .min(
+          0,
           `Fila ${rowIndex + 1}: Monto disponible debe ser un número positivo`
-        );
+        ),
+      organismo: z
+        .string()
+        .min(1, `Fila ${rowIndex + 1}: Organismo es requerido`),
+      unidad: z.string().min(1, `Fila ${rowIndex + 1}: Unidad es requerido`),
+      moneda: z.string().min(1, `Fila ${rowIndex + 1}: Moneda es requerido`),
+      cotizaciones_enviadas: z
+        .number()
+        .min(
+          0,
+          `Fila ${
+            rowIndex + 1
+          }: Cotizaciones enviadas debe ser un número positivo`
+        ),
+      estado_convocatoria: z
+        .string()
+        .min(1, `Fila ${rowIndex + 1}: Estado de convocatoria es requerido`),
+      estado: z.string().min(1, `Fila ${rowIndex + 1}: Estado es requerido`),
+    });
+
+    try {
+      const validatedRow = rowSchema.parse(row);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        errors.push(...error.issues.map((err: any) => err.message));
+      } else {
+        errors.push(`Fila ${rowIndex + 1}: Error de validación inesperado`);
       }
-    }
-
-    // Advertencias para campos opcionales vacíos
-    if (!row.organismo || row.organismo.toString().trim() === '') {
-      warnings.push(`Fila ${rowIndex + 1}: Organismo está vacío`);
-    }
-
-    if (!row.unidad || row.unidad.toString().trim() === '') {
-      warnings.push(`Fila ${rowIndex + 1}: Unidad está vacía`);
     }
 
     return {
