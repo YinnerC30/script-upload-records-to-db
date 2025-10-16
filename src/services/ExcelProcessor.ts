@@ -159,17 +159,10 @@ export class ExcelProcessor {
       // Validar datos
       const dataValidation = this.validator.validateData(transformedData);
 
-      // if (!dataValidation.isValid) {
-      //   console.log('❌ Errores de validación encontrados:');
-      //   dataValidation.errors
-      //     .slice(0, 5)
-      //     .forEach((error) => console.log(`   - ${error}`));
-      //   if (dataValidation.errors.length > 5) {
-      //     console.log(
-      //       `   ... y ${dataValidation.errors.length - 5} errores más`
-      //     );
-      //   }
-      // }
+      if (!dataValidation.isValid) {
+        console.log('❌ Errores de validación encontrados:');
+        dataValidation.errors.forEach((error) => console.log(`   - ${error}`));
+      }
 
       // Procesar datos
       if (this.dryRun) {
@@ -186,12 +179,12 @@ export class ExcelProcessor {
         };
       } else {
         const dataResult = await this.processData(
-          transformedData,
+          dataValidation.validRows,
           fileName,
           filePath
         );
         return {
-          total: transformedData.length,
+          total: dataValidation.validRowsCount,
           successCount: dataResult.successCount,
           failedCount: dataResult.failedRecords.length,
         };

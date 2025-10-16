@@ -185,42 +185,50 @@ export class ExcelValidator {
   /**
    * Valida un conjunto de datos
    */
-  validateData(
-    data: ExcelRow[]
-  ): ValidationResult & { invalidRowsCount: number; validRowsCount: number } {
+  validateData(data: ExcelRow[]): ValidationResult & {
+    invalidRowsCount: number;
+    validRowsCount: number;
+    validRows: ExcelRow[];
+    invalidRows: ExcelRow[];
+  } {
     if (!Array.isArray(data) || data.length === 0) {
       return {
         isValid: false,
         errors: ['Los datos deben ser un array no vacío'],
         invalidRowsCount: 0,
         validRowsCount: 0,
+        validRows: [],
+        invalidRows: [],
       };
     }
 
+    // const validRows = [];
     const allErrors: string[] = [];
 
-    let validRows = 0;
+    let validRows: ExcelRow[] = [];
+    let invalidRows: ExcelRow[] = [];
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       if (!row) continue;
       const validation = this.validateRow(row, i);
 
-      // allErrors.push(...validation.errors);
-
       if (validation.isValid) {
-        validRows++;
+        validRows.push(row);
+      } else {
+        invalidRows.push(row);
       }
-    }
 
-    // Advertencia si hay muchas filas inválidas
-    const invalidRows = data.length - validRows;
+      allErrors.push(...validation.errors);
+    }
 
     return {
       isValid: allErrors.length === 0,
       errors: allErrors,
-      invalidRowsCount: invalidRows,
-      validRowsCount: validRows,
+      invalidRowsCount: invalidRows.length,
+      validRowsCount: validRows.length,
+      validRows,
+      invalidRows,
     };
   }
 
