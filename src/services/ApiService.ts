@@ -245,6 +245,7 @@ export class ApiService {
           licitacion_id: licitacion.licitacion_id,
           error: error.message,
           statusCode: error.response?.status,
+          body: JSON.stringify(licitacion),
         },
         error.response?.data ? { ...error.response.data } : {}
       );
