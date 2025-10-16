@@ -84,8 +84,6 @@ export class ExcelValidator {
    * Valida una fila de datos
    */
   validateRow(row: ExcelRow, rowIndex: number): ValidationResult {
-    const errors: string[] = [];
-
     // Definir esquema Zod para validación de fila
     const rowSchema = z.object({
       licitacion_id: z
@@ -168,19 +166,20 @@ export class ExcelValidator {
       estado: z.string().min(1, `Fila ${rowIndex + 1}: Estado es requerido`),
     });
 
-    try {
-      rowSchema.parse(row);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        console.log('🚀 ~ ExcelValidator ~ validateRow ~ error:', error);
-        errors.push(`Fila ${rowIndex + 1}: Error de validación de campos`);
-      }
-    }
+    rowSchema.safeParse(row);
+    const result = rowSchema.safeParse(row);
 
-    return {
-      isValid: errors.length === 0,
-      errors,
-    };
+    if (result.success) {
+      return {
+        isValid: true,
+        errors: [],
+      };
+    } else {
+      return {
+        isValid: false,
+        errors: result.error.issues.map((issue) => issue.message),
+      };
+    }
   }
 
   /**
