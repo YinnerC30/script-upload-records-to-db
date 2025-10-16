@@ -6,8 +6,8 @@ export class DataTransformer {
    * Mapea una fila del Excel a LicitacionApiData
    */
   mapToLicitacionApiData(row: ExcelRow, fileName: string): LicitacionApiData {
-    const fechaPublicacion = this.parseDate(row.fechaPublicacion);
-    const fechaCierre = this.parseDate(row.fechaCierre);
+    const fechaPublicacion = this.parseDate(row['fecha_publicacion']);
+    const fechaCierre = this.parseDate(row['fecha_cierre']);
 
     return {
       licitacion_id: row.idLicitacion || '',
@@ -18,8 +18,8 @@ export class DataTransformer {
       fecha_cierre: fechaCierre ? this.formatDateForApi(fechaCierre) : '',
       organismo: row.organismo || '',
       unidad: row.unidad || '',
-      monto_disponible: this.parseNumber(row.montoDisponible),
-      moneda: row.moneda || 'CLP',
+      monto_disponible: this.parseNumber(row['monto_disponible']),
+      moneda: row.moneda || '',
       estado: row.estado || '',
     };
   }
@@ -33,7 +33,22 @@ export class DataTransformer {
         .toLowerCase()
         .trim()
         .replace(/\s+/g, ' ')
-        .replace(/[^\w\s]/g, '')
+        .replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '')
+        .replace(/[áéíóúÁÉÍÓÚ]/g, (match: string) => {
+          const map: { [key: string]: string } = {
+            á: 'a',
+            é: 'e',
+            í: 'i',
+            ó: 'o',
+            ú: 'u',
+            Á: 'A',
+            É: 'E',
+            Í: 'I',
+            Ó: 'O',
+            Ú: 'U',
+          };
+          return map[match] || match;
+        })
     );
   }
 
@@ -43,26 +58,17 @@ export class DataTransformer {
   mapHeaders(rawHeaders: string[]): { [key: string]: string } {
     const normalizedHeaders = this.normalizeHeaders(rawHeaders);
     const headerMapping: { [key: string]: string } = {
-      id: 'idLicitacion',
+      id: 'licitacion_id',
       nombre: 'nombre',
-      'fecha de publicacion': 'fechaPublicacion',
-      'fecha de cierre': 'fechaCierre',
-      organismo: 'organismo',
-      unidad: 'unidad',
-      'monto disponible': 'montoDisponible',
-      moneda: 'moneda',
+      'unidad de compra': 'unidad',
+      'fecha de publicacion': 'fecha_publicacion',
+      'fecha de cierre': 'fecha_cierre',
       estado: 'estado',
-      // Variaciones adicionales para mayor compatibilidad
-      id_licitacion: 'idLicitacion',
-      idlicitacion: 'idLicitacion',
-      fecha_publicacion: 'fechaPublicacion',
-      fechapublicacion: 'fechaPublicacion',
-      fecha_cierre: 'fechaCierre',
-      fechacierre: 'fechaCierre',
-      monto_disponible: 'montoDisponible',
-      montodisponible: 'montoDisponible',
-      // Variaciones sin acentos (resultado de la normalización)
-      'fecha de publicacin': 'fechaPublicacion',
+      'cotizaciones enviadas': 'cotizaciones_enviadas',
+      institucion: 'organismo',
+      'presupuesto estimado': 'monto_disponible',
+      'tipo moneda': 'moneda',
+      'estado de convocatoria': 'estado_convocatoria',
     };
 
     const mappedHeaders: { [key: string]: string } = {};

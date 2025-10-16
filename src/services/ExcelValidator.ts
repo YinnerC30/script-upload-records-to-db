@@ -16,28 +16,31 @@ export interface HeaderValidationResult {
 export class ExcelValidator {
   // Mapeo de encabezados del Excel a campos del código (normalizados)
   private readonly HEADER_MAPPING: { [key: string]: string } = {
-    id: 'idLicitacion',
+    id: 'licitacion_id',
     nombre: 'nombre',
-    'fecha de publicacion': 'fechaPublicacion',
-    'fecha de cierre': 'fechaCierre',
-    organismo: 'organismo',
-    unidad: 'unidad',
-    'monto disponible': 'montoDisponible',
-    moneda: 'moneda',
+    'unidad de compra': 'unidad',
+    'fecha de publicacion': 'fecha_publicacion',
+    'fecha de cierre': 'fecha_cierre',
     estado: 'estado',
-    // Variaciones adicionales para mayor compatibilidad
-    id_licitacion: 'idLicitacion',
-    idlicitacion: 'idLicitacion',
-    fecha_publicacion: 'fechaPublicacion',
-    fechapublicacion: 'fechaPublicacion',
-    fecha_cierre: 'fechaCierre',
-    fechacierre: 'fechaCierre',
-    monto_disponible: 'montoDisponible',
-    montodisponible: 'montoDisponible',
+    'cotizaciones enviadas': 'cotizaciones_enviadas',
+    institucion: 'organismo',
+    'presupuesto estimado': 'monto_disponible',
+    'tipo moneda': 'moneda',
+    'estado de convocatoria': 'estado_convocatoria',
   };
 
   // Campos requeridos para una licitación válida
-  private readonly REQUIRED_FIELDS = ['idLicitacion', 'nombre'];
+  private readonly REQUIRED_FIELDS = [
+    'licitacion_id',
+    'nombre',
+    'fecha_publicacion',
+    'fecha_cierre',
+    'organismo',
+    'unidad',
+    'monto_disponible',
+    'moneda',
+    'estado',
+  ];
 
   /**
    * Valida los encabezados del archivo Excel
@@ -85,7 +88,10 @@ export class ExcelValidator {
     const warnings: string[] = [];
 
     // Validar campos requeridos
-    if (!row.idLicitacion || row.idLicitacion.toString().trim() === '') {
+    if (
+      !row['licitacion_id'] ||
+      row['licitacion_id'].toString().trim() === ''
+    ) {
       errors.push(`Fila ${rowIndex + 1}: ID de licitación es requerido`);
     }
 
@@ -94,23 +100,26 @@ export class ExcelValidator {
     }
 
     // Validar formato de fechas
-    if (row.fechaPublicacion) {
-      const date = this.parseDate(row.fechaPublicacion);
+    if (row['fecha_publicacion']) {
+      const date = this.parseDate(row['fecha_publicacion']);
       if (!date || isNaN(date.getTime())) {
         errors.push(`Fila ${rowIndex + 1}: Fecha de publicación inválida`);
       }
     }
 
-    if (row.fechaCierre) {
-      const date = this.parseDate(row.fechaCierre);
+    if (row['fecha_cierre']) {
+      const date = this.parseDate(row['fecha_cierre']);
       if (!date || isNaN(date.getTime())) {
         errors.push(`Fila ${rowIndex + 1}: Fecha de cierre inválida`);
       }
     }
 
     // Validar monto disponible
-    if (row.montoDisponible !== undefined && row.montoDisponible !== null) {
-      const amount = this.parseNumber(row.montoDisponible);
+    if (
+      row['monto_disponible'] !== undefined &&
+      row['monto_disponible'] !== null
+    ) {
+      const amount = this.parseNumber(row['monto_disponible']);
       if (isNaN(amount) || amount < 0) {
         errors.push(
           `Fila ${rowIndex + 1}: Monto disponible debe ser un número positivo`
@@ -186,7 +195,22 @@ export class ExcelValidator {
       .toLowerCase()
       .trim()
       .replace(/\s+/g, ' ')
-      .replace(/[^\w\s]/g, '');
+      .replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '')
+      .replace(/[áéíóúÁÉÍÓÚ]/g, (match: string) => {
+        const map: { [key: string]: string } = {
+          á: 'a',
+          é: 'e',
+          í: 'i',
+          ó: 'o',
+          ú: 'u',
+          Á: 'A',
+          É: 'E',
+          Í: 'I',
+          Ó: 'O',
+          Ú: 'U',
+        };
+        return map[match] || match;
+      });
   }
 
   /**

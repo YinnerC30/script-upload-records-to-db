@@ -229,7 +229,7 @@ export class ExcelProcessor {
     // Filtrar registros ya procesados por licitacion_id
     const filteredData: ExcelRow[] = [];
     for (const row of data) {
-      const id = row.idLicitacion;
+      const id = row['licitacion_id'];
       if (!id) {
         filteredData.push(row); // permitir que validaciones manejen casos sin ID
         continue;
