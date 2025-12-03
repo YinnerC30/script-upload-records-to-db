@@ -320,33 +320,4 @@ export class ExcelValidator {
         return map[match] || match;
       });
   }
-
-  /**
-   * Parsea una fecha desde string o Date
-   */
-  private parseDate(dateValue: string | Date | undefined): Date {
-    if (!dateValue) return new Date();
-
-    if (dateValue instanceof Date) {
-      return dateValue;
-    }
-
-    const parsed = new Date(dateValue);
-
-    return isNaN(parsed.getTime()) ? new Date() : parsed;
-  }
-
-  /**
-   * Parsea un número desde string o number
-   */
-  private parseNumber(value: string | number | undefined): number {
-    if (value === undefined || value === null) return 0;
-
-    if (typeof value === 'number') {
-      return value;
-    }
-
-    const parsed = parseFloat(value.toString().replace(/[^\d.-]/g, ''));
-    return isNaN(parsed) ? 0 : parsed;
-  }
 }
