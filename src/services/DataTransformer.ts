@@ -67,6 +67,10 @@ export class DataTransformer {
       'presupuesto estimado': 'monto_disponible',
       'tipo moneda': 'moneda',
       'estado de convocatoria': 'estado_convocatoria',
+      unidad: 'unidad',
+      'monto disponible': 'monto_disponible',
+      moneda: 'moneda',
+      organismo: 'organismo',
     };
 
     const mappedHeaders: { [key: string]: string } = {};
@@ -132,15 +136,30 @@ export class DataTransformer {
       return dateValue;
     }
 
-    const regex = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/;
-    const match = dateValue.match(regex);
-    if (!match) {
-      throw new Error('Formato de fecha inválido. Esperado: DD/MM/YYYY HH:mm');
+    // Intentar formato antiguo: DD/MM/YYYY HH:mm
+    const oldFormatRegex = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/;
+    const oldMatch = dateValue.match(oldFormatRegex);
+
+    if (oldMatch) {
+      const [, day = 0, month = 0, year = 0, hours = 0, minutes = 0] =
+        oldMatch.map(Number);
+      return new Date(year, month - 1, day, hours, minutes);
     }
 
-    const [, day = 0, month = 0, year = 0, hours = 0, minutes = 0] =
-      match.map(Number);
-    return new Date(year, month - 1, day, hours, minutes);
+    // Intentar formato nuevo: YYYY-MM-DD HH:mm
+    const newFormatRegex = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/;
+    const newMatch = dateValue.match(newFormatRegex);
+
+    if (newMatch) {
+      const [, year = 0, month = 0, day = 0, hours = 0, minutes = 0] =
+        newMatch.map(Number);
+      return new Date(year, month - 1, day, hours, minutes);
+    }
+
+    // Si no coincide con ninguno de los dos formatos:
+    throw new Error(
+      'Formato de fecha inválido. Esperado: DD/MM/YYYY HH:mm o YYYY-MM-DD HH:mm'
+    );
   }
   /**
    * Parsea un número desde string o number

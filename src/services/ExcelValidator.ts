@@ -27,6 +27,10 @@ export class ExcelValidator {
     'presupuesto estimado': 'monto_disponible',
     'tipo moneda': 'moneda',
     'estado de convocatoria': 'estado_convocatoria',
+    unidad: 'unidad',
+    'monto disponible': 'monto_disponible',
+    moneda: 'moneda',
+    organismo: 'organismo',
   };
 
   // Campos requeridos para una licitación válida
@@ -101,24 +105,38 @@ export class ExcelValidator {
           message: `Fila ${rowIndex + 1}: Fecha de publicación es requerida`,
         })
         .regex(
-          /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/,
+          /^(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}|\d{4}-\d{2}-\d{2} \d{2}:\d{2})$/,
           `Fila ${
             rowIndex + 1
-          }: Fecha de publicación debe tener formato DD/MM/YYYY HH:MM`
+          }: Fecha de publicación debe tener formato DD/MM/YYYY HH:MM o YYYY-MM-DD HH:MM`
         )
         .refine((dateStr) => {
-          const [datePart = '', timePart = ''] = dateStr.split(' ');
-          const [day = 0, month = 0, year = 0] = datePart
-            .split('/')
-            .map(Number);
-          const [hour = 0, minute = 0] = timePart.split(':').map(Number);
+          let day = 0,
+            month = 0,
+            year = 0,
+            hour = 0,
+            minute = 0;
 
-          // Validar rangos
+          if (dateStr.includes('/')) {
+            // Formato antiguo: DD/MM/YYYY HH:MM
+            const [datePart = '', timePart = ''] = dateStr.split(' ');
+            [day = 0, month = 0, year = 0] = datePart.split('/').map(Number);
+            [hour = 0, minute = 0] = timePart.split(':').map(Number);
+          } else if (dateStr.includes('-')) {
+            // Formato nuevo: YYYY-MM-DD HH:MM
+            const [datePart = '', timePart = ''] = dateStr.split(' ');
+            [year = 0, month = 0, day = 0] = datePart.split('-').map(Number);
+            [hour = 0, minute = 0] = timePart.split(':').map(Number);
+          } else {
+            return false;
+          }
+
+          // Validar rangos básicos
           if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900)
             return false;
           if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return false;
 
-          // Crear fecha y verificar que sea válida
+          // Verificar fecha/hora real
           const date = new Date(year, month - 1, day, hour, minute);
           return (
             date.getFullYear() === year &&
@@ -133,24 +151,38 @@ export class ExcelValidator {
           message: `Fila ${rowIndex + 1}: Fecha de cierre es requerida`,
         })
         .regex(
-          /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/,
+          /^(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}|\d{4}-\d{2}-\d{2} \d{2}:\d{2})$/,
           `Fila ${
             rowIndex + 1
-          }: Fecha de cierre debe tener formato DD/MM/YYYY HH:MM`
+          }: Fecha de cierre debe tener formato DD/MM/YYYY HH:MM o YYYY-MM-DD HH:MM`
         )
         .refine((dateStr) => {
-          const [datePart = '', timePart = ''] = dateStr.split(' ');
-          const [day = 0, month = 0, year = 0] = datePart
-            .split('/')
-            .map(Number);
-          const [hour = 0, minute = 0] = timePart.split(':').map(Number);
+          let day = 0,
+            month = 0,
+            year = 0,
+            hour = 0,
+            minute = 0;
 
-          // Validar rangos
+          if (dateStr.includes('/')) {
+            // Formato antiguo: DD/MM/YYYY HH:MM
+            const [datePart = '', timePart = ''] = dateStr.split(' ');
+            [day = 0, month = 0, year = 0] = datePart.split('/').map(Number);
+            [hour = 0, minute = 0] = timePart.split(':').map(Number);
+          } else if (dateStr.includes('-')) {
+            // Formato nuevo: YYYY-MM-DD HH:MM
+            const [datePart = '', timePart = ''] = dateStr.split(' ');
+            [year = 0, month = 0, day = 0] = datePart.split('-').map(Number);
+            [hour = 0, minute = 0] = timePart.split(':').map(Number);
+          } else {
+            return false;
+          }
+
+          // Validar rangos básicos
           if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900)
             return false;
           if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return false;
 
-          // Crear fecha y verificar que sea válida
+          // Verificar fecha/hora real
           const date = new Date(year, month - 1, day, hour, minute);
           return (
             date.getFullYear() === year &&
