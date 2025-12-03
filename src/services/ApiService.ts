@@ -179,46 +179,6 @@ export class ApiService {
   }
 
   /**
-   * Envía una licitación individual a la API
-   */
-  async sendLicitacion(licitacion: LicitacionApiData): Promise<ApiResponse> {
-    try {
-      this.logger.debug('Enviando licitación individual a la API', {
-        licitacion_id: licitacion.licitacion_id,
-      });
-
-      const response: any = await this.client.post('', licitacion);
-
-      this.logger.debug('Licitación enviada exitosamente', {
-        licitacion_id: licitacion.licitacion_id,
-        responseStatus: response.status,
-        success: response.status === 200,
-      });
-
-      return {
-        success: response.status === 200,
-        data: response.data,
-        message:
-          response.status === 200
-            ? 'Licitación enviada exitosamente'
-            : `API respondió con código ${response.status}`,
-      };
-    } catch (error: any) {
-      this.logger.error('Error enviando licitación individual', {
-        licitacion_id: licitacion.licitacion_id,
-        error: error.message,
-        statusCode: error.response?.status,
-      });
-
-      return {
-        success: false,
-        error: error.message,
-        message: `Error enviando licitación: ${error.message}`,
-      };
-    }
-  }
-
-  /**
    * Envía una licitación individual y retorna la respuesta completa
    */
   async sendLicitacionWithResponse(
