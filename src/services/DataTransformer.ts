@@ -26,7 +26,7 @@ export class DataTransformer {
   /**
    * Normaliza encabezados para mapeo
    */
-  normalizeHeaders(headers: string[]): string[] {
+  static normalizeHeaders(headers: string[]): string[] {
     return headers.map((header) =>
       header
         .toLowerCase()
@@ -55,7 +55,7 @@ export class DataTransformer {
    * Mapea encabezados del Excel a campos del código
    */
   mapHeaders(rawHeaders: string[]): { [key: string]: string } {
-    const normalizedHeaders = this.normalizeHeaders(rawHeaders);
+    const normalizedHeaders = DataTransformer.normalizeHeaders(rawHeaders);
 
     const mappedHeaders: { [key: string]: string } = {};
 

@@ -1,5 +1,6 @@
 import z from 'zod';
 import { ExcelRow } from '../types/excel';
+import { DataTransformer } from './DataTransformer';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -51,9 +52,7 @@ export class ExcelValidator {
    * Valida los encabezados del archivo Excel
    */
   validateHeaders(headers: string[]): HeaderValidationResult {
-    const normalizedHeaders = headers.map((header) =>
-      this.normalizeHeader(header)
-    );
+    const normalizedHeaders = DataTransformer.normalizeHeaders(headers);
 
     const mappedHeaders: string[] = [];
     const missingHeaders: string[] = [];
@@ -293,31 +292,5 @@ export class ExcelValidator {
       validRows,
       invalidRows,
     };
-  }
-
-  /**
-   * Normaliza un encabezado para comparación
-   */
-  normalizeHeader(header: string): string {
-    return header
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, ' ')
-      .replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '')
-      .replace(/[áéíóúÁÉÍÓÚ]/g, (match: string) => {
-        const map: { [key: string]: string } = {
-          á: 'a',
-          é: 'e',
-          í: 'i',
-          ó: 'o',
-          ú: 'u',
-          Á: 'A',
-          É: 'E',
-          Í: 'I',
-          Ó: 'O',
-          Ú: 'U',
-        };
-        return map[match] || match;
-      });
   }
 }
