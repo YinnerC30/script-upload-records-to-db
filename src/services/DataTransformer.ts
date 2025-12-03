@@ -6,7 +6,7 @@ export class DataTransformer {
   /**
    * Mapea una fila del Excel a LicitacionApiData
    */
-  mapToLicitacionApiData(row: ExcelRow, fileName: string): LicitacionApiData {
+  mapToLicitacionApiData(row: ExcelRow): LicitacionApiData {
     const fechaPublicacion = this.parseDate(row['fecha_publicacion']);
     const fechaCierre = this.parseDate(row['fecha_cierre']);
 

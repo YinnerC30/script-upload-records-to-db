@@ -1,17 +1,13 @@
-import * as XLSX from 'xlsx';
 import * as path from 'path';
+import * as XLSX from 'xlsx';
+import { config } from '../config/config';
+import { ExcelRow, FailedRecord } from '../types/excel';
+import { StructuredLogger } from '../utils/logger';
 import { ApiService } from './ApiService';
-import { FileProcessor } from './FileProcessor';
-import {
-  ExcelValidator,
-  ValidationResult,
-  HeaderValidationResult,
-} from './ExcelValidator';
 import { DataTransformer } from './DataTransformer';
 import { DatabaseService } from './DatabaseService';
-import { ExcelRow, FailedRecord, LicitacionApiData } from '../types/excel';
-import logger, { StructuredLogger } from '../utils/logger';
-import { config } from '../config/config';
+import { ExcelValidator } from './ExcelValidator';
+import { FileProcessor } from './FileProcessor';
 
 export class ExcelProcessor {
   private readonly fileProcessor: FileProcessor;
@@ -287,10 +283,7 @@ export class ExcelProcessor {
       if (!row) continue;
 
       try {
-        const licitacionData = this.transformer.mapToLicitacionApiData(
-          row,
-          fileName
-        );
+        const licitacionData = this.transformer.mapToLicitacionApiData(row);
 
         // Enviar registro individual a la API
         const response = await this.apiService.sendLicitacionWithResponse(
@@ -335,10 +328,7 @@ export class ExcelProcessor {
         }
       } catch (error: any) {
         // Error de red, timeout, etc.
-        const licitacionData = this.transformer.mapToLicitacionApiData(
-          row,
-          fileName
-        );
+        const licitacionData = this.transformer.mapToLicitacionApiData(row);
 
         // Si la API devuelve 400 y el body indica duplicado, registrar el ID en JSON store
         const statusCode = error.response?.status;
