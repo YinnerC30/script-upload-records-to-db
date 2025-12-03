@@ -158,29 +158,4 @@ export class DataTransformer {
     const parsed = parseFloat(value.toString().replace(/[^\d.-]/g, ''));
     return isNaN(parsed) ? 0 : parsed;
   }
-
-  /**
-   * Limpia y normaliza un string
-   */
-  cleanString(value: string | undefined): string {
-    if (!value) return '';
-    return value.toString().trim();
-  }
-
-  /**
-   * Valida y limpia datos antes de la transformación
-   */
-  preprocessData(rawData: any[]): any[] {
-    return rawData.map((row) => {
-      const cleanedRow: any = {};
-
-      for (const [key, value] of Object.entries(row)) {
-        if (value !== null && value !== undefined) {
-          cleanedRow[key] = value;
-        }
-      }
-
-      return cleanedRow;
-    });
-  }
 }
