@@ -1,5 +1,6 @@
 import { ExcelRow } from '../types/excel';
 import { LicitacionApiData } from './ApiService';
+import { HEADER_MAPPING } from './ExcelValidator';
 
 export class DataTransformer {
   /**
@@ -55,23 +56,6 @@ export class DataTransformer {
    */
   mapHeaders(rawHeaders: string[]): { [key: string]: string } {
     const normalizedHeaders = this.normalizeHeaders(rawHeaders);
-    const headerMapping: { [key: string]: string } = {
-      id: 'licitacion_id',
-      nombre: 'nombre',
-      'unidad de compra': 'unidad',
-      'fecha de publicacion': 'fecha_publicacion',
-      'fecha de cierre': 'fecha_cierre',
-      estado: 'estado',
-      'cotizaciones enviadas': 'cotizaciones_enviadas',
-      institucion: 'organismo',
-      'presupuesto estimado': 'monto_disponible',
-      'tipo moneda': 'moneda',
-      'estado de convocatoria': 'estado_convocatoria',
-      unidad: 'unidad',
-      'monto disponible': 'monto_disponible',
-      moneda: 'moneda',
-      organismo: 'organismo',
-    };
 
     const mappedHeaders: { [key: string]: string } = {};
 
@@ -82,9 +66,9 @@ export class DataTransformer {
       if (
         normalizedHeader &&
         originalHeader &&
-        headerMapping[normalizedHeader]
+        HEADER_MAPPING[normalizedHeader]
       ) {
-        mappedHeaders[originalHeader] = headerMapping[normalizedHeader];
+        mappedHeaders[originalHeader] = HEADER_MAPPING[normalizedHeader];
       }
     }
 

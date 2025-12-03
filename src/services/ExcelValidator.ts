@@ -1,4 +1,4 @@
-import z, { ZodError } from 'zod';
+import z from 'zod';
 import { ExcelRow } from '../types/excel';
 
 export interface ValidationResult {
@@ -13,25 +13,26 @@ export interface HeaderValidationResult {
   extraHeaders: string[];
 }
 
+export const HEADER_MAPPING: { [key: string]: string } = {
+  id: 'licitacion_id',
+  nombre: 'nombre',
+  'unidad de compra': 'unidad',
+  'fecha de publicacion': 'fecha_publicacion',
+  'fecha de cierre': 'fecha_cierre',
+  estado: 'estado',
+  'cotizaciones enviadas': 'cotizaciones_enviadas',
+  institucion: 'organismo',
+  'presupuesto estimado': 'monto_disponible',
+  'tipo moneda': 'moneda',
+  'estado de convocatoria': 'estado_convocatoria',
+  unidad: 'unidad',
+  'monto disponible': 'monto_disponible',
+  moneda: 'moneda',
+  organismo: 'organismo',
+};
+
 export class ExcelValidator {
   // Mapeo de encabezados del Excel a campos del código (normalizados)
-  private readonly HEADER_MAPPING: { [key: string]: string } = {
-    id: 'licitacion_id',
-    nombre: 'nombre',
-    'unidad de compra': 'unidad',
-    'fecha de publicacion': 'fecha_publicacion',
-    'fecha de cierre': 'fecha_cierre',
-    estado: 'estado',
-    'cotizaciones enviadas': 'cotizaciones_enviadas',
-    institucion: 'organismo',
-    'presupuesto estimado': 'monto_disponible',
-    'tipo moneda': 'moneda',
-    'estado de convocatoria': 'estado_convocatoria',
-    unidad: 'unidad',
-    'monto disponible': 'monto_disponible',
-    moneda: 'moneda',
-    organismo: 'organismo',
-  };
 
   // Campos requeridos para una licitación válida
   private readonly REQUIRED_FIELDS = [
@@ -60,8 +61,8 @@ export class ExcelValidator {
 
     // Verificar encabezados mapeados
     for (const header of normalizedHeaders) {
-      if (this.HEADER_MAPPING[header]) {
-        mappedHeaders.push(this.HEADER_MAPPING[header]);
+      if (HEADER_MAPPING[header]) {
+        mappedHeaders.push(HEADER_MAPPING[header]);
       } else {
         extraHeaders.push(header);
       }
