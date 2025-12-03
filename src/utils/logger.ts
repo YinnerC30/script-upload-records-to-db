@@ -219,12 +219,17 @@ class ConsoleCleaner {
   }
 }
 
+const showVersion = (): string => {
+  const packageJson = require('../../package.json');
+  return packageJson.version;
+};
+
 const logger = winston.createLogger({
   levels: customLevels,
   level: config.logging.level,
   defaultMeta: {
     service: 'excel-processor',
-    version: process.env.npm_package_version || '1.2.3',
+    version: showVersion() || '1.2.3',
   },
   transports: [
     // Archivo de logs general
